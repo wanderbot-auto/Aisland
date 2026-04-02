@@ -5,88 +5,54 @@
 >
 > To all vibe coders: 我们自己构建自己的产品。
 
-An open-source macOS companion for terminal-native AI coding agents.
+The open-source macOS companion for terminal-native AI coding.
 
-`open-vibe-island` is building a native control surface for local agent workflows on macOS: monitor sessions, surface permission requests and questions, and jump back to the right terminal context without replacing the CLI.
+`open-vibe-island` gives coding agents a native home on your Mac: a lightweight island in the notch or top bar where you can see live sessions, approve actions, answer questions, and jump back to the right terminal without breaking flow.
 
-## Why This Exists
+## Why It Exists
 
-The point of this project is straightforward:
+AI coding workflows should stay local, inspectable, and under your control.
 
-- local AI workflows should stay local
-- approval and monitoring tools should be inspectable and hackable
-- developers should not need a closed-source paid app watching their machine to stay in control
+This project exists for people who want the convenience of an agent companion app without handing their machine over to a closed-source paid product.
 
-This repository is an attempt to build that layer in the open.
+## What The Product Does
 
-## What It Is
+- shows live agent activity in a small native macOS surface
+- brings pending approvals and questions to the front
+- helps you return to the right terminal context quickly
+- keeps the CLI as the primary workflow instead of replacing it
 
-`open-vibe-island` is a native Swift app for macOS that sits in the notch or top bar and acts as a lightweight companion for coding agents. It is designed to stay out of the way until you need it, then give you a fast control surface for:
+## What Makes It Different
 
-- session visibility
-- permission approval
-- answering agent questions
-- jumping back into the right terminal or editor context
+- open source
+- local first
+- native macOS
+- built for terminal workflows, not around them
 
-This project is not trying to replace the terminal. The terminal remains the primary interface. The island attaches to that workflow and makes it easier to manage.
+## Current Status
 
-## Project Status
+`open-vibe-island` is an early preview, but it is already buildable and usable as a real local prototype.
 
-This is an early but buildable prototype.
-
-The repository currently includes:
-
-- `VibeIslandApp` for the SwiftUI and AppKit shell
-- `VibeIslandCore` for shared event and session state logic
-- `VibeIslandHooks` for Codex hook ingestion over stdin/stdout
-- `VibeIslandSetup` for reversible Codex hook installation and removal
-- a local Unix-socket bridge between the app and external hook processes
-- core tests for session state transitions
-
-The repository name is now `open-vibe-island`. The Swift package and modules still use the `VibeIsland` prefix for now.
-
-## Current Scope
-
-The current implementation is intentionally narrow:
+Current focus:
 
 - macOS only
-- native SwiftUI/AppKit app
-- local-first communication over Unix sockets
-- Codex-first integration
-- focus on interaction, not passive dashboards
+- Codex first
+- approval flow
+- session visibility
+- jump-back behavior
 
-That narrow scope is deliberate. The goal is to get one end-to-end loop working well before expanding to more agents.
+## What Works Today
 
-## Current Capabilities
+Today the project can:
 
-Today, the project can already cover the main skeleton of the workflow:
-
-- receive Codex hook events through a local helper
-- normalize those events into shared session state
-- surface session and approval state in the app shell
-- install or uninstall managed Codex hooks from `~/.codex`
+- receive Codex hook events locally
+- show session and approval state in the app shell
+- install and uninstall managed Codex hooks from `~/.codex`
 - record terminal hints for best-effort jump back behavior
 
-## Architecture At A Glance
+## Quick Start
 
-The system shape is currently:
-
-1. Codex runs in the user’s existing terminal session.
-2. Codex invokes `VibeIslandHooks` from `hooks.json`.
-3. The helper forwards hook payloads to the app bridge over a Unix socket.
-4. The app consumes normalized agent events and renders state.
-5. Approval decisions can be sent back through the same bridge.
-
-Two design rules matter here:
-
-- keep the terminal entrypoint unchanged
-- keep installation and rollback explicit and reversible
-
-More detail lives in [docs/architecture.md](docs/architecture.md) and [docs/product.md](docs/product.md).
-
-## Getting Started
-
-### Build And Test
+Build and run the app locally:
 
 ```bash
 swift test
@@ -94,145 +60,43 @@ swift build
 open Package.swift
 ```
 
-Open the package in Xcode to run the macOS app target. The app starts a local bridge and waits for Codex hook events. If you want to see the older mock timeline, use `Restart Demo` in the UI.
-
-### Codex Hook Setup
-
-Enable the official Codex hook feature once:
+To connect Codex:
 
 ```toml
 [features]
 codex_hooks = true
 ```
 
-Build the helper:
-
 ```bash
 swift build -c release --product VibeIslandHooks
+swift run VibeIslandSetup install --hooks-binary "$(pwd)/.build/release/VibeIslandHooks"
 ```
 
-Install or inspect the managed hook setup:
+Check or remove the setup later:
 
 ```bash
-swift run VibeIslandSetup install --hooks-binary "$(pwd)/.build/release/VibeIslandHooks"
 swift run VibeIslandSetup status --hooks-binary "$(pwd)/.build/release/VibeIslandHooks"
 swift run VibeIslandSetup uninstall
 ```
 
-The installer:
+## Product Direction
 
-- enables `[features].codex_hooks = true` if needed
-- merges Vibe Island hook handlers into `~/.codex/hooks.json` without deleting unrelated hooks
-- writes a manifest so uninstall only removes what this project added
-- creates timestamped backups before rewriting `config.toml` or `hooks.json`
+The goal is simple: make AI coding feel more native on macOS.
 
-If you want to manage the files yourself, a minimal `~/.codex/hooks.json` shape looks like:
+That means:
 
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "startup|resume",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/you/path/to/open-vibe-island/.build/release/VibeIslandHooks"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/you/path/to/open-vibe-island/.build/release/VibeIslandHooks"
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/you/path/to/open-vibe-island/.build/release/VibeIslandHooks"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/you/path/to/open-vibe-island/.build/release/VibeIslandHooks"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/you/path/to/open-vibe-island/.build/release/VibeIslandHooks"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-## Jump Back
-
-Codex hook ingestion captures terminal hints from the hook process environment, including `TERM_PROGRAM`, `ITERM_SESSION_ID`, and Ghostty-specific variables. The app uses those hints to power a best-effort jump action:
-
-- store terminal-specific locators when available
-- focus the matching iTerm session, Ghostty terminal, or Terminal tab before falling back
-- reopen the recorded working directory in that terminal as the final fallback
-
-The point is not perfect pane restoration on day one. The point is to make returning to the live agent session fast enough to preserve flow.
+- less tab hunting
+- less context loss
+- less friction around approvals
+- a faster path back to the active agent session
 
 ## Roadmap
 
-1. `v0.1` Single-agent MVP with real Codex hook monitoring and overlay UI
-2. `v0.2` Approval flow hardening, terminal jump, and install automation
-3. `v0.3` Multi-session state and better external-display behavior
-4. `v0.4` Multi-agent adapters and setup automation
-
-## Development Principles
-
-- keep the app local-first
-- prefer native platform APIs over cross-platform abstractions
-- build narrow end-to-end slices before adding breadth
-- treat hooks, IPC, and focus restoration as first-class engineering concerns
-- keep third-party config edits reversible
-
-## Repository Layout
-
-- `Package.swift` Swift package entry point
-- `Sources/VibeIslandApp` macOS UI shell
-- `Sources/VibeIslandCore` shared models, bridge protocol, installer logic, and session reducer
-- `Sources/VibeIslandHooks` Codex hook executable
-- `Sources/VibeIslandSetup` setup and uninstall CLI
-- `Tests/VibeIslandCoreTests` core test coverage
-- `docs/product.md` product scope and MVP boundary
-- `docs/architecture.md` architecture notes and event flow
+1. Ship a solid single-agent macOS MVP
+2. Harden approvals and jump-back behavior
+3. Improve multi-session handling
+4. Expand to more agent integrations over time
 
 ## Contributing
 
-Issues and pull requests are welcome.
-
-If you want to contribute:
-
-- keep changes incremental and reviewable
-- prefer one coherent change per PR
-- include the most relevant verification for the change
-- avoid broad speculative refactors
-
-If you want to propose a larger direction change, open an issue first so the scope is explicit before code starts moving.
+Issues and pull requests are welcome. If you want to help, prefer small focused changes and keep the product experience as the center of gravity.
