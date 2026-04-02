@@ -202,18 +202,48 @@ struct ControlCenterView: View {
                     .foregroundStyle(.secondary)
                 Text(session.title)
                     .font(.system(size: 30, weight: .semibold, design: .rounded))
-                Text(session.summary)
+                Text(session.spotlightPrimaryText)
                     .font(.title3)
                     .foregroundStyle(.primary)
 
+                if let secondaryText = session.spotlightSecondaryText {
+                    Text(secondaryText)
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                }
+
                 HStack(spacing: 12) {
-                    detailPill(title: session.phase.displayName)
-                    if let jumpTarget = session.jumpTarget {
-                        detailPill(title: "\(jumpTarget.terminalApp) · \(jumpTarget.workspaceName)")
+                    detailPill(title: session.spotlightStatusLabel)
+                    if let currentTool = session.spotlightCurrentToolLabel {
+                        detailPill(title: currentTool)
+                    }
+                    if let terminalLabel = session.spotlightTerminalLabel {
+                        detailPill(title: terminalLabel)
+                    }
+                    if session.spotlightTrackingLabel != nil {
+                        detailPill(title: "rollout live")
                     }
                     Text(session.updatedAt, style: .relative)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+
+                if session.tool == .codex, session.codexMetadata != nil {
+                    actionCard(title: "Live Codex State", subtitle: "Enriched from local rollout tracking") {
+                        VStack(alignment: .leading, spacing: 10) {
+                            if let assistantMessage = session.codexMetadata?.lastAssistantMessage {
+                                metadataRow(title: "Assistant", value: assistantMessage)
+                            }
+
+                            if let currentTool = session.codexMetadata?.currentTool {
+                                metadataRow(title: "Current tool", value: currentTool)
+                            }
+
+                            if let transcriptPath = session.codexMetadata?.transcriptPath {
+                                metadataRow(title: "Transcript", value: transcriptPath)
+                            }
+                        }
+                    }
                 }
 
                 if let request = session.permissionRequest {
@@ -336,6 +366,17 @@ struct ControlCenterView: View {
         )
     }
 
+    private func metadataRow(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.subheadline)
+                .textSelection(.enabled)
+        }
+    }
+
     private var backgroundGradient: some View {
         LinearGradient(
             colors: [
@@ -371,13 +412,17 @@ private struct SessionRowView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Text(session.summary)
+                Text(session.spotlightPrimaryText)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
 
                 HStack {
-                    Text(session.phase.displayName)
+                    Text(session.spotlightStatusLabel)
+                    if let currentTool = session.spotlightCurrentToolLabel {
+                        Text("·")
+                        Text(currentTool)
+                    }
                     Text("·")
                     Text(session.updatedAt, style: .relative)
                 }

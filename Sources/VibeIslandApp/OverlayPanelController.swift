@@ -22,7 +22,7 @@ final class OverlayPanelController {
 
     private func makePanel(model: AppModel) -> IslandPanel {
         let panel = IslandPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 460, height: 210),
+            contentRect: NSRect(x: 0, y: 0, width: 520, height: 256),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false

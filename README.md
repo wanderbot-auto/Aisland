@@ -165,7 +165,7 @@ The helper reads the Codex hook payload from `stdin`, forwards it to the app bri
 
 The bridge also respects non-interactive Codex permission modes such as `dontAsk` and `bypassPermissions`, so the island does not insert extra approval prompts when Codex itself is configured to run through.
 
-The app now also keeps a small local Codex session cache under `~/Library/Application Support/open-vibe-island/session-terminals.json` and follows `transcriptPath` rollout files when available. That lets the island recover recent Codex sessions after relaunch and keep tracking richer state such as the latest assistant message, current tool, and turn completion beyond the narrow hook edge.
+The app now also keeps a small local Codex session cache under `~/Library/Application Support/open-vibe-island/session-terminals.json` and follows `transcriptPath` rollout files when available. That lets the island recover recent Codex sessions after relaunch and keep tracking richer state such as the latest assistant message, current tool, and turn completion beyond the narrow hook edge. The island surface and control center now both prioritize that enriched rollout state instead of only showing the last hook summary line.
 
 ## Jump Back
 
@@ -199,4 +199,4 @@ Codex hook ingestion now captures terminal hints from the hook process environme
 
 ## Next Step
 
-Polish the Codex hook adapter, add installation automation, and start wiring terminal jump behavior.
+Shift the default experience further toward the island surface, keep the control center as a diagnostic tool, and harden Codex session recovery and jump accuracy.
