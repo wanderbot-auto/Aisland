@@ -30,7 +30,7 @@ It is a multi-surface local integration product built from these layers:
 
 - a resident menu bar app with a local Unix socket server at `/tmp/vibe-island.sock`
 - a bundled helper binary at `Contents/Helpers/vibe-island-bridge`
-- auto-installed CLI hook wiring for Claude, Codex, Gemini, and Cursor
+- auto-installed CLI hook wiring for Claude and Codex
 - a Claude statusline bridge that writes quota payloads into `/tmp/vibe-island-rl.json`
 - IDE extensions for Cursor and VS Code to focus the correct integrated terminal by PID
 - Apple Events / AppleScript automation for Terminal and iTerm2
@@ -88,14 +88,12 @@ That wrapper:
 
 So the durable integration point is the installed app, not a standalone script copied out of the repo.
 
-### 3. CLI Hooks Across Multiple Tools
+### 3. CLI Hooks For Supported Agents
 
 The app has modified local CLI config files on this machine:
 
 - `~/.claude/settings.json`
 - `~/.codex/hooks.json`
-- `~/.gemini/settings.json`
-- `~/.cursor/hooks.json`
 
 All of them point to:
 
@@ -119,20 +117,6 @@ Current observed coverage:
   - `SessionStart`
   - `UserPromptSubmit`
   - `Stop`
-- Gemini:
-  - `BeforeAgent`
-  - `AfterAgent`
-  - `BeforeTool`
-  - `AfterTool`
-  - `SessionStart`
-  - `SessionEnd`
-- Cursor:
-  - `beforeSubmitPrompt`
-  - `beforeShellExecution`
-  - `afterShellExecution`
-  - `beforeMCPExecution`
-  - `afterMCPExecution`
-  - other response / file / stop hooks
 
 This proves the product is already multi-tool and not Codex-only.
 
@@ -379,8 +363,6 @@ strings -a '/Applications/Vibe Island.app/Contents/MacOS/vibe-island'
 lsof -nP -U | rg '/tmp/vibe-island.sock|vibe-island'
 sed -n '1,260p' ~/.claude/settings.json
 sed -n '1,260p' ~/.codex/hooks.json
-sed -n '1,260p' ~/.cursor/hooks.json
-sed -n '1,260p' ~/.gemini/settings.json
 sed -n '1,260p' ~/.config/opencode/plugins/vibe-island.js
 sed -n '1,260p' ~/.cursor/extensions/vibe-island.terminal-focus-1.0.0/extension.js
 sed -n '1,220p' ~/Library/Application\ Support/vibe-island/session-terminals.json

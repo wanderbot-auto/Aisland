@@ -404,13 +404,6 @@ struct SetupSettingsPane: View {
     @State private var confirmingUninstallClaude = false
     @State private var confirmingUninstallCodex = false
     @State private var confirmingUninstallOpenCode = false
-    @State private var confirmingUninstallQoder = false
-    @State private var confirmingUninstallQwenCode = false
-    @State private var confirmingUninstallFactory = false
-    @State private var confirmingUninstallCodebuddy = false
-    @State private var confirmingUninstallCursor = false
-    @State private var confirmingUninstallGemini = false
-    @State private var confirmingUninstallKimi = false
     @State private var confirmingUninstallClaudeUsage = false
 
     private var lang: LanguageManager { model.lang }
@@ -476,125 +469,6 @@ struct SetupSettingsPane: View {
                     Text("This will remove the Open Island plugin from ~/.config/opencode/plugins/.")
                 }
 
-                hookRow(
-                    name: "Qoder",
-                    installed: model.qoderHooksInstalled,
-                    busy: model.isQoderHookSetupBusy,
-                    configLocationURL: model.qoderHookStatus?.settingsURL,
-                    installAction: { model.installQoderHooks() },
-                    uninstallAction: { confirmingUninstallQoder = true }
-                )
-                .alert(lang.t("settings.general.uninstallConfirmTitle"), isPresented: $confirmingUninstallQoder) {
-                    Button(lang.t("settings.general.uninstallConfirmAction"), role: .destructive) {
-                        model.uninstallQoderHooks()
-                    }
-                    Button(lang.t("settings.general.cancel"), role: .cancel) {}
-                } message: {
-                    Text("This will remove Open Island hooks from ~/.qoder/settings.json.")
-                }
-
-                hookRow(
-                    name: "Qwen Code",
-                    installed: model.qwenCodeHooksInstalled,
-                    busy: model.isQwenCodeHookSetupBusy,
-                    configLocationURL: model.qwenCodeHookStatus?.settingsURL,
-                    installAction: { model.installQwenCodeHooks() },
-                    uninstallAction: { confirmingUninstallQwenCode = true }
-                )
-                .alert(lang.t("settings.general.uninstallConfirmTitle"), isPresented: $confirmingUninstallQwenCode) {
-                    Button(lang.t("settings.general.uninstallConfirmAction"), role: .destructive) {
-                        model.uninstallQwenCodeHooks()
-                    }
-                    Button(lang.t("settings.general.cancel"), role: .cancel) {}
-                } message: {
-                    Text("This will remove Open Island hooks from ~/.qwen/settings.json.")
-                }
-
-                hookRow(
-                    name: "Factory",
-                    installed: model.factoryHooksInstalled,
-                    busy: model.isFactoryHookSetupBusy,
-                    configLocationURL: model.factoryHookStatus?.settingsURL,
-                    installAction: { model.installFactoryHooks() },
-                    uninstallAction: { confirmingUninstallFactory = true }
-                )
-                .alert(lang.t("settings.general.uninstallConfirmTitle"), isPresented: $confirmingUninstallFactory) {
-                    Button(lang.t("settings.general.uninstallConfirmAction"), role: .destructive) {
-                        model.uninstallFactoryHooks()
-                    }
-                    Button(lang.t("settings.general.cancel"), role: .cancel) {}
-                } message: {
-                    Text("This will remove Open Island hooks from ~/.factory/settings.json.")
-                }
-
-                hookRow(
-                    name: "CodeBuddy",
-                    installed: model.codebuddyHooksInstalled,
-                    busy: model.isCodebuddyHookSetupBusy,
-                    configLocationURL: model.codebuddyHookStatus?.settingsURL,
-                    installAction: { model.installCodebuddyHooks() },
-                    uninstallAction: { confirmingUninstallCodebuddy = true }
-                )
-                .alert(lang.t("settings.general.uninstallConfirmTitle"), isPresented: $confirmingUninstallCodebuddy) {
-                    Button(lang.t("settings.general.uninstallConfirmAction"), role: .destructive) {
-                        model.uninstallCodebuddyHooks()
-                    }
-                    Button(lang.t("settings.general.cancel"), role: .cancel) {}
-                } message: {
-                    Text("This will remove Open Island hooks from ~/.codebuddy/settings.json.")
-                }
-
-                hookRow(
-                    name: "Cursor",
-                    installed: model.cursorHooksInstalled,
-                    busy: model.isCursorHookSetupBusy,
-                    requiresBinary: true,
-                    configLocationURL: model.cursorHookStatus?.hooksURL,
-                    installAction: { model.installCursorHooks() },
-                    uninstallAction: { confirmingUninstallCursor = true }
-                )
-                .alert(lang.t("settings.general.uninstallConfirmTitle"), isPresented: $confirmingUninstallCursor) {
-                    Button(lang.t("settings.general.uninstallConfirmAction"), role: .destructive) {
-                        model.uninstallCursorHooks()
-                    }
-                    Button(lang.t("settings.general.cancel"), role: .cancel) {}
-                } message: {
-                    Text("This will remove the Open Island hooks from ~/.cursor/hooks.json.")
-                }
-
-                hookRow(
-                    name: "Gemini CLI",
-                    installed: model.geminiHooksInstalled,
-                    busy: model.isGeminiHookSetupBusy,
-                    configLocationURL: geminiHookConfigURL,
-                    installAction: { model.installGeminiHooks() },
-                    uninstallAction: { confirmingUninstallGemini = true }
-                )
-                .alert(lang.t("settings.general.uninstallConfirmTitle"), isPresented: $confirmingUninstallGemini) {
-                    Button(lang.t("settings.general.uninstallConfirmAction"), role: .destructive) {
-                        model.uninstallGeminiHooks()
-                    }
-                    Button(lang.t("settings.general.cancel"), role: .cancel) {}
-                } message: {
-                    Text("This will remove Open Island hooks from ~/.gemini/settings.json.")
-                }
-
-                hookRow(
-                    name: "Kimi CLI",
-                    installed: model.kimiHooksInstalled,
-                    busy: model.isKimiHookSetupBusy,
-                    configLocationURL: model.kimiHookStatus?.configURL,
-                    installAction: { model.installKimiHooks() },
-                    uninstallAction: { confirmingUninstallKimi = true }
-                )
-                .alert(lang.t("settings.general.uninstallConfirmTitle"), isPresented: $confirmingUninstallKimi) {
-                    Button(lang.t("settings.general.uninstallConfirmAction"), role: .destructive) {
-                        model.uninstallKimiHooks()
-                    }
-                    Button(lang.t("settings.general.cancel"), role: .cancel) {}
-                } message: {
-                    Text("This will remove Open Island hooks from ~/.kimi/config.toml.")
-                }
             }
 
             Section {
@@ -665,13 +539,6 @@ struct SetupSettingsPane: View {
                     if !model.claudeHooksInstalled { model.installClaudeHooks() }
                     if !model.codexHooksInstalled { model.installCodexHooks() }
                     if !model.openCodePluginInstalled { model.installOpenCodePlugin() }
-                    if !model.qoderHooksInstalled { model.installQoderHooks() }
-                    if !model.qwenCodeHooksInstalled { model.installQwenCodeHooks() }
-                    if !model.factoryHooksInstalled { model.installFactoryHooks() }
-                    if !model.codebuddyHooksInstalled { model.installCodebuddyHooks() }
-                    if !model.cursorHooksInstalled { model.installCursorHooks() }
-                    if !model.geminiHooksInstalled { model.installGeminiHooks() }
-                    if !model.kimiHooksInstalled { model.installKimiHooks() }
                     if !model.claudeUsageInstalled { model.installClaudeUsageBridge() }
                 }
                 .disabled(model.hooksBinaryURL == nil || allReady)
@@ -731,9 +598,7 @@ struct SetupSettingsPane: View {
     }
 
     private var allReady: Bool {
-        model.claudeHooksInstalled && model.codexHooksInstalled && model.openCodePluginInstalled
-            && model.qoderHooksInstalled && model.qwenCodeHooksInstalled && model.factoryHooksInstalled && model.codebuddyHooksInstalled
-            && model.cursorHooksInstalled && model.geminiHooksInstalled && model.kimiHooksInstalled && model.claudeUsageInstalled
+        model.claudeHooksInstalled && model.codexHooksInstalled && model.openCodePluginInstalled && model.claudeUsageInstalled
     }
 
     @ViewBuilder
@@ -767,27 +632,25 @@ struct SetupSettingsPane: View {
         return model.codexHookStatus?.configURL ?? model.codexHookStatus?.hooksURL
     }
 
-    private var geminiHookConfigURL: URL {
-        FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".gemini/settings.json")
-    }
-
     private var hasErrors: Bool {
         let claudeErrors = model.claudeHealthReport?.errors.count ?? 0
         let codexErrors = model.codexHealthReport?.errors.count ?? 0
-        return claudeErrors + codexErrors > 0
+        let openCodeErrors = model.openCodeHealthReport?.errors.count ?? 0
+        return claudeErrors + codexErrors + openCodeErrors > 0
     }
 
     private var hasRepairableIssues: Bool {
         let claude = model.claudeHealthReport?.repairableIssues.isEmpty == false
         let codex = model.codexHealthReport?.repairableIssues.isEmpty == false
-        return claude || codex
+        let openCode = model.openCodeHealthReport?.repairableIssues.isEmpty == false
+        return claude || codex || openCode
     }
 
     private var hasNotices: Bool {
         let claude = model.claudeHealthReport?.notices.isEmpty == false
         let codex = model.codexHealthReport?.notices.isEmpty == false
-        return claude || codex
+        let openCode = model.openCodeHealthReport?.notices.isEmpty == false
+        return claude || codex || openCode
     }
 
     @ViewBuilder
@@ -799,8 +662,11 @@ struct SetupSettingsPane: View {
             if let codexReport = model.codexHealthReport, !codexReport.issues.isEmpty {
                 issueList(report: codexReport)
             }
+            if let openCodeReport = model.openCodeHealthReport, !openCodeReport.issues.isEmpty {
+                issueList(report: openCodeReport)
+            }
 
-            if model.claudeHealthReport == nil && model.codexHealthReport == nil {
+            if model.claudeHealthReport == nil && model.codexHealthReport == nil && model.openCodeHealthReport == nil {
                 HStack {
                     Text(lang.t("setup.diagnostics.notRun"))
                         .foregroundStyle(.secondary)
@@ -849,7 +715,7 @@ struct SetupSettingsPane: View {
     @ViewBuilder
     private func issueList(report: HookHealthReport) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(report.agent == "claude" ? "Claude Code" : "Codex")
+            Text(agentName(for: report.agent))
                 .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundStyle(.secondary)
@@ -873,6 +739,19 @@ struct SetupSettingsPane: View {
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
             }
+        }
+    }
+
+    private func agentName(for agent: String) -> String {
+        switch agent {
+        case "claude":
+            return "Claude Code"
+        case "codex":
+            return "Codex"
+        case "opencode":
+            return "OpenCode"
+        default:
+            return agent
         }
     }
 

@@ -17,7 +17,7 @@ You can also fork your own version and modify it however you like — but PRing 
 | # | Area | Description | Status | Links |
 |---|------|-------------|--------|-------|
 | 1 | **Code Agent Experience** | The refactor keeps first-class support focused on Claude Code, Codex, and OpenCode. Other agents should integrate through the future generic adapter path instead of new one-off first-class integrations. | Active | — |
-| 2 | **IDE / Plugin Jump-back** | Support jumping back to IDE or in-IDE terminal windows, or apps with integrated code agent plugins (Cursor, VSCode, GoLand, Obsidian, etc.). | Planned | [#173](https://github.com/Octane0411/open-vibe-island/issues/173), [#183](https://github.com/Octane0411/open-vibe-island/issues/183) |
+| 2 | **IDE / Terminal Jump-back** | Support jumping back to IDE windows or in-IDE terminal tabs (Cursor, VS Code, GoLand, Obsidian, etc.) without adding those apps as first-class agents. | Planned | [#173](https://github.com/Octane0411/open-vibe-island/issues/173), [#183](https://github.com/Octane0411/open-vibe-island/issues/183) |
 | 3 | **More Terminals** | Add support for terminal apps not yet on the supported list. If your terminal isn't supported, you're the best person to add it. | Open | — |
 | 4 | **SSH Jump-back** | We currently support detecting and notifying code agent sessions over SSH. Jump-back is harder and needs more work. | Open | — |
 | 5 | **Interaction & Polish** | Better UX, UI, animations, sound design, and overall feel. [Vibe Island](https://vibeisland.app/) sets a high bar here — we welcome community ideas and contributions in this space. | Open | — |

@@ -25,8 +25,9 @@ CLI coding agents are powerful, but they pull attention away from the editor and
 | **Claude Code** | Supported | Hook integration, JSONL session discovery, status line bridge, usage tracking |
 | **Codex** | Supported | Full hook integration (SessionStart, UserPromptSubmit, Stop), usage tracking |
 | **OpenCode** | Supported | JS plugin integration, permission/question flows, process detection |
+| **General Agent** | Supported | Generic session identity for adapters that are not first-class integrations |
 
-Unsupported agents should use the future generic adapter path instead of one-off first-class integrations. Cursor, Gemini CLI, Kimi CLI, Qoder, Qwen Code, Factory, and CodeBuddy are being removed from the first-class support boundary during the refactor.
+Unsupported agents must use the generic adapter path instead of one-off first-class integrations.
 
 ## Supported Terminals
 

@@ -31,7 +31,7 @@ Restore cached sessions from registry → discover recent JSONL transcripts (`~/
 
 ## Supported scope (narrow by design)
 
-- **Agents**: Claude Code, Codex, OpenCode, Cursor, Qoder, Qwen Code, Factory, CodeBuddy
+- **Agents**: Claude Code, Codex, OpenCode, General Agent
 - **Terminals**: Terminal.app, Ghostty, iTerm2, WezTerm, cmux, Kaku, Zellij; tmux (multiplexer)
 - **IDE workspace jump**: VS Code, Cursor, Windsurf, Trae, JetBrains IDEs
 - Do NOT expand scope unless explicitly asked

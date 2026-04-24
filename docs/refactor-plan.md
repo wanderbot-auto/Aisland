@@ -19,7 +19,7 @@ The repository is primarily a Swift package with four products:
 | `OpenIslandApp` | SwiftUI + AppKit app shell, menu bar extra, overlay/notch panel, settings, control center, discovery, process monitoring, terminal jump-back. |
 | `OpenIslandCore` | Shared domain and runtime layer: session/event models, reducer, Unix socket transport, bridge server, hook payloads, installers, registries, and usage loading. |
 | `OpenIslandHooks` | Hook CLI invoked by supported agents. It reads stdin JSON, decodes by `--source`, forwards to the app bridge, and writes blocking directives only when needed. |
-| `OpenIslandSetup` | Setup CLI for installing, uninstalling, and checking managed Codex, Claude, and Kimi hooks. |
+| `OpenIslandSetup` | Setup CLI for installing, uninstalling, and checking managed Codex and Claude hooks. |
 
 Supporting areas:
 
@@ -92,7 +92,7 @@ Largest Swift files:
 
 ## Main Complexity Drivers
 
-- Broad agent support: Claude Code, Codex, OpenCode, Cursor, Gemini, Kimi, Qoder, Qwen Code, Factory, and CodeBuddy.
+- Focused agent support: Claude Code, Codex, OpenCode, and General Agent.
 - Broad terminal support: Terminal.app, Ghostty, cmux, Kaku, WezTerm, iTerm2, tmux, Zellij, Warp fallback, VS Code family, and JetBrains workspace jumps.
 - Large state facade: `AppModel` coordinates bridge, overlay, settings, hooks, process discovery, persistence, sounds, usage, and jump actions.
 - Mixed protocol responsibilities: `BridgeServer` combines socket mechanics, command routing, event adaptation, pending interactions, and local state merging.
@@ -110,10 +110,7 @@ Scope decision for this refactor pass:
 | Codex | Keep core | Preserve hook support, session tracking, usage where still relevant, and terminal jump enrichment. |
 | Claude Code | Keep core | Preserve Claude Code hook support, permission/question flows, subagent/task presentation, and transcript discovery where needed. |
 | OpenCode | Keep core | Preserve plugin support, permission/question flows, session registry, and process discovery. |
-| Cursor | Remove | Delete adapter, payload handling, installer/status UI, tests, and docs references in focused cleanup slices. |
-| Gemini CLI | Remove | Delete adapter, payload handling, installer/status UI, tests, and docs references in focused cleanup slices. |
-| Kimi CLI | Remove | Delete installer/setup CLI support and Claude-format fork handling in focused cleanup slices. |
-| Qoder, Qwen Code, Factory, CodeBuddy | Remove | Delete Claude Code fork setup/status paths and UI sections in focused cleanup slices. |
+| Unsupported one-off agents | Removed | Dedicated adapters, payload handling, installer/status UI, tests, and docs references have been removed. Future compatibility must use the generic adapter boundary. |
 | iOS companion app | Removed | Mobile project/code/docs references were deleted in the iOS/Watch removal slice. |
 | Watch companion app | Removed | Watch target/code/docs references and app-side relay integration were deleted in the iOS/Watch removal slice. |
 | Terminal jump support | Keep for now | Defer terminal support pruning until jump strategies are split and independently testable. |
@@ -148,7 +145,7 @@ Target: reduce the highest-coupled runtime file without changing the socket prot
   - `CodexBridgeAdapter`
   - `ClaudeBridgeAdapter`
   - `OpenCodeBridgeAdapter`
-- Do not extract new Cursor, Gemini, Kimi, or Claude-fork adapters; remove those paths during cleanup instead.
+- Do not extract new unsupported one-off adapters; route future compatibility through the generic adapter boundary instead.
 - Extract pending approval/question state into `PendingInteractionStore`.
 - Have adapters return explicit effects: events to emit, responses to send, and pending interaction mutations.
 - Preserve current `BridgeCommand`, `BridgeResponse`, and JSON envelope formats.
@@ -193,7 +190,7 @@ Target: remove repeated app-level setup state and per-agent boilerplate for the 
 - Introduce installer adapters only for Codex, Claude Code, and OpenCode.
 - Replace repeated status title/summary logic with a shared view model.
 - Simplify `SettingsView` setup sections so they render descriptors rather than hard-coded per-agent blocks.
-- Delete setup/status UI for Cursor, Gemini, Kimi, Qoder, Qwen Code, Factory, and CodeBuddy.
+- Keep unsupported one-off setup/status UI deleted; retained setup UI should render only Codex, Claude Code, and OpenCode.
 
 ### Phase 7: Model Boundary Cleanup
 
@@ -209,7 +206,7 @@ Target: reduce pressure on `AgentSession` and make deletions safer.
 
 Only delete or deeply simplify features after boundaries exist.
 
-- Remove adapters, installers, CLI source cases, and UI sections for Cursor, Gemini, Kimi, Qoder, Qwen Code, Factory, and CodeBuddy.
+- Keep unsupported adapters, installers, CLI source cases, and UI sections removed.
 - Remove terminal strategies classified as out of scope.
 - Keep iOS and Watch companion features removed; do not reintroduce `ios/`, app-side watch relay wiring, watch settings, or watch documentation links.
 - Remove stale docs and tests in the same focused slice as the feature deletion.
@@ -231,7 +228,7 @@ This creates a behavior safety net before touching the largest files.
 Recommended order for the next work round:
 
 1. Add bridge adapter golden tests for Codex, Claude Code, and OpenCode.
-2. Use the unsupported-agent removal inventory to list every code path touched by Cursor, Gemini, Kimi, Qoder, Qwen Code, Factory, and CodeBuddy before each deletion slice.
+2. Keep unsupported agent support behind the generic adapter boundary; do not reintroduce one-off adapters without a new scope decision.
 3. Keep iOS/Watch deleted and verify future changes do not recreate companion app, watch relay, or watch settings surfaces.
 4. Begin `BridgeServer` extraction with one retained adapter at a time, starting with Codex because its hook flow is smaller than Claude-compatible flows.
 5. After retained adapters are isolated, delete unsupported agent paths in narrow, independently verified commits.

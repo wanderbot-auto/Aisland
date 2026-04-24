@@ -14,8 +14,6 @@ final class SessionDiscoveryCoordinator {
         var claudeRecordsNeedPrune: Bool
         var openCodeRecords: [OpenCodeTrackedSessionRecord]
         var openCodeRecordsNeedPrune: Bool
-        var cursorRecords: [CursorTrackedSessionRecord]
-        var cursorRecordsNeedPrune: Bool
         var discoveredCodexRecords: [CodexTrackedSessionRecord]
         var discoveredClaudeSessions: [AgentSession]
         var hooksBinaryURL: URL?
@@ -46,8 +44,6 @@ final class SessionDiscoveryCoordinator {
     private let openCodeSessionRegistry = OpenCodeSessionRegistry()
 
     @ObservationIgnored
-    private let cursorSessionRegistry = CursorSessionRegistry()
-
     @ObservationIgnored
     let codexRolloutWatcher = CodexRolloutWatcher()
 
@@ -67,8 +63,6 @@ final class SessionDiscoveryCoordinator {
     private var openCodeSessionPersistenceTask: Task<Void, Never>?
 
     @ObservationIgnored
-    private var cursorSessionPersistenceTask: Task<Void, Never>?
-
     private var state: SessionState {
         get { stateAccessor?() ?? SessionState() }
         set {
@@ -92,9 +86,6 @@ final class SessionDiscoveryCoordinator {
         let allOpenCode = (try? openCodeSessionRegistry.load()) ?? []
         let openCodeRecords = allOpenCode.filter { $0.updatedAt >= cutoff }
 
-        let allCursor = (try? cursorSessionRegistry.load()) ?? []
-        let cursorRecords = allCursor.filter { $0.updatedAt >= cutoff && $0.shouldRestoreToLiveState }
-
         let discoveredCodex = codexRolloutDiscovery.discoverRecentSessions()
         let discoveredClaude = claudeTranscriptDiscovery.discoverRecentSessions()
 
@@ -105,8 +96,6 @@ final class SessionDiscoveryCoordinator {
             claudeRecordsNeedPrune: claudeRecords != allClaude,
             openCodeRecords: openCodeRecords,
             openCodeRecordsNeedPrune: openCodeRecords != allOpenCode,
-            cursorRecords: cursorRecords,
-            cursorRecordsNeedPrune: cursorRecords != allCursor,
             discoveredCodexRecords: discoveredCodex,
             discoveredClaudeSessions: discoveredClaude,
             hooksBinaryURL: HooksBinaryLocator.locate(
@@ -128,9 +117,6 @@ final class SessionDiscoveryCoordinator {
         if payload.openCodeRecordsNeedPrune {
             try? openCodeSessionRegistry.save(payload.openCodeRecords)
         }
-        if payload.cursorRecordsNeedPrune {
-            try? cursorSessionRegistry.save(payload.cursorRecords)
-        }
 
         // Restore persisted Codex sessions.
         if !payload.codexRecords.isEmpty {
@@ -150,13 +136,6 @@ final class SessionDiscoveryCoordinator {
             let restoredSessions = payload.openCodeRecords.map(\.restorableSession)
             state = SessionState(sessions: mergeDiscoveredSessions(restoredSessions))
             onStatusMessage?("Restored \(payload.openCodeRecords.count) recent OpenCode session(s) from local registry.")
-        }
-
-        // Restore persisted Cursor sessions.
-        if !payload.cursorRecords.isEmpty {
-            let restoredSessions = payload.cursorRecords.map(\.restorableSession)
-            state = SessionState(sessions: mergeDiscoveredSessions(restoredSessions))
-            onStatusMessage?("Restored \(payload.cursorRecords.count) recent Cursor session(s) from local registry.")
         }
 
         // Merge discovered Codex sessions.
@@ -230,7 +209,6 @@ final class SessionDiscoveryCoordinator {
         merged.codexMetadata = mergeCodexMetadata(existing.codexMetadata, discovered.codexMetadata)
         merged.claudeMetadata = mergeClaudeMetadata(existing.claudeMetadata, discovered.claudeMetadata)
         merged.openCodeMetadata = mergeOpenCodeMetadata(existing.openCodeMetadata, discovered.openCodeMetadata)
-        merged.cursorMetadata = mergeCursorMetadata(existing.cursorMetadata, discovered.cursorMetadata)
         // Once a session is identified as a Codex.app session by any source
         // (hook or rediscovery), preserve that flag so liveness uses the
         // app-level check instead of subprocess polling.
@@ -258,34 +236,6 @@ final class SessionDiscoveryCoordinator {
             currentTool: discovered.currentTool ?? existing.currentTool,
             currentToolInputPreview: discovered.currentToolInputPreview ?? existing.currentToolInputPreview,
             model: discovered.model ?? existing.model
-        )
-        return merged.isEmpty ? nil : merged
-    }
-
-    private func mergeCursorMetadata(
-        _ existing: CursorSessionMetadata?,
-        _ discovered: CursorSessionMetadata?
-    ) -> CursorSessionMetadata? {
-        guard let existing else {
-            return discovered?.isEmpty == true ? nil : discovered
-        }
-
-        guard let discovered else {
-            return existing.isEmpty ? nil : existing
-        }
-
-        let merged = CursorSessionMetadata(
-            conversationId: discovered.conversationId ?? existing.conversationId,
-            generationId: discovered.generationId ?? existing.generationId,
-            workspaceRoots: discovered.workspaceRoots ?? existing.workspaceRoots,
-            initialUserPrompt: existing.initialUserPrompt ?? discovered.initialUserPrompt ?? discovered.lastUserPrompt,
-            lastUserPrompt: discovered.lastUserPrompt ?? existing.lastUserPrompt,
-            lastAssistantMessage: discovered.lastAssistantMessage ?? existing.lastAssistantMessage,
-            currentTool: discovered.currentTool ?? existing.currentTool,
-            currentToolInputPreview: discovered.currentToolInputPreview ?? existing.currentToolInputPreview,
-            currentCommandPreview: discovered.currentCommandPreview ?? existing.currentCommandPreview,
-            model: discovered.model ?? existing.model,
-            transcriptPath: discovered.transcriptPath ?? existing.transcriptPath
         )
         return merged.isEmpty ? nil : merged
     }
@@ -500,22 +450,5 @@ final class SessionDiscoveryCoordinator {
         }
     }
 
-    func scheduleCursorSessionPersistence() {
-        cursorSessionPersistenceTask?.cancel()
 
-        let records = state.sessions
-            .filter {
-                $0.tool == .cursor
-                    && $0.isTrackedLiveSession
-                    && $0.updatedAt >= Date.now.addingTimeInterval(-86_400)
-                    && ($0.jumpTarget != nil || $0.cursorMetadata?.conversationId != nil)
-            }
-            .map(CursorTrackedSessionRecord.init(session:))
-        let registry = cursorSessionRegistry
-
-        cursorSessionPersistenceTask = Task.detached(priority: .utility) {
-            try? await Task.sleep(for: .milliseconds(250))
-            try? registry.save(records)
-        }
-    }
 }

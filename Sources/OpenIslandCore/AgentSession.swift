@@ -3,14 +3,19 @@ import Foundation
 public enum AgentTool: String, CaseIterable, Codable, Sendable {
     case claudeCode
     case codex
-    case geminiCLI
     case openCode
-    case qoder
-    case qwenCode
-    case factory
-    case codebuddy
-    case cursor
-    case kimiCLI
+    case general
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let rawValue = try container.decode(String.self)
+        self = AgentTool(rawValue: rawValue) ?? .general
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
+    }
 
     public var displayName: String {
         switch self {
@@ -18,22 +23,10 @@ public enum AgentTool: String, CaseIterable, Codable, Sendable {
             "Claude Code"
         case .codex:
             "Codex"
-        case .geminiCLI:
-            "Gemini CLI"
         case .openCode:
             "OpenCode"
-        case .qoder:
-            "Qoder"
-        case .qwenCode:
-            "Qwen Code"
-        case .factory:
-            "Factory"
-        case .codebuddy:
-            "CodeBuddy"
-        case .cursor:
-            "Cursor"
-        case .kimiCLI:
-            "Kimi CLI"
+        case .general:
+            "General Agent"
         }
     }
 
@@ -43,32 +36,15 @@ public enum AgentTool: String, CaseIterable, Codable, Sendable {
             "CLAUDE"
         case .codex:
             "CODEX"
-        case .geminiCLI:
-            "GEMINI"
         case .openCode:
             "OPENCODE"
-        case .qoder:
-            "QODER"
-        case .qwenCode:
-            "QWEN"
-        case .factory:
-            "FACTORY"
-        case .codebuddy:
-            "CODEBUDDY"
-        case .cursor:
-            "CURSOR"
-        case .kimiCLI:
-            "KIMI"
+        case .general:
+            "AGENT"
         }
     }
 
     public var isClaudeCodeFork: Bool {
-        switch self {
-        case .claudeCode, .qoder, .qwenCode, .factory, .codebuddy, .kimiCLI:
-            true
-        default:
-            false
-        }
+        self == .claudeCode
     }
 }
 
@@ -347,9 +323,7 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
     public var jumpTarget: JumpTarget?
     public var codexMetadata: CodexSessionMetadata?
     public var claudeMetadata: ClaudeSessionMetadata?
-    public var geminiMetadata: GeminiSessionMetadata?
     public var openCodeMetadata: OpenCodeSessionMetadata?
-    public var cursorMetadata: CursorSessionMetadata?
 
     /// Whether this session originates from a remote (SSH) connection.
     public var isRemote: Bool = false
@@ -392,9 +366,7 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         jumpTarget: JumpTarget? = nil,
         codexMetadata: CodexSessionMetadata? = nil,
         claudeMetadata: ClaudeSessionMetadata? = nil,
-        geminiMetadata: GeminiSessionMetadata? = nil,
-        openCodeMetadata: OpenCodeSessionMetadata? = nil,
-        cursorMetadata: CursorSessionMetadata? = nil
+        openCodeMetadata: OpenCodeSessionMetadata? = nil
     ) {
         self.id = id
         self.title = title
@@ -409,9 +381,7 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         self.jumpTarget = jumpTarget
         self.codexMetadata = codexMetadata
         self.claudeMetadata = claudeMetadata
-        self.geminiMetadata = geminiMetadata
         self.openCodeMetadata = openCodeMetadata
-        self.cursorMetadata = cursorMetadata
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -428,9 +398,7 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         case jumpTarget
         case codexMetadata
         case claudeMetadata
-        case geminiMetadata
         case openCodeMetadata
-        case cursorMetadata
     }
 
     public init(from decoder: any Decoder) throws {
@@ -448,9 +416,7 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         jumpTarget = try container.decodeIfPresent(JumpTarget.self, forKey: .jumpTarget)
         codexMetadata = try container.decodeIfPresent(CodexSessionMetadata.self, forKey: .codexMetadata)
         claudeMetadata = try container.decodeIfPresent(ClaudeSessionMetadata.self, forKey: .claudeMetadata)
-        geminiMetadata = try container.decodeIfPresent(GeminiSessionMetadata.self, forKey: .geminiMetadata)
         openCodeMetadata = try container.decodeIfPresent(OpenCodeSessionMetadata.self, forKey: .openCodeMetadata)
-        cursorMetadata = try container.decodeIfPresent(CursorSessionMetadata.self, forKey: .cursorMetadata)
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -468,9 +434,7 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         try container.encodeIfPresent(jumpTarget, forKey: .jumpTarget)
         try container.encodeIfPresent(codexMetadata, forKey: .codexMetadata)
         try container.encodeIfPresent(claudeMetadata, forKey: .claudeMetadata)
-        try container.encodeIfPresent(geminiMetadata, forKey: .geminiMetadata)
         try container.encodeIfPresent(openCodeMetadata, forKey: .openCodeMetadata)
-        try container.encodeIfPresent(cursorMetadata, forKey: .cursorMetadata)
     }
 }
 
@@ -480,7 +444,7 @@ public extension AgentSession {
     }
 
     var isTrackedLiveSession: Bool {
-        !isDemoSession && (tool == .codex || tool == .claudeCode || tool == .geminiCLI || tool == .openCode || tool == .qoder || tool == .qwenCode || tool == .factory || tool == .codebuddy || tool == .cursor || tool == .kimiCLI)
+        !isDemoSession && (tool == .codex || tool == .claudeCode || tool == .openCode || tool == .general)
     }
 
     var isTrackedLiveCodexSession: Bool {
@@ -507,200 +471,30 @@ public extension AgentSession {
     }
 
     var currentToolName: String? {
-        codexMetadata?.currentTool ?? claudeMetadata?.currentTool ?? openCodeMetadata?.currentTool ?? cursorMetadata?.currentTool
+        codexMetadata?.currentTool ?? claudeMetadata?.currentTool ?? openCodeMetadata?.currentTool
     }
 
     var lastAssistantMessageText: String? {
-        codexMetadata?.lastAssistantMessage ?? claudeMetadata?.lastAssistantMessage ?? geminiMetadata?.lastAssistantMessage ?? openCodeMetadata?.lastAssistantMessage ?? cursorMetadata?.lastAssistantMessage
+        codexMetadata?.lastAssistantMessage ?? claudeMetadata?.lastAssistantMessage ?? openCodeMetadata?.lastAssistantMessage
     }
 
     var completionAssistantMessageText: String? {
-        if let gemini = geminiMetadata {
-            if let body = gemini.lastAssistantMessageBody?
-                .trimmingCharacters(in: .whitespacesAndNewlines),
-               !body.isEmpty {
-                if let extractedBody = Self.extractGeminiCompletionBody(from: body) {
-                    return extractedBody
-                }
-            }
-            return gemini.lastAssistantMessage
-        }
-        return lastAssistantMessageText
+        lastAssistantMessageText
     }
 
     var trackingTranscriptPath: String? {
-        codexMetadata?.transcriptPath ?? claudeMetadata?.transcriptPath ?? geminiMetadata?.transcriptPath
+        codexMetadata?.transcriptPath ?? claudeMetadata?.transcriptPath
     }
 
     var latestUserPromptText: String? {
-        codexMetadata?.lastUserPrompt ?? claudeMetadata?.lastUserPrompt ?? geminiMetadata?.lastUserPrompt ?? openCodeMetadata?.lastUserPrompt ?? cursorMetadata?.lastUserPrompt
+        codexMetadata?.lastUserPrompt ?? claudeMetadata?.lastUserPrompt ?? openCodeMetadata?.lastUserPrompt
     }
 
     var initialUserPromptText: String? {
-        codexMetadata?.initialUserPrompt ?? claudeMetadata?.initialUserPrompt ?? geminiMetadata?.initialUserPrompt ?? openCodeMetadata?.initialUserPrompt ?? cursorMetadata?.initialUserPrompt
+        codexMetadata?.initialUserPrompt ?? claudeMetadata?.initialUserPrompt ?? openCodeMetadata?.initialUserPrompt
     }
 
     var currentCommandPreviewText: String? {
-        codexMetadata?.currentCommandPreview ?? claudeMetadata?.currentToolInputPreview ?? openCodeMetadata?.currentToolInputPreview ?? cursorMetadata?.currentToolInputPreview
-    }
-}
-
-private extension AgentSession {
-    static func extractGeminiCompletionBody(from body: String) -> String? {
-        let normalizedBody = normalizeGeminiBlankLines(in: body)
-            .replacingOccurrences(of: "\n{3,}", with: "\n\n\n", options: .regularExpression)
-
-        let segments = normalizedBody
-            .components(separatedBy: "\n\n\n")
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-
-        guard let lastSegment = segments.last else {
-            return nil
-        }
-
-        // Gemini hook payloads sometimes append a duplicate copy of the final
-        // answer, often with only whitespace differences. Deduplicate against a
-        // whitespace-compacted view of the text, but preserve the original
-        // formatting in the string we return to the UI.
-        let deduplicatedSegment = removeRepeatedTrailingGeminiContent(from: lastSegment)
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        return deduplicatedSegment.isEmpty ? nil : deduplicatedSegment
-    }
-
-    static func normalizeGeminiBlankLines(in text: String) -> String {
-        text
-            .replacingOccurrences(of: "\r\n", with: "\n")
-            .replacingOccurrences(of: "\r", with: "\n")
-            .components(separatedBy: "\n")
-            .map { line in
-                line.trimmingCharacters(in: .whitespaces).isEmpty ? "" : line
-            }
-            .joined(separator: "\n")
-    }
-
-    static func removeRepeatedTrailingGeminiContent(from text: String) -> String {
-        let compacted = compactedGeminiText(text)
-        let minimumRepeatedTailLength = 30
-
-        guard compacted.characters.count >= minimumRepeatedTailLength * 2 else {
-            return text
-        }
-
-        let maximumTailLength = compacted.characters.count / 2
-        guard maximumTailLength >= minimumRepeatedTailLength else {
-            return text
-        }
-
-        guard let repeatedTailStart = longestRepeatedGeminiTailStart(
-            in: compacted.characters,
-            minimumLength: minimumRepeatedTailLength
-        ) else {
-            return text
-        }
-
-        let originalTailStart = compacted.originalIndices[repeatedTailStart]
-        let adjustedTailStart = adjustedGeminiDuplicateBoundary(in: text, from: originalTailStart)
-        return String(text[..<adjustedTailStart]).trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    static func compactedGeminiText(_ text: String) -> (characters: [Character], originalIndices: [String.Index]) {
-        var characters: [Character] = []
-        var originalIndices: [String.Index] = []
-
-        for index in text.indices {
-            let character = text[index]
-            if character.isWhitespace {
-                continue
-            }
-            characters.append(character)
-            originalIndices.append(index)
-        }
-
-        return (characters, originalIndices)
-    }
-
-    static func longestRepeatedGeminiTailStart(
-        in characters: [Character],
-        minimumLength: Int
-    ) -> Int? {
-        let count = characters.count
-        guard count >= minimumLength * 2 else {
-            return nil
-        }
-
-        for length in stride(from: count / 2, through: minimumLength, by: -1) {
-            let tailStart = count - length
-            let tail = Array(characters[tailStart...])
-
-            if tailStart < length {
-                continue
-            }
-
-            for candidateStart in 0...(tailStart - length) {
-                let candidateEnd = candidateStart + length
-                if Array(characters[candidateStart..<candidateEnd]) == tail {
-                    return tailStart
-                }
-            }
-        }
-
-        return nil
-    }
-
-    static func adjustedGeminiDuplicateBoundary(in text: String, from index: String.Index) -> String.Index {
-        var boundary = index
-
-        while boundary > text.startIndex {
-            let previous = text.index(before: boundary)
-            if text[previous].isWhitespace {
-                boundary = previous
-                continue
-            }
-            break
-        }
-
-        var searchIndex = boundary
-        while searchIndex > text.startIndex {
-            let candidate = text.index(before: searchIndex)
-            if text[candidate] != "\n" {
-                searchIndex = candidate
-                continue
-            }
-
-            var newlineCount = 1
-            var probe = candidate
-            while probe > text.startIndex {
-                let previous = text.index(before: probe)
-                if text[previous] == "\n" {
-                    newlineCount += 1
-                    probe = previous
-                    continue
-                }
-                if text[previous].isWhitespace {
-                    probe = previous
-                    continue
-                }
-                break
-            }
-
-            if newlineCount >= 2 {
-                let fragment = text[searchIndex..<index]
-                let compactedFragmentCount = fragment.reduce(into: 0) { count, character in
-                    if !character.isWhitespace {
-                        count += 1
-                    }
-                }
-
-                if compactedFragmentCount <= 12 {
-                    return searchIndex
-                }
-                return boundary
-            }
-
-            searchIndex = candidate
-        }
-
-        return boundary
+        codexMetadata?.currentCommandPreview ?? claudeMetadata?.currentToolInputPreview ?? openCodeMetadata?.currentToolInputPreview
     }
 }

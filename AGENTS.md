@@ -56,7 +56,7 @@ See [docs/worktree-workflow.md](/Users/wangruobing/Personal/open-island/docs/wor
 
 ## Reproduction Scope
 
-- Supported agents: `Claude Code`, `Codex`, `OpenCode`, `Cursor`, `Qoder`, `Qwen Code`, `Factory`, `CodeBuddy`.
+- Supported agents: `Claude Code`, `Codex`, `OpenCode`, `General Agent`.
 - Supported terminals: `Terminal.app`, `Ghostty`, `iTerm2`, `WezTerm`, `cmux`, `Kaku`, `Zellij`; `tmux` (multiplexer).
 - IDE workspace jump: `VS Code`, `Cursor`, `Windsurf`, `Trae`, `JetBrains IDEs`.
 - Treat these surfaces as the supported product boundary. See `docs/product.md` for the canonical list.

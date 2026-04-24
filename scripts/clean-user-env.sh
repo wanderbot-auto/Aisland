@@ -47,11 +47,10 @@ echo "==> Cleaning Open Island artifacts"
 # --- Hook configurations ---
 echo "--- Hook configs ---"
 
-# Claude-style forks (.claude / .qoder / .qwen / .factory / .codebuddy / .gemini):
-# each has a settings.json that may contain Open Island hook entries, plus
-# sidecar manifests and backups. Strip OpenIsland references but preserve
-# any user-owned hooks (including Vibe Island) so we don't trash setups
-# the test isn't supposed to touch.
+# Claude Code has a settings.json that may contain Open Island hook entries,
+# plus sidecar manifests and backups. Strip OpenIsland references but preserve
+# any user-owned hooks (including Vibe Island) so we don't trash setups the
+# test isn't supposed to touch.
 strip_claude_style() {
     local dir="$1"
     local settings="$dir/settings.json"
@@ -94,7 +93,7 @@ if changed:
     clean_glob "$dir/settings.json.backup.*"
 }
 
-for d in ~/.claude ~/.qoder ~/.qwen ~/.factory ~/.codebuddy ~/.gemini; do
+for d in ~/.claude; do
     strip_claude_style "$d"
 done
 
@@ -133,42 +132,6 @@ clean_path ~/.codex/open-island-codex-hooks-install.json
 clean_path ~/.codex/open-island-install.json
 clean_glob ~/.codex/'config.toml.backup.*'
 clean_glob ~/.codex/'hooks.json.backup.*'
-
-# Cursor: hooks.json uses a flat `[{command: "..."}]` shape (NOT the
-# nested `[{hooks:[{command:...}]}]` shape Claude/Codex use). Match the
-# command field directly.
-cursor_hooks=~/.cursor/hooks.json
-if [[ -f "$cursor_hooks" ]]; then
-    if $DRY_RUN; then
-        yellow "[dry-run] would strip OpenIsland hooks from: $cursor_hooks"
-    else
-        python3 -c "
-import json, sys, pathlib
-p = pathlib.Path(sys.argv[1])
-d = json.loads(p.read_text())
-hooks = d.get('hooks', {})
-changed = False
-for event in list(hooks.keys()):
-    original = hooks[event]
-    if not isinstance(original, list): continue
-    filtered = [h for h in original
-                if 'OpenIslandHooks' not in h.get('command','')]
-    if len(filtered) != len(original):
-        changed = True
-        if filtered:
-            hooks[event] = filtered
-        else:
-            del hooks[event]
-if changed:
-    if not hooks and 'hooks' in d:
-        del d['hooks']
-    p.write_text(json.dumps(d, indent=2, ensure_ascii=False) + '\n')
-    print('stripped OpenIsland hooks from', sys.argv[1])
-" "$cursor_hooks" 2>/dev/null && green "cleaned hooks in $cursor_hooks" || true
-    fi
-fi
-clean_path ~/.cursor/open-island-cursor-hooks-install.json
-clean_glob ~/.cursor/'hooks.json.backup.*'
 
 # OpenCode: bundled plugin file is `open-island.js` (not the install
 # manifest name). Strip the matching plugin reference from config.json

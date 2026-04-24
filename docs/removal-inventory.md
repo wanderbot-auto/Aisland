@@ -12,43 +12,16 @@ This inventory tracks the planned removal of non-core surfaces during the system
 
 ## Unsupported Agent Removal Inventory
 
-These agent-specific paths should be removed or replaced by generic adapter support in later slices.
+Unsupported one-off agent integrations have been removed from the first-class product boundary.
+The retained setup, bridge, persistence, and UI surfaces now target only Codex, Claude Code, OpenCode, and the generic agent model.
 
-### Dedicated Source Files
+Cleanup completed in this area:
 
-| Surface | Files |
-|---|---|
-| Cursor | `Sources/OpenIslandCore/CursorHookInstallationManager.swift`, `Sources/OpenIslandCore/CursorHookInstaller.swift`, `Sources/OpenIslandCore/CursorHooks.swift`, `Sources/OpenIslandCore/CursorSessionRegistry.swift`, `Sources/OpenIslandCore/CursorTranscriptReader.swift` |
-| Gemini CLI | `Sources/OpenIslandCore/GeminiHookInstallationManager.swift`, `Sources/OpenIslandCore/GeminiHookInstaller.swift`, `Sources/OpenIslandCore/GeminiHooks.swift` |
-| Kimi CLI | `Sources/OpenIslandCore/KimiHookInstallationManager.swift`, `Sources/OpenIslandCore/KimiHookInstaller.swift` |
-
-### Shared Files With Unsupported-Agent Branches
-
-| File | Cleanup needed |
-|---|---|
-| `Sources/OpenIslandCore/AgentSession.swift` | Remove enum cases and display metadata for Cursor, Gemini, Kimi, Qoder, Qwen Code, Factory, and CodeBuddy once generic support exists. |
-| `Sources/OpenIslandCore/AgentHookIntent.swift` | Remove agent identifiers/intents that are no longer first-class integrations. |
-| `Sources/OpenIslandCore/BridgeTransport.swift` | Remove first-class bridge command/response cases for removed agents, or route them through a generic adapter command. |
-| `Sources/OpenIslandCore/BridgeServer.swift` | Remove dedicated `handleCursorHook`, `handleGeminiHook`, Kimi/fork branches, and associated pending state. |
-| `Sources/OpenIslandCore/ClaudeHooks.swift` | Keep Claude Code support; remove hard-coded fork mapping for Qoder, Qwen Code, Factory, CodeBuddy, and Kimi. |
-| `Sources/OpenIslandApp/HookInstallationCoordinator.swift` | Remove status, busy flags, install/uninstall actions, and summaries for removed agents. |
-| `Sources/OpenIslandApp/AppModel.swift` | Remove app facade properties and actions for removed agents. |
-| `Sources/OpenIslandApp/Views/SettingsView.swift` | Remove setup UI sections for removed agents. |
-| `Sources/OpenIslandHooks/OpenIslandHooksCLI.swift` | Remove `--source` cases for removed dedicated integrations or map future generic sources through one adapter. |
-| `Sources/OpenIslandSetup/OpenIslandSetupCLI.swift` | Remove Kimi setup commands. |
-| `Sources/OpenIslandApp/ActiveAgentProcessDiscovery.swift` | Remove process classifiers for removed first-class agents, or map generic ones to a generic process identity. |
-| `Sources/OpenIslandApp/ProcessMonitoringCoordinator.swift` | Remove first-class liveness logic for removed agents after generic identity is introduced. |
-| `Sources/OpenIslandApp/SessionDiscoveryCoordinator.swift` | Remove persistence/discovery for removed first-class registries. |
-| `Sources/OpenIslandApp/IslandDebugScenario.swift` | Remove debug fixtures for removed first-class agents. |
-| `Sources/OpenIslandApp/Views/ControlCenterView.swift` | Remove removed-agent setup/debug status display. |
-
-### Tests And Docs
-
-| Area | Files |
-|---|---|
-| Tests | `Tests/OpenIslandCoreTests/CursorHooksTests.swift`, `Tests/OpenIslandCoreTests/GeminiHooksTests.swift`, `Tests/OpenIslandCoreTests/KimiHooksTests.swift`, plus unsupported-agent expectations in `Tests/OpenIslandCoreTests/SessionStateTests.swift` and `Tests/OpenIslandCoreTests/AgentIntentStoreTests.swift`. |
-| Public docs | `README.md`, `README.zh-CN.md`, `docs/product.md`, `docs/hooks.md`, `docs/roadmap.md`, `docs/roadmap.zh-CN.md`. |
-| Internal docs/scripts | `docs/refactor-plan.md`, `docs/app-ghostty-codex-chain.md`, `docs/installed-app-bundle-analysis.md`, `scripts/clean-user-env.sh`. |
+- Removed dedicated unsupported-agent adapter source files and tests.
+- Removed first-class bridge commands, responses, metadata events, and process liveness branches for unsupported adapters.
+- Removed unsupported-agent hook installer status, setup actions, and configuration rows from the app UI.
+- Removed unsupported `--source` hook CLI cases and setup CLI commands.
+- Updated public docs to advertise only the retained agent set and the generic adapter boundary.
 
 ## Generic Unsupported-Agent Adapter Direction
 

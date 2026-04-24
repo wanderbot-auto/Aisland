@@ -152,39 +152,6 @@ struct ActiveAgentProcessDiscovery {
                 continue
             }
 
-            if isGeminiProcess(command: process.command) {
-                let claimKey = "gemini:\(process.pid)"
-                guard claimedKeys.insert(claimKey).inserted else {
-                    continue
-                }
-
-                let lsofOutput = lsofOutput(pid: process.pid)
-                snapshots.append(ProcessSnapshot(
-                    tool: .geminiCLI,
-                    sessionID: nil,
-                    workingDirectory: lsofOutput.flatMap(workingDirectory(from:)),
-                    terminalTTY: process.terminalTTY,
-                    terminalApp: terminalApp(for: process, processesByPID: processesByPID)
-                ))
-                continue
-            }
-
-            if isKimiProcess(command: process.command) {
-                let claimKey = "kimi:\(process.pid)"
-                guard claimedKeys.insert(claimKey).inserted else {
-                    continue
-                }
-
-                let lsofOutput = lsofOutput(pid: process.pid)
-                snapshots.append(ProcessSnapshot(
-                    tool: .kimiCLI,
-                    sessionID: nil,
-                    workingDirectory: lsofOutput.flatMap(workingDirectory(from:)),
-                    terminalTTY: process.terminalTTY,
-                    terminalApp: terminalApp(for: process, processesByPID: processesByPID)
-                ))
-                continue
-            }
         }
 
         return snapshots
@@ -637,36 +604,6 @@ struct ActiveAgentProcessDiscovery {
         }
 
         return false
-    }
-
-    private func isGeminiProcess(command: String) -> Bool {
-        let lowered = command.lowercased()
-        guard let firstToken = lowered.split(separator: " ").first.map(String.init) else {
-            return false
-        }
-
-        return firstToken == "gemini"
-            || firstToken.hasSuffix("/gemini")
-            || lowered.contains("/bin/gemini")
-            || lowered.contains("/google/gemini-cli")
-            || lowered.contains("/@google/gemini-cli")
-    }
-
-    /// Matches the `kimi` CLI (Moonshot) entry-point. `kimi-info` / `kimi-mcp` /
-    /// `kimi-term` / `kimi-vis` / `kimi-web` are auxiliary subcommands shipped
-    /// alongside the main binary and must not be picked up as agent sessions.
-    private func isKimiProcess(command: String) -> Bool {
-        let lowered = command.lowercased()
-        guard let firstToken = lowered.split(separator: " ").first.map(String.init) else {
-            return false
-        }
-
-        let binaryName = (firstToken as NSString).lastPathComponent
-        guard binaryName == "kimi" else {
-            return false
-        }
-
-        return firstToken == "kimi" || firstToken.hasSuffix("/kimi")
     }
 
     /// Returns `true` when the given `ps` command string belongs to a Claude Code process.

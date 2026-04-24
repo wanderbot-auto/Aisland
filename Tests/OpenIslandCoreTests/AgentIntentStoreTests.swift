@@ -16,15 +16,15 @@ struct AgentIntentStoreTests {
     func setIntentPersistsAndReadsBack() {
         let (store, defaults) = makeStore()
         store.setIntent(.installed, for: .claudeCode)
-        store.setIntent(.uninstalled, for: .cursor)
+        store.setIntent(.uninstalled, for: .openCode)
 
         #expect(store.intent(for: .claudeCode) == .installed)
-        #expect(store.intent(for: .cursor) == .uninstalled)
+        #expect(store.intent(for: .openCode) == .uninstalled)
         #expect(store.intent(for: .codex) == .untouched)
 
         let reopened = AgentIntentStore(defaults: defaults)
         #expect(reopened.intent(for: .claudeCode) == .installed)
-        #expect(reopened.intent(for: .cursor) == .uninstalled)
+        #expect(reopened.intent(for: .openCode) == .uninstalled)
     }
 
     @Test
@@ -32,7 +32,7 @@ struct AgentIntentStoreTests {
         let (store, _) = makeStore()
         store.setIntent(.installed, for: .claudeCode)
         store.setIntent(.installed, for: .codex)
-        store.setIntent(.uninstalled, for: .cursor)
+        store.setIntent(.uninstalled, for: .openCode)
 
         let installed = Set(store.installedAgents())
         #expect(installed == Set([.claudeCode, .codex]))
@@ -41,13 +41,13 @@ struct AgentIntentStoreTests {
     @Test
     func migrationStampsInstalledForAgentsAlreadyOnDisk() {
         let (store, defaults) = makeStore()
-        let present: Set<AgentIdentifier> = [.claudeCode, .cursor]
+        let present: Set<AgentIdentifier> = [.claudeCode, .openCode]
 
         let ranWithInstalled = store.migrateFromLegacyStateIfNeeded { present.contains($0) }
 
         #expect(ranWithInstalled == true)
         #expect(store.intent(for: .claudeCode) == .installed)
-        #expect(store.intent(for: .cursor) == .installed)
+        #expect(store.intent(for: .openCode) == .installed)
         #expect(store.intent(for: .codex) == .untouched)
         #expect(store.firstLaunchCompleted == true)
         #expect(defaults.integer(forKey: "agentIntentMigrationVersion") == 1)

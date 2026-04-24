@@ -157,7 +157,6 @@ private enum LegacyMockSessionIDs {
     static let all: Set<String> = [
         "claude-fix-auth-bug",
         "codex-backend-server",
-        "gemini-optimize-queries",
         "session-running",
         "session-recent",
         "session-claude-research",

@@ -107,18 +107,6 @@ struct ControlCenterView: View {
                     }
                 }
 
-                ccForkHookCard(title: "Qoder Hooks", installed: model.qoderHooksInstalled, status: model.qoderHookStatus, isBusy: model.isQoderHookSetupBusy, install: model.installQoderHooks, uninstall: model.uninstallQoderHooks)
-
-                ccForkHookCard(title: "Qwen Code Hooks", installed: model.qwenCodeHooksInstalled, status: model.qwenCodeHookStatus, isBusy: model.isQwenCodeHookSetupBusy, install: model.installQwenCodeHooks, uninstall: model.uninstallQwenCodeHooks)
-
-                ccForkHookCard(title: "Factory Hooks", installed: model.factoryHooksInstalled, status: model.factoryHookStatus, isBusy: model.isFactoryHookSetupBusy, install: model.installFactoryHooks, uninstall: model.uninstallFactoryHooks)
-
-                ccForkHookCard(title: "CodeBuddy Hooks", installed: model.codebuddyHooksInstalled, status: model.codebuddyHookStatus, isBusy: model.isCodebuddyHookSetupBusy, install: model.installCodebuddyHooks, uninstall: model.uninstallCodebuddyHooks)
-
-                geminiHookCard
-
-                kimiHookCard
-
                 usageDebugCard(
                     title: "Claude Usage",
                     statusTitle: model.claudeUsageStatusTitle,
@@ -253,64 +241,6 @@ struct ControlCenterView: View {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .strokeBorder(selectedScenario == scenario ? .white.opacity(0.18) : .white.opacity(0.05))
         )
-    }
-
-    private var geminiHookCard: some View {
-        usageDebugCard(
-            title: "Gemini Hooks",
-            statusTitle: model.geminiHookStatusTitle,
-            statusSummary: model.geminiHookStatusSummary,
-            isActive: model.geminiHooksInstalled,
-            accentColor: model.geminiHooksInstalled ? .mint : .blue
-        ) {
-            EmptyView()
-        } actions: {
-            HStack(spacing: 10) {
-                Button(lang.t("debug.refresh")) {
-                    model.refreshGeminiHookStatus()
-                }
-                .buttonStyle(DebugActionButtonStyle(kind: .secondary))
-
-                Button(model.geminiHooksInstalled ? lang.t("debug.removeHooks") : lang.t("debug.installHooks")) {
-                    if model.geminiHooksInstalled {
-                        model.uninstallGeminiHooks()
-                    } else {
-                        model.installGeminiHooks()
-                    }
-                }
-                .buttonStyle(DebugActionButtonStyle(kind: .primary))
-                .disabled(model.isGeminiHookSetupBusy || model.hooksBinaryURL == nil)
-            }
-        }
-    }
-
-    private var kimiHookCard: some View {
-        usageDebugCard(
-            title: "Kimi Hooks",
-            statusTitle: model.kimiHookStatusTitle,
-            statusSummary: model.kimiHookStatusSummary,
-            isActive: model.kimiHooksInstalled,
-            accentColor: model.kimiHooksInstalled ? .mint : .blue
-        ) {
-            EmptyView()
-        } actions: {
-            HStack(spacing: 10) {
-                Button(lang.t("debug.refresh")) {
-                    model.refreshKimiHookStatus()
-                }
-                .buttonStyle(DebugActionButtonStyle(kind: .secondary))
-
-                Button(model.kimiHooksInstalled ? lang.t("debug.removeHooks") : lang.t("debug.installHooks")) {
-                    if model.kimiHooksInstalled {
-                        model.uninstallKimiHooks()
-                    } else {
-                        model.installKimiHooks()
-                    }
-                }
-                .buttonStyle(DebugActionButtonStyle(kind: .primary))
-                .disabled(model.isKimiHookSetupBusy || model.hooksBinaryURL == nil)
-            }
-        }
     }
 
     private var actionCard: some View {
@@ -465,55 +395,6 @@ struct ControlCenterView: View {
         let snapshot = scenario.snapshot()
         previewSnapshot = snapshot
         previewModel.loadDebugSnapshot(snapshot)
-    }
-
-    private func ccForkHookCard(
-        title: String,
-        installed: Bool,
-        status: ClaudeHookInstallationStatus?,
-        isBusy: Bool,
-        install: @escaping () -> Void,
-        uninstall: @escaping () -> Void
-    ) -> some View {
-        usageDebugCard(
-            title: title,
-            statusTitle: installed ? "\(title) installed" : "\(title) not installed",
-            statusSummary: {
-                guard status != nil else {
-                    return "Reading settings.json."
-                }
-                if installed {
-                    return "managed hooks present"
-                }
-                if model.hooksBinaryURL == nil {
-                    return "Build OpenIslandHooks before installing."
-                }
-                return "no managed hooks"
-            }(),
-            isActive: installed,
-            accentColor: installed ? .mint : .blue
-        ) {
-            if let status {
-                metadataRow(title: "settings", value: status.settingsURL.path)
-            }
-        } actions: {
-            HStack(spacing: 10) {
-                Button(lang.t("debug.refresh")) {
-                    model.refreshCCForkHookStatuses()
-                }
-                .buttonStyle(DebugActionButtonStyle(kind: .secondary))
-
-                Button(installed ? lang.t("debug.removeHooks") : lang.t("debug.installHooks")) {
-                    if installed {
-                        uninstall()
-                    } else {
-                        install()
-                    }
-                }
-                .buttonStyle(DebugActionButtonStyle(kind: .primary))
-                .disabled(isBusy || model.hooksBinaryURL == nil)
-            }
-        }
     }
 
     private func usageDebugCard<Content: View, Actions: View>(

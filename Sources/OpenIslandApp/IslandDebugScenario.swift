@@ -60,7 +60,7 @@ enum IslandDebugScenario: String, CaseIterable, Identifiable {
     func snapshot(at now: Date = .now) -> IslandDebugSnapshot {
         switch self {
         case .closed:
-            let sessions = DebugSessionFactory.listSessions(now: now)
+            let sessions = DebugSessionBuilder.listSessions(now: now)
             return IslandDebugSnapshot(
                 title: title,
                 summary: summary,
@@ -73,7 +73,7 @@ enum IslandDebugScenario: String, CaseIterable, Identifiable {
             )
 
         case .sessionList:
-            let sessions = DebugSessionFactory.listSessions(now: now)
+            let sessions = DebugSessionBuilder.listSessions(now: now)
             return IslandDebugSnapshot(
                 title: title,
                 summary: summary,
@@ -86,7 +86,7 @@ enum IslandDebugScenario: String, CaseIterable, Identifiable {
             )
 
         case .approvalCard:
-            let session = DebugSessionFactory.approvalSession(now: now)
+            let session = DebugSessionBuilder.approvalSession(now: now)
             return IslandDebugSnapshot(
                 title: title,
                 summary: summary,
@@ -94,12 +94,12 @@ enum IslandDebugScenario: String, CaseIterable, Identifiable {
                 notchStatus: .opened,
                 notchOpenReason: .notification,
                 islandSurface: .sessionList(actionableSessionID: session.id),
-                sessions: DebugSessionFactory.notificationSessions(lead: session, now: now),
+                sessions: DebugSessionBuilder.notificationSessions(lead: session, now: now),
                 selectedSessionID: session.id
             )
 
         case .questionCard:
-            let session = DebugSessionFactory.questionSession(now: now)
+            let session = DebugSessionBuilder.questionSession(now: now)
             return IslandDebugSnapshot(
                 title: title,
                 summary: summary,
@@ -107,12 +107,12 @@ enum IslandDebugScenario: String, CaseIterable, Identifiable {
                 notchStatus: .opened,
                 notchOpenReason: .notification,
                 islandSurface: .sessionList(actionableSessionID: session.id),
-                sessions: DebugSessionFactory.notificationSessions(lead: session, now: now),
+                sessions: DebugSessionBuilder.notificationSessions(lead: session, now: now),
                 selectedSessionID: session.id
             )
 
         case .completionCard:
-            let session = DebugSessionFactory.completionSession(now: now)
+            let session = DebugSessionBuilder.completionSession(now: now)
             return IslandDebugSnapshot(
                 title: title,
                 summary: summary,
@@ -120,12 +120,12 @@ enum IslandDebugScenario: String, CaseIterable, Identifiable {
                 notchStatus: .opened,
                 notchOpenReason: .notification,
                 islandSurface: .sessionList(actionableSessionID: session.id),
-                sessions: DebugSessionFactory.notificationSessions(lead: session, now: now),
+                sessions: DebugSessionBuilder.notificationSessions(lead: session, now: now),
                 selectedSessionID: session.id
             )
 
         case .longCompletionCard:
-            let session = DebugSessionFactory.longCompletionSession(now: now)
+            let session = DebugSessionBuilder.longCompletionSession(now: now)
             return IslandDebugSnapshot(
                 title: title,
                 summary: summary,
@@ -133,14 +133,14 @@ enum IslandDebugScenario: String, CaseIterable, Identifiable {
                 notchStatus: .opened,
                 notchOpenReason: .notification,
                 islandSurface: .sessionList(actionableSessionID: session.id),
-                sessions: DebugSessionFactory.notificationSessions(lead: session, now: now),
+                sessions: DebugSessionBuilder.notificationSessions(lead: session, now: now),
                 selectedSessionID: session.id
             )
         }
     }
 }
 
-private enum DebugSessionFactory {
+private enum DebugSessionBuilder {
     static func listSessions(now: Date) -> [AgentSession] {
         [
             runningSession(now: now),
@@ -149,7 +149,7 @@ private enum DebugSessionFactory {
                 id: "session-claude-research",
                 workspace: "claude-research",
                 initialPrompt: "我更关注获取的部分 我想在其他 app 里实时展示我的 usage。",
-                latestPrompt: "为什么要查 Cursor 官方呢？这个事跟 Cursor 有什么关系？",
+                latestPrompt: "为什么要查 IDE 官方呢？这个事跟 IDE 有什么关系？",
                 assistant: "不建议按“最古老”来选。最古老不等于最轻量且最适合这个任务。",
                 age: 27 * 60,
                 now: now
@@ -157,8 +157,8 @@ private enum DebugSessionFactory {
             inactiveSession(
                 id: "session-personal",
                 workspace: "Personal",
-                initialPrompt: "[Image #1]我给你截了 3 张图，这个是我现在 Cursor 里面可用的模型。",
-                latestPrompt: "[Image #1]我给你截了 3 张图，这个是我现在 Cursor 里面可用的模型。",
+                initialPrompt: "[Image #1]我给你截了 3 张图，这个是我现在 IDE 里面可用的模型。",
+                latestPrompt: "[Image #1]我给你截了 3 张图，这个是我现在 IDE 里面可用的模型。",
                 assistant: "这张图里的模型，严格说不是这个 `voice-input` App 应该选的模…",
                 age: 32 * 60,
                 now: now
@@ -177,7 +177,7 @@ private enum DebugSessionFactory {
                 workspace: "voice-input",
                 initialPrompt: "看看 voice-input 这个仓库，重点关注模型选型。",
                 latestPrompt: "严格来说它应该选哪个模型？",
-                assistant: "如果目标是轻量实时，不建议直接按 Cursor 现成套餐来映射。",
+                assistant: "如果目标是轻量实时，不建议直接按 IDE 现成套餐来映射。",
                 age: 78 * 60,
                 now: now
             ),
