@@ -35,6 +35,7 @@ This index is the repository map for humans and coding agents. Read these files 
 
 ## Refactoring Plans
 
+- [docs/refactor-plan.md](./refactor-plan.md) for the systematic repository refactoring route, complexity hotspots, and next execution slices
 - [docs/session-state-refactor.md](./session-state-refactor.md) for the session state management refactoring plan (process discovery as source of truth)
 
 ## Watch / iOS
