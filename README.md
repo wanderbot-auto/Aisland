@@ -260,7 +260,7 @@ Developers who already live in the terminal and want a better way to work with c
 
 - **Notch overlay** — On Macs with a built-in notch, the island sits in the notch area; on external displays or non-notch Macs, it falls back to a compact top-center bar
 - **Control center** — Codex/Claude hook status, usage dashboard, debug scenarios
-- **Settings** — General, Display, Sound, Shortcuts, Lab (advanced), About
+- **Settings** — General, Setup, Appearance, Display, Sound, Shortcuts
 - **Notification mode** — Auto-height notification panel for permission requests and session events
 - **Notification sounds** — Configurable system sounds (default: Bottle) with mute toggle
 - **i18n** — English and Simplified Chinese

@@ -8,8 +8,6 @@
 "settings.tab.display" = "显示";
 "settings.tab.sound" = "声音";
 "settings.tab.shortcuts" = "快捷键";
-"settings.tab.lab" = "实验室";
-"settings.tab.about" = "关于";
 
 /* Settings - Section Headers */
 "settings.section.system" = "系统";
@@ -119,12 +117,8 @@
 
 /* Settings - Placeholder */
 "settings.shortcuts.comingSoon" = "快捷键设置即将推出。";
-"settings.lab.comingSoon" = "实验性功能即将推出。";
 
-/* Settings - About */
-"settings.about.version" = "版本 %@";
-"settings.about.checkForUpdates" = "检查更新…";
-"settings.about.quitApp" = "退出 Open Island";
+/* Island Panel - Quit */
 "island.quit.confirmTitle" = "退出 Open Island？";
 "island.quit.confirmAction" = "退出";
 "island.quit.confirmMessage" = "确定要退出吗？";

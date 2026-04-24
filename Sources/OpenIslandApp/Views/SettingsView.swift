@@ -11,8 +11,6 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     case sound
     case appearance
     case shortcuts
-    case lab
-    case about
 
     var id: String { rawValue }
 
@@ -24,8 +22,6 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .display:    lang.t("settings.tab.display")
         case .sound:      lang.t("settings.tab.sound")
         case .shortcuts:  lang.t("settings.tab.shortcuts")
-        case .lab:        lang.t("settings.tab.lab")
-        case .about:      lang.t("settings.tab.about")
         }
     }
 
@@ -37,8 +33,6 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .display:    "textformat.size"
         case .sound:      "speaker.wave.2.fill"
         case .shortcuts:  "keyboard.fill"
-        case .lab:        "flask.fill"
-        case .about:      "info.circle.fill"
         }
     }
 
@@ -50,16 +44,13 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .display:    .blue
         case .sound:      .green
         case .shortcuts:  .gray
-        case .lab:        .pink
-        case .about:      .blue
         }
     }
 
     var section: SettingsSection {
         switch self {
         case .general, .setup, .display, .sound, .appearance: .system
-        case .shortcuts, .lab:                                .advanced
-        case .about:                                          .app
+        case .shortcuts:                                      .advanced
         }
     }
 }
@@ -67,13 +58,11 @@ enum SettingsTab: String, CaseIterable, Identifiable {
 enum SettingsSection: String, CaseIterable {
     case system
     case advanced
-    case app
 
     func header(_ lang: LanguageManager) -> String {
         switch self {
         case .system:   lang.t("settings.section.system")
         case .advanced: lang.t("settings.section.advanced")
-        case .app:      "Open Island"
         }
     }
 
@@ -144,10 +133,6 @@ struct SettingsView: View {
                 SoundSettingsPane(model: model)
             case .shortcuts:
                 PlaceholderSettingsPane(model: model, titleKey: "settings.tab.shortcuts", subtitleKey: "settings.shortcuts.comingSoon")
-            case .lab:
-                PlaceholderSettingsPane(model: model, titleKey: "settings.tab.lab", subtitleKey: "settings.lab.comingSoon")
-            case .about:
-                AboutSettingsPane(model: model)
             }
 
             if model.updateChecker.hasUpdate, let version = model.updateChecker.latestVersion {
@@ -301,98 +286,6 @@ struct SoundSettingsPane: View {
         }
         .formStyle(.grouped)
         .navigationTitle(lang.t("settings.tab.sound"))
-    }
-}
-
-// MARK: - About
-
-struct AboutSettingsPane: View {
-    var model: AppModel
-
-    private var lang: LanguageManager { model.lang }
-    private let primaryInk = Color.white.opacity(0.94)
-
-    var body: some View {
-        VStack(spacing: 0) {
-            VStack(spacing: 8) {
-                Image(nsImage: NSApplication.shared.applicationIconImage)
-                    .resizable()
-                    .frame(width: 56, height: 56)
-
-                Text(lang.t("app.name"))
-                    .font(.title.bold())
-
-                Text(lang.t("app.description"))
-                    .foregroundStyle(.secondary)
-
-                if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
-                    Text(lang.t("settings.about.version", version))
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            .padding(.top, 24)
-            .padding(.bottom, 20)
-
-            Divider()
-
-            Form {
-                Section {
-                    aboutActionRow(
-                        title: lang.t("settings.about.checkForUpdates"),
-                        systemImage: "arrow.triangle.2.circlepath",
-                        tint: primaryInk,
-                        action: {
-                            model.updateChecker.checkForUpdates()
-                        }
-                    )
-                    .disabled(!model.updateChecker.canCheckForUpdates)
-                    .opacity(model.updateChecker.canCheckForUpdates ? 1 : 0.55)
-                    .accessibilityIdentifier("settings.about.checkForUpdates")
-                }
-
-                Section {
-                    aboutActionRow(
-                        title: lang.t("settings.about.quitApp"),
-                        systemImage: "rectangle.portrait.and.arrow.right",
-                        tint: Color(red: 1.0, green: 0.29, blue: 0.29),
-                        action: {
-                            model.quitApplication()
-                        }
-                    )
-                    .accessibilityIdentifier("settings.about.quitApp")
-                }
-            }
-            .formStyle(.grouped)
-
-            Spacer()
-        }
-        .frame(maxWidth: .infinity)
-        .navigationTitle(lang.t("settings.tab.about"))
-    }
-
-    private func aboutActionRow(
-        title: String,
-        systemImage: String,
-        tint: Color,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            HStack(spacing: 10) {
-                Image(systemName: systemImage)
-                    .font(.system(size: 13, weight: .medium))
-                    .frame(width: 18, alignment: .leading)
-
-                Text(title)
-                    .font(.system(size: 11.5, weight: .semibold))
-
-                Spacer()
-            }
-            .foregroundStyle(tint)
-            .padding(.vertical, 2)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
     }
 }
 

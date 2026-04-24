@@ -8,8 +8,6 @@
 "settings.tab.display" = "Display";
 "settings.tab.sound" = "Sound";
 "settings.tab.shortcuts" = "Shortcuts";
-"settings.tab.lab" = "Lab";
-"settings.tab.about" = "About";
 
 /* Settings - Section Headers */
 "settings.section.system" = "System";
@@ -119,12 +117,8 @@
 
 /* Settings - Placeholder */
 "settings.shortcuts.comingSoon" = "Keyboard shortcuts coming soon.";
-"settings.lab.comingSoon" = "Experimental features coming soon.";
 
-/* Settings - About */
-"settings.about.version" = "Version %@";
-"settings.about.checkForUpdates" = "Check for Updates…";
-"settings.about.quitApp" = "Quit Open Island";
+/* Island Panel - Quit */
 "island.quit.confirmTitle" = "Quit Open Island?";
 "island.quit.confirmAction" = "Quit";
 "island.quit.confirmMessage" = "Are you sure you want to quit?";
