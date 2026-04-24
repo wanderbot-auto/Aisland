@@ -107,13 +107,30 @@ Largest Swift files:
 
 ### Phase 0: Scope And Guardrails
 
-Produce an explicit scope decision before deleting code.
+Scope decision for this refactor pass:
 
-- Classify each supported agent as `core`, `compatibility`, or `defer/remove`.
-- Classify each terminal jump implementation as `core`, `best effort`, or `defer/remove`.
-- Decide whether iOS/Watch, usage dashboards, Sparkle auto-update, Codex.app server, debug harnesses, and release packaging are in the first refactor scope.
-- Add a short scope document or section to this document before implementation begins.
-- Keep existing behavior intact until adapter and facade boundaries are in place.
+| Surface | Decision | Notes |
+|---|---|---|
+| Codex | Keep core | Preserve hook support, session tracking, usage where still relevant, and terminal jump enrichment. |
+| Claude Code | Keep core | Preserve Claude Code hook support, permission/question flows, subagent/task presentation, and transcript discovery where needed. |
+| OpenCode | Keep core | Preserve plugin support, permission/question flows, session registry, and process discovery. |
+| Cursor | Remove | Delete adapter, payload handling, installer/status UI, tests, and docs references in focused cleanup slices. |
+| Gemini CLI | Remove | Delete adapter, payload handling, installer/status UI, tests, and docs references in focused cleanup slices. |
+| Kimi CLI | Remove | Delete installer/setup CLI support and Claude-format fork handling in focused cleanup slices. |
+| Qoder, Qwen Code, Factory, CodeBuddy | Remove | Delete Claude Code fork setup/status paths and UI sections in focused cleanup slices. |
+| iOS companion app | Remove | Delete mobile project/code/docs references after bridge/watch dependencies are untangled. |
+| Watch companion app | Remove | Delete Watch target/code/docs references and app-side watch relay integration. |
+| Terminal jump support | Keep for now | Defer terminal support pruning until jump strategies are split and independently testable. |
+| Usage dashboards | Keep for now | Reassess after unsupported agent removal simplifies setup and session metadata. |
+| Sparkle auto-update | Keep for now | Not coupled to agent scope; preserve unless release scope changes. |
+| Debug harnesses and packaging | Keep for now | Useful during refactor verification and release checks. |
+
+Guardrails before deleting code:
+
+- Keep Codex, Claude Code, and OpenCode behavior intact until adapter and facade boundaries are in place.
+- Remove unsupported agents in narrow vertical slices: core payloads, bridge handling, app coordinator state, settings UI, tests, and docs.
+- Remove iOS/Watch in a separate slice from agent removal because it touches app relay state, `ios/`, docs, and project files.
+- Classify terminal jump implementations later, after strategy extraction exposes per-terminal ownership.
 
 ### Phase 1: Strengthen Verification Around Core Behavior
 
@@ -135,8 +152,7 @@ Target: reduce the highest-coupled runtime file without changing the socket prot
   - `CodexBridgeAdapter`
   - `ClaudeBridgeAdapter`
   - `OpenCodeBridgeAdapter`
-  - `CursorBridgeAdapter`
-  - `GeminiBridgeAdapter`
+- Do not extract new Cursor, Gemini, Kimi, or Claude-fork adapters; remove those paths during cleanup instead.
 - Extract pending approval/question state into `PendingInteractionStore`.
 - Have adapters return explicit effects: events to emit, responses to send, and pending interaction mutations.
 - Preserve current `BridgeCommand`, `BridgeResponse`, and JSON envelope formats.
@@ -147,7 +163,7 @@ Target: make `AppModel` a SwiftUI-facing facade instead of the owner of every si
 
 - Extract bridge observer lifecycle into `BridgeObserverController`.
 - Extract user actions into `SessionActionController` or focused methods owned by a session controller.
-- Extract watch relay lifecycle into `WatchRelayController`.
+- Remove watch relay lifecycle after the iOS/Watch removal inventory identifies all app-side wiring.
 - Extract persisted settings state into a smaller settings model.
 - Keep `AppModel` as the observable facade that SwiftUI views already depend on.
 - Avoid changing view bindings until state ownership is clearer.
@@ -176,12 +192,13 @@ Target: make terminal support removable and independently testable.
 
 ### Phase 6: Data-Driven Hook Installation
 
-Target: remove repeated app-level setup state and per-agent boilerplate.
+Target: remove repeated app-level setup state and per-agent boilerplate for the retained agent set.
 
 - Introduce `AgentIntegrationDescriptor` for display name, config location, installer, status, and supported actions.
-- Introduce an installer adapter abstraction for Codex, Claude-compatible forks, Cursor, OpenCode, Gemini, and Kimi.
+- Introduce installer adapters only for Codex, Claude Code, and OpenCode.
 - Replace repeated status title/summary logic with a shared view model.
 - Simplify `SettingsView` setup sections so they render descriptors rather than hard-coded per-agent blocks.
+- Delete setup/status UI for Cursor, Gemini, Kimi, Qoder, Qwen Code, Factory, and CodeBuddy.
 
 ### Phase 7: Model Boundary Cleanup
 
@@ -197,20 +214,20 @@ Target: reduce pressure on `AgentSession` and make deletions safer.
 
 Only delete or deeply simplify features after boundaries exist.
 
-- Remove adapters, installers, and UI sections for agents classified as out of scope.
+- Remove adapters, installers, CLI source cases, and UI sections for Cursor, Gemini, Kimi, Qoder, Qwen Code, Factory, and CodeBuddy.
 - Remove terminal strategies classified as out of scope.
-- Remove companion or usage features only if Phase 0 marks them non-core.
+- Remove iOS and Watch companion features, including `ios/`, app-side watch relay wiring, watch settings, and watch documentation links.
 - Remove stale docs and tests in the same focused slice as the feature deletion.
 - Keep each deletion independently revertible.
 
 ## Suggested First Implementation Slice
 
-Start with a non-destructive planning and verification slice:
+Start with a non-destructive verification slice for the retained core agents:
 
-1. Add a `Refactor Scope` section to this document with explicit `keep`, `defer`, and `remove` decisions.
-2. Add golden tests around the current `BridgeServer` Codex and Claude hook conversions before extraction.
+1. Add golden tests around the current `BridgeServer` Codex, Claude Code, and OpenCode hook conversions before extraction.
+2. Add a short removal inventory for unsupported agents and iOS/Watch so deletion slices are easy to review.
 3. Run `swift test`.
-4. Commit only the tests and scope update.
+4. Commit only the tests and inventory update.
 
 This creates a behavior safety net before touching the largest files.
 
@@ -218,11 +235,11 @@ This creates a behavior safety net before touching the largest files.
 
 Recommended order for the next work round:
 
-1. Decide the minimal supported product boundary for the first refactor pass.
-2. Choose whether `Codex + Claude Code` are the only core agents for that pass.
-3. Choose whether terminal support should initially remain broad or be reduced to the most reliable jump paths.
-4. Add bridge adapter golden tests for the core agents.
-5. Begin `BridgeServer` extraction with one adapter at a time, starting with Codex because its hook flow is smaller than Claude-compatible flows.
+1. Add bridge adapter golden tests for Codex, Claude Code, and OpenCode.
+2. Create an unsupported-agent removal inventory that lists every file and test touched by Cursor, Gemini, Kimi, Qoder, Qwen Code, Factory, and CodeBuddy.
+3. Create an iOS/Watch removal inventory covering `ios/`, app-side watch relay code, settings UI, docs, and package/project references.
+4. Begin `BridgeServer` extraction with one retained adapter at a time, starting with Codex because its hook flow is smaller than Claude-compatible flows.
+5. After retained adapters are isolated, delete unsupported agent paths in narrow, independently verified commits.
 
 ## Verification Strategy
 
