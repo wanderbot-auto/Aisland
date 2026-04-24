@@ -14,8 +14,6 @@ struct AppModelSessionListTests {
             id: "live-session",
             title: "Claude · active",
             tool: .claudeCode,
-            origin: .live,
-            attachmentState: .attached,
             phase: .running,
             summary: "Running",
             updatedAt: now,
@@ -40,9 +38,7 @@ struct AppModelSessionListTests {
                     id: "recent-session",
                     title: "Claude · recent",
                     tool: .claudeCode,
-                    origin: .live,
-                    attachmentState: .stale,
-                    phase: .completed,
+            phase: .completed,
                     summary: "Finished",
                     updatedAt: now.addingTimeInterval(-300),
                     jumpTarget: JumpTarget(
@@ -74,8 +70,6 @@ struct AppModelSessionListTests {
             id: "running-live",
             title: "Codex · open-island",
             tool: .codex,
-            origin: .live,
-            attachmentState: .attached,
             phase: .running,
             summary: "Current live turn",
             updatedAt: now,
@@ -93,8 +87,6 @@ struct AppModelSessionListTests {
             id: "old-turn-same-split",
             title: "Codex · open-island",
             tool: .codex,
-            origin: .live,
-            attachmentState: .attached,
             phase: .completed,
             summary: "Historical turn on the same split",
             updatedAt: now.addingTimeInterval(-90),
@@ -112,8 +104,6 @@ struct AppModelSessionListTests {
             id: "other-live",
             title: "Codex · open-island",
             tool: .codex,
-            origin: .live,
-            attachmentState: .attached,
             phase: .completed,
             summary: "Another live split",
             updatedAt: now.addingTimeInterval(-30),
@@ -149,9 +139,7 @@ struct AppModelSessionListTests {
                     id: "recovered-session",
                     title: "Codex · open-island",
                     tool: .codex,
-                    origin: .live,
-                    attachmentState: .stale,
-                    phase: .running,
+            phase: .running,
                     summary: "Recovered from cache",
                     updatedAt: now
                 ),
@@ -172,8 +160,6 @@ struct AppModelSessionListTests {
             id: "live-session",
             title: "Codex · open-island",
             tool: .codex,
-            origin: .live,
-            attachmentState: .attached,
             phase: .running,
             summary: "Working",
             updatedAt: now
@@ -201,8 +187,6 @@ struct AppModelSessionListTests {
             id: "live-session",
             title: "Codex · open-island",
             tool: .codex,
-            origin: .live,
-            attachmentState: .attached,
             phase: .running,
             summary: "Running",
             updatedAt: now,
@@ -241,9 +225,7 @@ struct AppModelSessionListTests {
                     id: "recovered-session",
                     title: "Codex · open-island",
                     tool: .codex,
-                    origin: .live,
-                    attachmentState: .stale,
-                    phase: .running,
+            phase: .running,
                     summary: "Recovered from cache",
                     updatedAt: now
                 ),
@@ -264,12 +246,12 @@ struct AppModelSessionListTests {
         )
 
         #expect(model.liveSessionCount == 0)
-        #expect(model.state.session(id: "recovered-session")?.attachmentState == .stale)
+        #expect(model.state.session(id: "recovered-session")?.isProcessAlive == false)
         #expect(model.shouldShowSessionBootstrapPlaceholder)
     }
 
     @Test
-    func bridgeEventsStillPromoteSessionsToAttached() {
+    func bridgeEventsMarkSessionsAlive() {
         let now = Date(timeIntervalSince1970: 2_000)
         let model = AppModel()
         model.state = SessionState(
@@ -278,9 +260,7 @@ struct AppModelSessionListTests {
                     id: "live-session",
                     title: "Codex · open-island",
                     tool: .codex,
-                    origin: .live,
-                    attachmentState: .stale,
-                    phase: .running,
+            phase: .running,
                     summary: "Recovered from cache",
                     updatedAt: now
                 ),
@@ -301,7 +281,7 @@ struct AppModelSessionListTests {
         )
 
         #expect(model.liveSessionCount == 1)
-        #expect(model.state.session(id: "live-session")?.attachmentState == .attached)
+        #expect(model.state.session(id: "live-session")?.isProcessAlive == true)
     }
 
     @Test
@@ -317,9 +297,7 @@ struct AppModelSessionListTests {
                     id: "recovered-session",
                     title: "Codex · open-island",
                     tool: .codex,
-                    origin: .live,
-                    attachmentState: .stale,
-                    phase: .running,
+            phase: .running,
                     summary: "Recovered from cache",
                     updatedAt: now
                 ),
@@ -359,9 +337,7 @@ struct AppModelSessionListTests {
                     id: "frontmost-session",
                     title: "Codex · open-island",
                     tool: .codex,
-                    origin: .live,
-                    attachmentState: .attached,
-                    phase: .running,
+            phase: .running,
                     summary: "Already focused in the front terminal.",
                     updatedAt: now
                 ),
@@ -408,9 +384,7 @@ struct AppModelSessionListTests {
                     id: "background-session",
                     title: "Codex · open-island",
                     tool: .codex,
-                    origin: .live,
-                    attachmentState: .attached,
-                    phase: .running,
+            phase: .running,
                     summary: "Needs approval.",
                     updatedAt: now
                 ),
@@ -559,9 +533,7 @@ struct AppModelSessionListTests {
                     id: "claude-session",
                     title: "Claude · open-island",
                     tool: .claudeCode,
-                    origin: .live,
-                    attachmentState: .stale,
-                    phase: .completed,
+            phase: .completed,
                     summary: "Recovered from registry",
                     updatedAt: now.addingTimeInterval(-60),
                     jumpTarget: JumpTarget(
@@ -581,9 +553,7 @@ struct AppModelSessionListTests {
                 id: "claude-session",
                 title: "Claude · open-island",
                 tool: .claudeCode,
-                origin: .live,
-                attachmentState: .stale,
-                phase: .running,
+            phase: .running,
                 summary: "Recovered from transcript",
                 updatedAt: now,
                 jumpTarget: JumpTarget(
@@ -629,7 +599,7 @@ struct AppModelSessionListTests {
 
         #expect(merged.count == 1)
         #expect(merged.first?.id.hasPrefix("claude-process:") == true)
-        #expect(merged.first?.attachmentState == .attached)
+        #expect(merged.first?.isProcessAlive == true)
         #expect(merged.first?.jumpTarget?.terminalApp == "Ghostty")
         #expect(merged.first?.jumpTarget?.terminalTTY == "/dev/ttys002")
     }
@@ -642,8 +612,6 @@ struct AppModelSessionListTests {
             id: "e45d5e87-66d0-4f67-8399-6ebc02f3d453",
             title: "Claude · open-island",
             tool: .claudeCode,
-            origin: .live,
-            attachmentState: .stale,
             phase: .running,
             summary: "Running",
             updatedAt: now,
@@ -670,8 +638,6 @@ struct AppModelSessionListTests {
             id: "e45d5e87-66d0-4f67-8399-6ebc02f3d453",
             title: "Claude · open-island",
             tool: .claudeCode,
-            origin: .live,
-            attachmentState: .attached,
             phase: .running,
             summary: "Running",
             updatedAt: now,
@@ -709,8 +675,6 @@ struct AppModelSessionListTests {
             id: "e45d5e87-66d0-4f67-8399-6ebc02f3d453",
             title: "Claude · open-island-readme",
             tool: .claudeCode,
-            origin: .live,
-            attachmentState: .stale,
             phase: .completed,
             summary: "Recovered transcript",
             updatedAt: now.addingTimeInterval(-120),
@@ -756,7 +720,6 @@ struct AppModelSessionListTests {
             id: "approval-session-A",
             title: "Claude · proj-A",
             tool: .claudeCode,
-            attachmentState: .attached,
             phase: .waitingForApproval,
             summary: "Approve edit A",
             updatedAt: .now,
@@ -772,7 +735,6 @@ struct AppModelSessionListTests {
             id: "approval-session-B",
             title: "Claude · proj-B",
             tool: .claudeCode,
-            attachmentState: .attached,
             phase: .waitingForApproval,
             summary: "Approve edit B",
             updatedAt: .now,
@@ -812,9 +774,7 @@ struct AppModelSessionListTests {
                 id: "e45d5e87-66d0-4f67-8399-6ebc02f3d453",
                 title: "Claude · open-island",
                 tool: .claudeCode,
-                origin: .live,
-                attachmentState: .stale,
-                phase: .completed,
+            phase: .completed,
                 summary: "Recovered transcript",
                 updatedAt: now.addingTimeInterval(-10_800),
                 jumpTarget: JumpTarget(
@@ -828,9 +788,7 @@ struct AppModelSessionListTests {
                 id: "c9a48d05-c1f9-4e39-ab66-19edef0c2bc9",
                 title: "Claude · open-island",
                 tool: .claudeCode,
-                origin: .live,
-                attachmentState: .stale,
-                phase: .completed,
+            phase: .completed,
                 summary: "Recovered transcript",
                 updatedAt: now.addingTimeInterval(-64_800),
                 jumpTarget: JumpTarget(
@@ -862,24 +820,7 @@ struct AppModelSessionListTests {
         #expect(merged.count == 2)
         #expect(merged.allSatisfy { !$0.id.hasPrefix("claude-process:") })
 
-        let probe = TerminalSessionAttachmentProbe()
-        let resolutions = probe.sessionResolutions(
-            for: merged,
-            ghosttyAvailability: .unavailable(appIsRunning: true),
-            terminalAvailability: .available([] as [TerminalSessionAttachmentProbe.TerminalTabSnapshot], appIsRunning: false),
-            activeProcesses: activeProcesses,
-            now: now
-        )
-
         model.state = SessionState(sessions: merged)
-        _ = model.state.reconcileAttachmentStates(resolutions.mapValues(\.attachmentState))
-        _ = model.state.reconcileJumpTargets(
-            resolutions.reduce(into: [String: JumpTarget]()) { partialResult, entry in
-                if let correctedJumpTarget = entry.value.correctedJumpTarget {
-                    partialResult[entry.key] = correctedJumpTarget
-                }
-            }
-        )
 
         let claudeSessions = model.state.sessions.filter { $0.tool == .claudeCode }
         #expect(claudeSessions.count == 2)

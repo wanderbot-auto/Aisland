@@ -203,8 +203,7 @@ final class SessionDiscoveryCoordinator {
             merged.questionPrompt = discovered.questionPrompt
         }
 
-        merged.origin = existing.origin ?? discovered.origin
-        merged.attachmentState = mergeAttachmentState(existing.attachmentState, discovered.attachmentState)
+        merged.isDemoSession = existing.isDemoSession || discovered.isDemoSession
         merged.jumpTarget = existing.jumpTarget ?? discovered.jumpTarget
         merged.codexMetadata = mergeCodexMetadata(existing.codexMetadata, discovered.codexMetadata)
         merged.claudeMetadata = mergeClaudeMetadata(existing.claudeMetadata, discovered.claudeMetadata)
@@ -238,20 +237,6 @@ final class SessionDiscoveryCoordinator {
             model: discovered.model ?? existing.model
         )
         return merged.isEmpty ? nil : merged
-    }
-
-    private func mergeAttachmentState(
-        _ existing: SessionAttachmentState,
-        _ discovered: SessionAttachmentState
-    ) -> SessionAttachmentState {
-        switch (existing, discovered) {
-        case (.attached, _), (_, .attached):
-            .attached
-        case (.stale, _), (_, .stale):
-            .stale
-        case (.detached, .detached):
-            .detached
-        }
     }
 
     private func mergeCodexMetadata(

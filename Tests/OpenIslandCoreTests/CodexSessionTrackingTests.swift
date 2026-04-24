@@ -18,9 +18,7 @@ struct CodexSessionTrackingTests {
             CodexTrackedSessionRecord(
                 sessionID: "codex-session-1",
                 title: "Codex · open-island",
-                origin: .live,
-                attachmentState: .attached,
-                summary: "Inspecting rollout watcher.",
+                        summary: "Inspecting rollout watcher.",
                 phase: .running,
                 updatedAt: Date(timeIntervalSince1970: 1_000),
                 jumpTarget: JumpTarget(
@@ -46,27 +44,15 @@ struct CodexSessionTrackingTests {
         #expect(reloaded.first?.session.codexMetadata?.transcriptPath == "/tmp/rollout.jsonl")
         #expect(reloaded.first?.session.codexMetadata?.initialUserPrompt == "Start by checking the rollout watcher.")
         #expect(reloaded.first?.session.codexMetadata?.lastUserPrompt == "Check the rollout watcher state.")
-        #expect(reloaded.first?.session.origin == .live)
-        #expect(reloaded.first?.session.attachmentState == .attached)
+        #expect(reloaded.first?.session.isDemoSession == false)
     }
 
     @Test
-    func codexTrackedSessionRecordRejectsDemoAndLegacyMockSessions() {
+    func codexTrackedSessionRecordRejectsLegacyMockSessions() {
         let liveRecord = CodexTrackedSessionRecord(
             sessionID: "codex-live-1",
             title: "Codex · live",
-            origin: .live,
-            attachmentState: .attached,
-            summary: "Working",
-            phase: .running,
-            updatedAt: .now
-        )
-        let demoRecord = CodexTrackedSessionRecord(
-            sessionID: "codex-demo-1",
-            title: "Codex · demo",
-            origin: .demo,
-            attachmentState: .attached,
-            summary: "Working",
+                    summary: "Working",
             phase: .running,
             updatedAt: .now
         )
@@ -80,33 +66,27 @@ struct CodexSessionTrackingTests {
         let debugScenarioRecord = CodexTrackedSessionRecord(
             sessionID: "session-approval",
             title: "Codex · open-island",
-            origin: .live,
-            attachmentState: .attached,
-            summary: "Approval needed",
+                    summary: "Approval needed",
             phase: .waitingForApproval,
             updatedAt: .now
         )
 
         #expect(liveRecord.shouldRestoreToLiveState)
-        #expect(!demoRecord.shouldRestoreToLiveState)
         #expect(!legacyMockRecord.shouldRestoreToLiveState)
         #expect(!debugScenarioRecord.shouldRestoreToLiveState)
     }
 
     @Test
-    func codexRestorableSessionAlwaysStartsStale() {
+    func codexRestorableSessionPreservesIdentity() {
         let record = CodexTrackedSessionRecord(
             sessionID: "codex-live-1",
             title: "Codex · open-island",
-            origin: .live,
-            attachmentState: .attached,
-            summary: "Working",
+                    summary: "Working",
             phase: .running,
             updatedAt: .now
         )
 
-        #expect(record.session.attachmentState == .attached)
-        #expect(record.restorableSession.attachmentState == .stale)
+        #expect(record.restorableSession.id == "codex-live-1")
     }
 
     @Test
@@ -143,8 +123,7 @@ struct CodexSessionTrackingTests {
         let records = try store.load()
 
         #expect(records.count == 1)
-        #expect(records.first?.attachmentState == .stale)
-        #expect(records.first?.session.attachmentState == .stale)
+        #expect(records.first?.sessionID == "codex-session-legacy")
     }
 
     @Test
@@ -705,8 +684,7 @@ struct CodexSessionTrackingTests {
         #expect(records.first?.codexMetadata?.lastUserPrompt == "Inspect the local rollout files.")
         #expect(records.first?.codexMetadata?.currentTool == nil)
         #expect(records.first?.codexMetadata?.currentCommandPreview == nil)
-        #expect(records.first?.origin == .live)
-        #expect(records.first?.attachmentState == .stale)
+        #expect(records.first?.session.isDemoSession == false)
     }
 }
 

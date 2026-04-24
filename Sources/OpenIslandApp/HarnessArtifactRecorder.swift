@@ -70,7 +70,7 @@ struct HarnessArtifactReport: Codable {
         let id: String
         let tool: String
         let phase: String
-        let attachmentState: String
+        let isProcessAlive: Bool
         let title: String
         let summary: String
     }
@@ -173,7 +173,7 @@ enum HarnessArtifactRecorder {
                     id: $0.id,
                     tool: $0.tool.rawValue,
                     phase: $0.phase.rawValue,
-                    attachmentState: $0.attachmentState.rawValue,
+                    isProcessAlive: $0.isProcessAlive,
                     title: $0.title,
                     summary: $0.summary
                 )

@@ -4,7 +4,7 @@ public struct SessionStarted: Equatable, Codable, Sendable {
     public var sessionID: String
     public var title: String
     public var tool: AgentTool
-    public var origin: SessionOrigin?
+    public var isDemoSession: Bool
     public var initialPhase: SessionPhase
     public var summary: String
     public var timestamp: Date
@@ -18,7 +18,7 @@ public struct SessionStarted: Equatable, Codable, Sendable {
         sessionID: String,
         title: String,
         tool: AgentTool,
-        origin: SessionOrigin? = nil,
+        isDemoSession: Bool = false,
         initialPhase: SessionPhase = .running,
         summary: String,
         timestamp: Date,
@@ -31,7 +31,7 @@ public struct SessionStarted: Equatable, Codable, Sendable {
         self.sessionID = sessionID
         self.title = title
         self.tool = tool
-        self.origin = origin
+        self.isDemoSession = isDemoSession
         self.initialPhase = initialPhase
         self.summary = summary
         self.timestamp = timestamp

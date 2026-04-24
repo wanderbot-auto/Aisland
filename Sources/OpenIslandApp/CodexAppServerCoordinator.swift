@@ -245,7 +245,6 @@ final class CodexAppServerCoordinator {
                 sessionID: thread.id,
                 title: title,
                 tool: .codex,
-                origin: .live,
                 initialPhase: phase,
                 summary: summary,
                 timestamp: .now,

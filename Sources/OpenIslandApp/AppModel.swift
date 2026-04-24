@@ -1077,7 +1077,6 @@ final class AppModel {
         state.apply(event)
         reconcileIslandSurfaceAfterStateChange()
         if ingress == .bridge {
-            monitoring.markSessionAttached(for: event)
             monitoring.markSessionProcessAlive(for: event)
         }
         synchronizeSelection()
@@ -1235,16 +1234,9 @@ final class AppModel {
         }
 
         var primary: [AgentSession] = []
-        var claimedLiveAttachmentKeys: Set<String> = []
 
         for session in rankedSessions where session.isVisibleInIsland {
             guard !session.isSubagentSession else { continue }
-
-            if let liveAttachmentKey = monitoring.liveAttachmentKey(for: session) {
-                guard claimedLiveAttachmentKeys.insert(liveAttachmentKey).inserted else {
-                    continue
-                }
-            }
 
             primary.append(session)
         }

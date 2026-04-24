@@ -137,8 +137,7 @@ struct SessionStateTests {
                     id: "claude-question",
                     title: "Claude · repo",
                     tool: .claudeCode,
-                    attachmentState: .attached,
-                    phase: .waitingForAnswer,
+                phase: .waitingForAnswer,
                     summary: "Which environment?",
                     updatedAt: startedAt,
                     questionPrompt: QuestionPrompt(
@@ -183,8 +182,7 @@ struct SessionStateTests {
                     id: "claude-approval",
                     title: "Claude · repo",
                     tool: .claudeCode,
-                    attachmentState: .attached,
-                    phase: .waitingForApproval,
+                phase: .waitingForApproval,
                     summary: "Wants to edit file",
                     updatedAt: startedAt,
                     permissionRequest: PermissionRequest(
@@ -220,8 +218,7 @@ struct SessionStateTests {
                     id: "claude-question",
                     title: "Claude · repo",
                     tool: .claudeCode,
-                    attachmentState: .attached,
-                    phase: .waitingForAnswer,
+                phase: .waitingForAnswer,
                     summary: "Which environment?",
                     updatedAt: startedAt,
                     questionPrompt: QuestionPrompt(
@@ -277,7 +274,7 @@ struct SessionStateTests {
     }
 
     @Test
-    func preservesLiveSessionOriginFromStartEvent() {
+    func startEventCreatesLiveSession() {
         var state = SessionState()
 
         state.apply(
@@ -286,53 +283,14 @@ struct SessionStateTests {
                     sessionID: "live-session-1",
                     title: "Live session",
                     tool: .codex,
-                    origin: .live,
                     summary: "Live data",
                     timestamp: .now
                 )
             )
         )
 
-        #expect(state.session(id: "live-session-1")?.origin == .live)
         #expect(state.session(id: "live-session-1")?.isDemoSession == false)
-        #expect(state.session(id: "live-session-1")?.attachmentState == .attached)
-    }
-
-    @Test
-    func reconcileAttachmentStatesUpdatesExistingSessionsOnly() {
-        let startedAt = Date(timeIntervalSince1970: 4_000)
-        var state = SessionState(
-            sessions: [
-                AgentSession(
-                    id: "attached-session",
-                    title: "Attached session",
-                    tool: .codex,
-                    attachmentState: .stale,
-                    phase: .completed,
-                    summary: "Turn completed",
-                    updatedAt: startedAt
-                ),
-                AgentSession(
-                    id: "untouched-session",
-                    title: "Untouched session",
-                    tool: .codex,
-                    attachmentState: .attached,
-                    phase: .running,
-                    summary: "Still running",
-                    updatedAt: startedAt.addingTimeInterval(5)
-                ),
-            ]
-        )
-
-        let changed = state.reconcileAttachmentStates([
-            "attached-session": .attached,
-            "missing-session": .detached,
-        ])
-
-        #expect(changed)
-        #expect(state.session(id: "attached-session")?.attachmentState == .attached)
-        #expect(state.session(id: "attached-session")?.summary == "Turn completed")
-        #expect(state.session(id: "untouched-session")?.attachmentState == .attached)
+        #expect(state.session(id: "live-session-1")?.isProcessAlive == true)
     }
 
     @Test
@@ -341,7 +299,6 @@ struct SessionStateTests {
             id: "live-running",
             title: "Live running",
             tool: .codex,
-            attachmentState: .attached,
             phase: .running,
             summary: "Working",
             updatedAt: .now
@@ -352,7 +309,6 @@ struct SessionStateTests {
             id: "live-attention",
             title: "Live attention",
             tool: .codex,
-            attachmentState: .attached,
             phase: .waitingForApproval,
             summary: "Needs approval",
             updatedAt: .now
@@ -367,8 +323,7 @@ struct SessionStateTests {
                     id: "detached-running",
                     title: "Detached running",
                     tool: .codex,
-                    attachmentState: .detached,
-                    phase: .running,
+                phase: .running,
                     summary: "Old run",
                     updatedAt: .now
                 ),

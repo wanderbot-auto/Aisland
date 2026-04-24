@@ -18,9 +18,7 @@ struct ClaudeSessionRegistryTests {
             ClaudeTrackedSessionRecord(
                 sessionID: "claude-session-1",
                 title: "Claude · open-island",
-                origin: .live,
-                attachmentState: .attached,
-                summary: "Working on the registry.",
+                        summary: "Working on the registry.",
                 phase: .running,
                 updatedAt: Date(timeIntervalSince1970: 1_000),
                 jumpTarget: JumpTarget(
@@ -52,13 +50,11 @@ struct ClaudeSessionRegistryTests {
     }
 
     @Test
-    func claudeTrackedSessionRecordRestoresAsStale() {
+    func claudeTrackedSessionRecordRestoresJumpTarget() {
         let record = ClaudeTrackedSessionRecord(
             sessionID: "claude-session-1",
             title: "Claude · open-island",
-            origin: .live,
-            attachmentState: .attached,
-            summary: "Working on the registry.",
+                    summary: "Working on the registry.",
             phase: .running,
             updatedAt: .now,
             jumpTarget: JumpTarget(
@@ -71,8 +67,6 @@ struct ClaudeSessionRegistryTests {
             )
         )
 
-        #expect(record.session.attachmentState == .attached)
-        #expect(record.restorableSession.attachmentState == .stale)
         #expect(record.restorableSession.jumpTarget?.terminalSessionID == "ghostty-claude")
     }
 }

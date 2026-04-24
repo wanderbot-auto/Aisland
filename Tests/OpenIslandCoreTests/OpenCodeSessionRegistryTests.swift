@@ -22,9 +22,7 @@ final class OpenCodeSessionRegistryTests: XCTestCase {
             OpenCodeTrackedSessionRecord(
                 sessionID: "opencode-1",
                 title: "Test Session",
-                origin: .live,
-                attachmentState: .attached,
-                summary: "Testing OpenCode persistence",
+                        summary: "Testing OpenCode persistence",
                 phase: .running,
                 updatedAt: Date(),
                 openCodeMetadata: OpenCodeSessionMetadata(

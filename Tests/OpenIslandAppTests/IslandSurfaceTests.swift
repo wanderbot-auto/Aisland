@@ -43,7 +43,6 @@ struct IslandSurfaceTests {
             id: "session-1",
             title: "Codex · repo",
             tool: .codex,
-            attachmentState: .attached,
             phase: .waitingForApproval,
             summary: "Approve command",
             updatedAt: .now,
@@ -64,7 +63,6 @@ struct IslandSurfaceTests {
             id: "session-1",
             title: "Codex · repo",
             tool: .codex,
-            attachmentState: .attached,
             phase: .running,
             summary: "Working...",
             updatedAt: .now
@@ -107,7 +105,6 @@ struct IslandSurfaceTests {
             id: "session-1",
             title: "Test",
             tool: .codex,
-            attachmentState: .attached,
             phase: .waitingForApproval,
             summary: "Approve",
             updatedAt: .now,
@@ -117,7 +114,6 @@ struct IslandSurfaceTests {
             id: "session-3",
             title: "Test",
             tool: .codex,
-            attachmentState: .attached,
             phase: .completed,
             summary: "Done",
             updatedAt: .now

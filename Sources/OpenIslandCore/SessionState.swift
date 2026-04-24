@@ -60,8 +60,7 @@ public struct SessionState: Equatable, Sendable {
                 id: payload.sessionID,
                 title: payload.title,
                 tool: payload.tool,
-                origin: payload.origin,
-                attachmentState: .attached,
+                isDemoSession: payload.isDemoSession,
                 phase: payload.initialPhase,
                 summary: payload.summary,
                 updatedAt: payload.timestamp,
@@ -71,7 +70,7 @@ public struct SessionState: Equatable, Sendable {
                 openCodeMetadata: payload.openCodeMetadata?.isEmpty == true ? nil : payload.openCodeMetadata
             )
             session.isRemote = payload.isRemote
-            session.isHookManaged = payload.origin == .live
+            session.isHookManaged = !payload.isDemoSession
             // Codex.app sessions use app-level liveness (NSRunningApplication)
             // rather than hook-managed processNotSeenCount polling — flag is
             // derived from jumpTarget.terminalApp via the shared helper.
@@ -254,24 +253,6 @@ public struct SessionState: Equatable, Sendable {
         session.summary = summary.isEmpty ? "Answered the question." : "Answered: \(summary)"
         session.updatedAt = timestamp
         upsert(session)
-    }
-
-    @discardableResult
-    public mutating func reconcileAttachmentStates(_ updates: [String: SessionAttachmentState]) -> Bool {
-        var changed = false
-
-        for (sessionID, attachmentState) in updates {
-            guard var session = sessionsByID[sessionID],
-                  session.attachmentState != attachmentState else {
-                continue
-            }
-
-            session.attachmentState = attachmentState
-            upsert(session)
-            changed = true
-        }
-
-        return changed
     }
 
     @discardableResult

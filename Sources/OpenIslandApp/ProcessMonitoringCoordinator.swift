@@ -33,9 +33,6 @@ final class ProcessMonitoringCoordinator {
     let activeAgentProcessDiscovery = ActiveAgentProcessDiscovery()
 
     @ObservationIgnored
-    private let terminalSessionAttachmentProbe = TerminalSessionAttachmentProbe()
-
-    @ObservationIgnored
     private let terminalJumpTargetResolver = TerminalJumpTargetResolver()
 
     @ObservationIgnored
@@ -64,20 +61,15 @@ final class ProcessMonitoringCoordinator {
 
             while !Task.isCancelled {
                 let discovery = self.activeAgentProcessDiscovery
-                let probe = self.terminalSessionAttachmentProbe
                 let resolver = self.terminalJumpTargetResolver
                 let liveSessions = self.state.sessions.filter(\.isTrackedLiveSession)
-                let (snapshots, ghosttyAvail, terminalAvail, jumpTargets) = await Task.detached(priority: .utility) {
+                let (snapshots, jumpTargets) = await Task.detached(priority: .utility) {
                     let s = discovery.discover()
-                    let g = probe.ghosttySnapshotAvailability()
-                    let t = probe.terminalSnapshotAvailability()
                     let j = resolver.resolveJumpTargets(for: liveSessions, activeProcesses: s)
-                    return (s, g, t, j)
+                    return (s, j)
                 }.value
                 self.reconcileSessionAttachments(
                     activeProcesses: snapshots,
-                    ghosttyAvailability: ghosttyAvail,
-                    terminalAvailability: terminalAvail,
                     preResolvedJumpTargets: jumpTargets
                 )
                 try? await Task.sleep(for: .seconds(2))
@@ -89,8 +81,6 @@ final class ProcessMonitoringCoordinator {
 
     func reconcileSessionAttachments(
         activeProcesses: [ActiveProcessSnapshot]? = nil,
-        ghosttyAvailability: TerminalSessionAttachmentProbe.SnapshotAvailability<TerminalSessionAttachmentProbe.GhosttyTerminalSnapshot>? = nil,
-        terminalAvailability: TerminalSessionAttachmentProbe.SnapshotAvailability<TerminalSessionAttachmentProbe.TerminalTabSnapshot>? = nil,
         preResolvedJumpTargets: [String: JumpTarget]? = nil
     ) {
         let activeProcesses = activeProcesses ?? activeAgentProcessDiscovery.discover()
@@ -136,34 +126,6 @@ final class ProcessMonitoringCoordinator {
             return
         }
 
-        let resolutionReport: TerminalSessionAttachmentProbe.ResolutionReport
-        if let ghosttyAvailability, let terminalAvailability {
-            resolutionReport = terminalSessionAttachmentProbe.sessionResolutionReport(
-                for: sessions,
-                ghosttyAvailability: ghosttyAvailability,
-                terminalAvailability: terminalAvailability,
-                activeProcesses: activeProcesses,
-                allowRecentAttachmentGrace: !isResolvingInitialLiveSessions
-            )
-        } else {
-            resolutionReport = terminalSessionAttachmentProbe.sessionResolutionReport(
-                for: sessions,
-                activeProcesses: activeProcesses,
-                allowRecentAttachmentGrace: !isResolvingInitialLiveSessions
-            )
-        }
-        let resolutions = resolutionReport.resolutions
-        let attachmentUpdates = resolutions.mapValues { $0.attachmentState }
-        let jumpTargetUpdates = resolutions.reduce(into: [String: JumpTarget]()) { partialResult, entry in
-            if let correctedJumpTarget = entry.value.correctedJumpTarget {
-                partialResult[entry.key] = correctedJumpTarget
-            }
-        }
-
-        _ = local.reconcileAttachmentStates(attachmentUpdates)
-        _ = local.reconcileJumpTargets(jumpTargetUpdates)
-
-        // Phase 1: populate isProcessAlive in parallel with existing system.
         let aliveIDs = sessionIDsWithAliveProcesses(activeProcesses: activeProcesses)
         _ = local.markProcessLiveness(
             aliveSessionIDs: aliveIDs,
@@ -196,28 +158,16 @@ final class ProcessMonitoringCoordinator {
         }
 
         guard anyChange else {
-            if resolutionReport.isAuthoritative {
-                isResolvingInitialLiveSessions = false
-            }
+            isResolvingInitialLiveSessions = false
             return
         }
 
-        if resolutionReport.isAuthoritative {
-            isResolvingInitialLiveSessions = false
-        }
+        isResolvingInitialLiveSessions = false
         onSessionsReconciled?()
         onPersistenceNeeded?()
     }
 
     // MARK: - Event helpers
-
-    func markSessionAttached(for event: AgentEvent) {
-        guard let sessionID = sessionID(for: event) else {
-            return
-        }
-
-        _ = state.reconcileAttachmentStates([sessionID: .attached])
-    }
 
     func markSessionProcessAlive(for event: AgentEvent) {
         guard let sessionID = sessionID(for: event) else {
@@ -479,8 +429,6 @@ final class ProcessMonitoringCoordinator {
             id: "\(syntheticClaudeSessionPrefix)\(identity)",
             title: "Claude · \(workspaceName)",
             tool: .claudeCode,
-            origin: .live,
-            attachmentState: .attached,
             phase: .completed,
             summary: "Claude session detected from \(terminalApp).",
             updatedAt: now,
@@ -689,7 +637,6 @@ final class ProcessMonitoringCoordinator {
                 guard !sessionOwnedByOtherProcess else { continue }
 
                 sessions[index].jumpTarget?.terminalTTY = processTTY
-                sessions[index].attachmentState = .attached
                 sessions[index].updatedAt = .now
                 changed = true
                 break
@@ -720,42 +667,6 @@ final class ProcessMonitoringCoordinator {
             sanitizedSession.jumpTarget = jumpTarget
             return sanitizedSession
         }
-    }
-
-    // MARK: - Display helpers
-
-    func liveAttachmentKey(for session: AgentSession) -> String? {
-        guard let jumpTarget = session.jumpTarget else {
-            return nil
-        }
-
-        let terminalApp = supportedTerminalApp(for: jumpTarget.terminalApp)
-            ?? jumpTarget.terminalApp.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !terminalApp.isEmpty else {
-            return nil
-        }
-
-        if let terminalSessionID = jumpTarget.terminalSessionID?
-            .trimmingCharacters(in: .whitespacesAndNewlines),
-           !terminalSessionID.isEmpty {
-            return "\(terminalApp.lowercased()):session:\(terminalSessionID.lowercased())"
-        }
-
-        if let terminalTTY = normalizedTTYForMatching(jumpTarget.terminalTTY) {
-            return "\(terminalApp.lowercased()):tty:\(terminalTTY.lowercased())"
-        }
-
-        let paneTitle = jumpTarget.paneTitle.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if let workingDirectory = normalizedPathForMatching(jumpTarget.workingDirectory),
-           !paneTitle.isEmpty {
-            return "\(terminalApp.lowercased()):cwd:\(workingDirectory):title:\(paneTitle)"
-        }
-
-        if let workingDirectory = normalizedPathForMatching(jumpTarget.workingDirectory) {
-            return "\(terminalApp.lowercased()):cwd:\(workingDirectory)"
-        }
-
-        return nil
     }
 
     // MARK: - Utilities

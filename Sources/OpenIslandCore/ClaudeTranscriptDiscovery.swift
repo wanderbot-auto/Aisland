@@ -174,8 +174,6 @@ public final class ClaudeTranscriptDiscovery: @unchecked Sendable {
             id: sessionID,
             title: "Claude · \(workspaceName)",
             tool: .claudeCode,
-            origin: .live,
-            attachmentState: .stale,
             phase: .completed,
             summary: summary,
             updatedAt: updatedAt,

@@ -48,21 +48,6 @@ public enum AgentTool: String, CaseIterable, Codable, Sendable {
     }
 }
 
-public enum SessionOrigin: String, Codable, Sendable {
-    case live
-    case demo
-}
-
-public enum SessionAttachmentState: String, Codable, Sendable {
-    case attached
-    case stale
-    case detached
-
-    public var isLive: Bool {
-        self == .attached
-    }
-}
-
 public enum SessionPhase: String, Codable, Sendable, CaseIterable {
     case running
     case waitingForApproval
@@ -313,8 +298,6 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
     public var id: String
     public var title: String
     public var tool: AgentTool
-    public var origin: SessionOrigin?
-    public var attachmentState: SessionAttachmentState
     public var phase: SessionPhase
     public var summary: String
     public var updatedAt: Date
@@ -324,6 +307,9 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
     public var codexMetadata: CodexSessionMetadata?
     public var claudeMetadata: ClaudeSessionMetadata?
     public var openCodeMetadata: OpenCodeSessionMetadata?
+
+    /// Demo sessions are synthetic UI fixtures that should always remain visible.
+    public var isDemoSession: Bool = false
 
     /// Whether this session originates from a remote (SSH) connection.
     public var isRemote: Bool = false
@@ -356,8 +342,7 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         id: String,
         title: String,
         tool: AgentTool,
-        origin: SessionOrigin? = nil,
-        attachmentState: SessionAttachmentState = .stale,
+        isDemoSession: Bool = false,
         phase: SessionPhase,
         summary: String,
         updatedAt: Date,
@@ -371,8 +356,7 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         self.id = id
         self.title = title
         self.tool = tool
-        self.origin = origin
-        self.attachmentState = attachmentState
+        self.isDemoSession = isDemoSession
         self.phase = phase
         self.summary = summary
         self.updatedAt = updatedAt
@@ -388,8 +372,8 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         case id
         case title
         case tool
+        case isDemoSession
         case origin
-        case attachmentState
         case phase
         case summary
         case updatedAt
@@ -406,8 +390,8 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         id = try container.decode(String.self, forKey: .id)
         title = try container.decode(String.self, forKey: .title)
         tool = try container.decode(AgentTool.self, forKey: .tool)
-        origin = try container.decodeIfPresent(SessionOrigin.self, forKey: .origin)
-        attachmentState = try container.decodeIfPresent(SessionAttachmentState.self, forKey: .attachmentState) ?? .stale
+        isDemoSession = try container.decodeIfPresent(Bool.self, forKey: .isDemoSession)
+            ?? (try container.decodeIfPresent(String.self, forKey: .origin) == "demo")
         phase = try container.decode(SessionPhase.self, forKey: .phase)
         summary = try container.decode(String.self, forKey: .summary)
         updatedAt = try container.decode(Date.self, forKey: .updatedAt)
@@ -424,8 +408,7 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         try container.encode(id, forKey: .id)
         try container.encode(title, forKey: .title)
         try container.encode(tool, forKey: .tool)
-        try container.encodeIfPresent(origin, forKey: .origin)
-        try container.encode(attachmentState, forKey: .attachmentState)
+        try container.encode(isDemoSession, forKey: .isDemoSession)
         try container.encode(phase, forKey: .phase)
         try container.encode(summary, forKey: .summary)
         try container.encode(updatedAt, forKey: .updatedAt)
@@ -439,20 +422,12 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
 }
 
 public extension AgentSession {
-    var isDemoSession: Bool {
-        origin == .demo
-    }
-
     var isTrackedLiveSession: Bool {
         !isDemoSession && (tool == .codex || tool == .claudeCode || tool == .openCode || tool == .general)
     }
 
     var isTrackedLiveCodexSession: Bool {
         tool == .codex && !isDemoSession
-    }
-
-    var isAttachedToTerminal: Bool {
-        attachmentState.isLive
     }
 
     /// Visibility rule for the island UI.

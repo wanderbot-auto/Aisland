@@ -4,10 +4,10 @@ import OpenIslandCore
 
 /// Resolves precise jump targets for sessions by querying Ghostty and
 /// Terminal.app via AppleScript. This type is responsible ONLY for jump
-/// target precision — it never affects session visibility or attachment state.
+/// target precision — it never affects session visibility.
 ///
 /// Introduced in Phase 2 of the session state refactoring to separate
-/// jump-target resolution from the attachment state machine.
+/// jump-target resolution from process-liveness state.
 struct TerminalJumpTargetResolver {
     typealias ActiveProcessSnapshot = ActiveAgentProcessDiscovery.ProcessSnapshot
 

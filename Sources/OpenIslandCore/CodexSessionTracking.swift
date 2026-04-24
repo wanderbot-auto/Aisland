@@ -38,8 +38,6 @@ public struct CodexSessionMetadata: Equatable, Codable, Sendable {
 public struct CodexTrackedSessionRecord: Equatable, Codable, Sendable {
     public var sessionID: String
     public var title: String
-    public var origin: SessionOrigin?
-    public var attachmentState: SessionAttachmentState
     public var summary: String
     public var phase: SessionPhase
     public var updatedAt: Date
@@ -49,8 +47,6 @@ public struct CodexTrackedSessionRecord: Equatable, Codable, Sendable {
     public init(
         sessionID: String,
         title: String,
-        origin: SessionOrigin? = nil,
-        attachmentState: SessionAttachmentState = .stale,
         summary: String,
         phase: SessionPhase,
         updatedAt: Date,
@@ -59,8 +55,6 @@ public struct CodexTrackedSessionRecord: Equatable, Codable, Sendable {
     ) {
         self.sessionID = sessionID
         self.title = title
-        self.origin = origin
-        self.attachmentState = attachmentState
         self.summary = summary
         self.phase = phase
         self.updatedAt = updatedAt
@@ -72,8 +66,6 @@ public struct CodexTrackedSessionRecord: Equatable, Codable, Sendable {
         self.init(
             sessionID: session.id,
             title: session.title,
-            origin: session.origin,
-            attachmentState: session.attachmentState,
             summary: session.summary,
             phase: session.phase,
             updatedAt: session.updatedAt,
@@ -87,8 +79,6 @@ public struct CodexTrackedSessionRecord: Equatable, Codable, Sendable {
             id: sessionID,
             title: title,
             tool: .codex,
-            origin: origin,
-            attachmentState: attachmentState,
             phase: phase,
             summary: summary,
             updatedAt: updatedAt,
@@ -105,8 +95,6 @@ public struct CodexTrackedSessionRecord: Equatable, Codable, Sendable {
     private enum CodingKeys: String, CodingKey {
         case sessionID
         case title
-        case origin
-        case attachmentState
         case summary
         case phase
         case updatedAt
@@ -118,8 +106,6 @@ public struct CodexTrackedSessionRecord: Equatable, Codable, Sendable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         sessionID = try container.decode(String.self, forKey: .sessionID)
         title = try container.decode(String.self, forKey: .title)
-        origin = try container.decodeIfPresent(SessionOrigin.self, forKey: .origin)
-        attachmentState = try container.decodeIfPresent(SessionAttachmentState.self, forKey: .attachmentState) ?? .stale
         summary = try container.decode(String.self, forKey: .summary)
         phase = try container.decode(SessionPhase.self, forKey: .phase)
         updatedAt = try container.decode(Date.self, forKey: .updatedAt)
@@ -131,8 +117,6 @@ public struct CodexTrackedSessionRecord: Equatable, Codable, Sendable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(sessionID, forKey: .sessionID)
         try container.encode(title, forKey: .title)
-        try container.encodeIfPresent(origin, forKey: .origin)
-        try container.encode(attachmentState, forKey: .attachmentState)
         try container.encode(summary, forKey: .summary)
         try container.encode(phase, forKey: .phase)
         try container.encode(updatedAt, forKey: .updatedAt)
@@ -143,13 +127,11 @@ public struct CodexTrackedSessionRecord: Equatable, Codable, Sendable {
 
 public extension CodexTrackedSessionRecord {
     var restorableSession: AgentSession {
-        var session = session
-        session.attachmentState = .stale
-        return session
+        session
     }
 
     var shouldRestoreToLiveState: Bool {
-        origin != .demo && !LegacyMockSessionIDs.all.contains(sessionID)
+        !LegacyMockSessionIDs.all.contains(sessionID)
     }
 }
 
@@ -359,8 +341,6 @@ public final class CodexRolloutDiscovery: @unchecked Sendable {
         return CodexTrackedSessionRecord(
             sessionID: sessionMeta.sessionID,
             title: sessionMeta.sessionTitle,
-            origin: .live,
-            attachmentState: .stale,
             summary: summary,
             phase: snapshot.phase,
             updatedAt: updatedAt,
@@ -542,7 +522,7 @@ public enum CodexRolloutReducer {
                     SessionActivityUpdated(
                         sessionID: sessionID,
                         summary: newSummary,
-                        phase: newSnapshot.phase,
+            phase: newSnapshot.phase,
                         timestamp: timestamp
                     )
                 )
