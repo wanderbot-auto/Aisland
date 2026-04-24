@@ -25,12 +25,8 @@ CLI coding agents are powerful, but they pull attention away from the editor and
 | **Claude Code** | Supported | Hook integration, JSONL session discovery, status line bridge, usage tracking |
 | **Codex** | Supported | Full hook integration (SessionStart, UserPromptSubmit, Stop), usage tracking |
 | **OpenCode** | Supported | JS plugin integration, permission/question flows, process detection |
-| **Qoder** | Supported | Claude Code fork — same hook format, config at `~/.qoder/settings.json` |
-| **Qwen Code** | Supported | Claude Code fork — same hook format, config at `~/.qwen/settings.json` |
-| **Factory** | Supported | Claude Code fork — same hook format, config at `~/.factory/settings.json` |
-| **CodeBuddy** | Supported | Claude Code fork — same hook format, config at `~/.codebuddy/settings.json` |
-| **Gemini CLI** | Supported | Hook integration (`SessionStart`, `BeforeAgent`, `AfterAgent`, `SessionEnd`, `Notification`), session tracking, terminal jump metadata, completion-card compatibility handling |
-| **Kimi CLI** | Supported | Hook integration via `~/.kimi/config.toml` `[[hooks]]` (Moonshot AI). Kimi's hook payload is byte-compatible with Claude Code, so runtime reuses the Claude decode path; a dedicated TOML installer preserves user-authored hooks |
+
+Unsupported agents should use the future generic adapter path instead of one-off first-class integrations. Cursor, Gemini CLI, Kimi CLI, Qoder, Qwen Code, Factory, and CodeBuddy are being removed from the first-class support boundary during the refactor.
 
 ## Supported Terminals
 

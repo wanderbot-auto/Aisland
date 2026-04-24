@@ -17,7 +17,7 @@ The repository is primarily a Swift package with four products:
 | Target | Role |
 |---|---|
 | `OpenIslandApp` | SwiftUI + AppKit app shell, menu bar extra, overlay/notch panel, settings, control center, discovery, process monitoring, terminal jump-back. |
-| `OpenIslandCore` | Shared domain and runtime layer: session/event models, reducer, Unix socket transport, bridge server, hook payloads, installers, registries, usage loading, watch relay. |
+| `OpenIslandCore` | Shared domain and runtime layer: session/event models, reducer, Unix socket transport, bridge server, hook payloads, installers, registries, and usage loading. |
 | `OpenIslandHooks` | Hook CLI invoked by supported agents. It reads stdin JSON, decodes by `--source`, forwards to the app bridge, and writes blocking directives only when needed. |
 | `OpenIslandSetup` | Setup CLI for installing, uninstalling, and checking managed Codex, Claude, and Kimi hooks. |
 
@@ -26,9 +26,8 @@ Supporting areas:
 | Area | Role |
 |---|---|
 | `Tests` | Unit coverage for core reducers, hook payloads, session tracking, jump behavior, and app state lists. |
-| `ios` | iPhone and Watch companion notification surfaces, SSE/Bonjour connection management, and WatchConnectivity. |
 | `scripts` | Build, package, smoke, appcast, icon, release, and local environment helper scripts. |
-| `docs` | Architecture, product scope, hooks, quality, release, worktree, watch, and investigation notes. |
+| `docs` | Architecture, product scope, hooks, quality, release, worktree, removal, and investigation notes. |
 
 ## Code Size Snapshot
 
@@ -36,23 +35,20 @@ Top-level source/documentation footprint:
 
 | Area | Lines |
 |---|---:|
-| `Sources` | 34,678 |
+| `Sources` | 33,838 |
 | `Tests` | 8,510 |
-| `docs` | 5,431 |
-| `ios` | 2,865 |
+| `docs` | 5,142 |
 | `scripts` | 2,391 |
-| Total measured | 53,875 |
+| Total measured | 49,881 |
 
 Swift target footprint:
 
 | Area | Swift lines |
 |---|---:|
-| `Sources/OpenIslandApp` | 18,325 |
-| `Sources/OpenIslandCore` | 15,597 |
+| `Sources/OpenIslandApp` | 18,144 |
+| `Sources/OpenIslandCore` | 14,938 |
 | `Tests/OpenIslandCoreTests` | 5,212 |
 | `Tests/OpenIslandAppTests` | 3,298 |
-| `ios/OpenIslandMobile` | 2,383 |
-| `ios/OpenIslandWatch` | 445 |
 | `Sources/OpenIslandSetup` | 283 |
 | `Sources/OpenIslandHooks` | 135 |
 
@@ -62,12 +58,12 @@ Largest Swift files:
 |---|---:|---|
 | `Sources/OpenIslandCore/BridgeServer.swift` | 2,534 | Socket server, command router, per-agent hook adapters, pending interaction store, event emission. |
 | `Sources/OpenIslandApp/Views/IslandPanelView.swift` | 2,375 | Root island UI, header, session list, rows, approvals, questions, replies, usage, menu bar content. |
-| `Sources/OpenIslandApp/AppModel.swift` | 1,545 | App-level observable state, bridge observer, user actions, overlay forwarding, discovery, monitoring, persistence, watch relay. |
+| `Sources/OpenIslandApp/AppModel.swift` | 1,449 | App-level observable state, bridge observer, user actions, overlay forwarding, discovery, monitoring, and persistence. |
 | `Sources/OpenIslandCore/ClaudeHooks.swift` | 1,385 | Claude-compatible payloads, directives, metadata, question, permission, subagent, and task parsing. |
 | `Sources/OpenIslandApp/TerminalSessionAttachmentProbe.swift` | 1,360 | Terminal session attachment probing and matching. |
 | `Sources/OpenIslandApp/TerminalJumpService.swift` | 1,318 | Multi-terminal jump-back implementation. |
 | `Sources/OpenIslandApp/HookInstallationCoordinator.swift` | 1,310 | App-facing hook setup status, install/uninstall, usage monitoring, health checks, repair. |
-| `Sources/OpenIslandApp/Views/SettingsView.swift` | 1,251 | Settings UI and agent/watch/update setup sections. |
+| `Sources/OpenIslandApp/Views/SettingsView.swift` | 1,166 | Settings UI and agent/update setup sections. |
 | `Sources/OpenIslandCore/CodexSessionTracking.swift` | 1,140 | Codex rollout discovery, session store, reducer, and watcher. |
 | `Sources/OpenIslandApp/ProcessMonitoringCoordinator.swift` | 1,021 | Active process discovery and session liveness reconciliation. |
 
@@ -98,7 +94,7 @@ Largest Swift files:
 
 - Broad agent support: Claude Code, Codex, OpenCode, Cursor, Gemini, Kimi, Qoder, Qwen Code, Factory, and CodeBuddy.
 - Broad terminal support: Terminal.app, Ghostty, cmux, Kaku, WezTerm, iTerm2, tmux, Zellij, Warp fallback, VS Code family, and JetBrains workspace jumps.
-- Large state facade: `AppModel` coordinates bridge, overlay, settings, hooks, process discovery, persistence, watch relay, sounds, usage, and jump actions.
+- Large state facade: `AppModel` coordinates bridge, overlay, settings, hooks, process discovery, persistence, sounds, usage, and jump actions.
 - Mixed protocol responsibilities: `BridgeServer` combines socket mechanics, command routing, event adaptation, pending interactions, and local state merging.
 - UI concentration: `IslandPanelView` includes root panel behavior, presentation logic, all row variants, action controls, structured questions, reply input, usage, and menu content.
 - Domain model pressure: `AgentSession` carries terminal metadata, per-agent metadata, permissions, questions, tasks, subagents, liveness, remote state, and display state.
@@ -118,8 +114,8 @@ Scope decision for this refactor pass:
 | Gemini CLI | Remove | Delete adapter, payload handling, installer/status UI, tests, and docs references in focused cleanup slices. |
 | Kimi CLI | Remove | Delete installer/setup CLI support and Claude-format fork handling in focused cleanup slices. |
 | Qoder, Qwen Code, Factory, CodeBuddy | Remove | Delete Claude Code fork setup/status paths and UI sections in focused cleanup slices. |
-| iOS companion app | Remove | Delete mobile project/code/docs references after bridge/watch dependencies are untangled. |
-| Watch companion app | Remove | Delete Watch target/code/docs references and app-side watch relay integration. |
+| iOS companion app | Removed | Mobile project/code/docs references were deleted in the iOS/Watch removal slice. |
+| Watch companion app | Removed | Watch target/code/docs references and app-side relay integration were deleted in the iOS/Watch removal slice. |
 | Terminal jump support | Keep for now | Defer terminal support pruning until jump strategies are split and independently testable. |
 | Usage dashboards | Keep for now | Reassess after unsupported agent removal simplifies setup and session metadata. |
 | Sparkle auto-update | Keep for now | Not coupled to agent scope; preserve unless release scope changes. |
@@ -129,7 +125,7 @@ Guardrails before deleting code:
 
 - Keep Codex, Claude Code, and OpenCode behavior intact until adapter and facade boundaries are in place.
 - Remove unsupported agents in narrow vertical slices: core payloads, bridge handling, app coordinator state, settings UI, tests, and docs.
-- Remove iOS/Watch in a separate slice from agent removal because it touches app relay state, `ios/`, docs, and project files.
+- Keep iOS/Watch removal separate from agent removal because it touched app relay state, `ios/`, docs, and project files.
 - Classify terminal jump implementations later, after strategy extraction exposes per-terminal ownership.
 
 ### Phase 1: Strengthen Verification Around Core Behavior
@@ -163,7 +159,6 @@ Target: make `AppModel` a SwiftUI-facing facade instead of the owner of every si
 
 - Extract bridge observer lifecycle into `BridgeObserverController`.
 - Extract user actions into `SessionActionController` or focused methods owned by a session controller.
-- Remove watch relay lifecycle after the iOS/Watch removal inventory identifies all app-side wiring.
 - Extract persisted settings state into a smaller settings model.
 - Keep `AppModel` as the observable facade that SwiftUI views already depend on.
 - Avoid changing view bindings until state ownership is clearer.
@@ -216,7 +211,7 @@ Only delete or deeply simplify features after boundaries exist.
 
 - Remove adapters, installers, CLI source cases, and UI sections for Cursor, Gemini, Kimi, Qoder, Qwen Code, Factory, and CodeBuddy.
 - Remove terminal strategies classified as out of scope.
-- Remove iOS and Watch companion features, including `ios/`, app-side watch relay wiring, watch settings, and watch documentation links.
+- Keep iOS and Watch companion features removed; do not reintroduce `ios/`, app-side watch relay wiring, watch settings, or watch documentation links.
 - Remove stale docs and tests in the same focused slice as the feature deletion.
 - Keep each deletion independently revertible.
 
@@ -225,7 +220,7 @@ Only delete or deeply simplify features after boundaries exist.
 Start with a non-destructive verification slice for the retained core agents:
 
 1. Add golden tests around the current `BridgeServer` Codex, Claude Code, and OpenCode hook conversions before extraction.
-2. Add a short removal inventory for unsupported agents and iOS/Watch so deletion slices are easy to review.
+2. Use `docs/removal-inventory.md` to drive unsupported-agent cleanup slices.
 3. Run `swift test`.
 4. Commit only the tests and inventory update.
 
@@ -236,8 +231,8 @@ This creates a behavior safety net before touching the largest files.
 Recommended order for the next work round:
 
 1. Add bridge adapter golden tests for Codex, Claude Code, and OpenCode.
-2. Create an unsupported-agent removal inventory that lists every file and test touched by Cursor, Gemini, Kimi, Qoder, Qwen Code, Factory, and CodeBuddy.
-3. Create an iOS/Watch removal inventory covering `ios/`, app-side watch relay code, settings UI, docs, and package/project references.
+2. Use the unsupported-agent removal inventory to list every code path touched by Cursor, Gemini, Kimi, Qoder, Qwen Code, Factory, and CodeBuddy before each deletion slice.
+3. Keep iOS/Watch deleted and verify future changes do not recreate companion app, watch relay, or watch settings surfaces.
 4. Begin `BridgeServer` extraction with one retained adapter at a time, starting with Codex because its hook flow is smaller than Claude-compatible flows.
 5. After retained adapters are isolated, delete unsupported agent paths in narrow, independently verified commits.
 
