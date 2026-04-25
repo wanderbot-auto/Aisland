@@ -41,30 +41,30 @@ This refactor pass removes the companion surfaces entirely.
 
 | Area | Files |
 |---|---|
-| Xcode project | `ios/OpenIslandMobile.xcodeproj/project.pbxproj` |
-| iOS app | `ios/OpenIslandMobile/App.swift`, `ios/OpenIslandMobile/ContentView.swift`, `ios/OpenIslandMobile/Info.plist`, `ios/OpenIslandMobile/PrivacyInfo.xcprivacy` |
-| iOS models | `ios/OpenIslandMobile/Models/WatchEvent.swift` |
-| iOS networking | `ios/OpenIslandMobile/Network/BonjourDiscovery.swift`, `ios/OpenIslandMobile/Network/ConnectionManager.swift`, `ios/OpenIslandMobile/Network/SSEClient.swift`, `ios/OpenIslandMobile/Network/WatchConnectivityManager.swift` |
-| iOS notifications | `ios/OpenIslandMobile/Notifications/NotificationManager.swift` |
-| iOS views | `ios/OpenIslandMobile/Views/EventDetailView.swift`, `ios/OpenIslandMobile/Views/PairingView.swift`, `ios/OpenIslandMobile/Views/SettingsView.swift` |
-| iOS assets | `ios/OpenIslandMobile/Assets.xcassets/**` |
-| Watch app | `ios/OpenIslandWatch/ContentView.swift`, `ios/OpenIslandWatch/EventCardView.swift`, `ios/OpenIslandWatch/HapticManager.swift`, `ios/OpenIslandWatch/OpenIslandWatchApp.swift`, `ios/OpenIslandWatch/PrivacyInfo.xcprivacy`, `ios/OpenIslandWatch/WatchSessionManager.swift` |
-| Watch assets | `ios/OpenIslandWatch/Assets.xcassets/**` |
+| Xcode project | `ios/AislandMobile.xcodeproj/project.pbxproj` |
+| iOS app | `ios/AislandMobile/App.swift`, `ios/AislandMobile/ContentView.swift`, `ios/AislandMobile/Info.plist`, `ios/AislandMobile/PrivacyInfo.xcprivacy` |
+| iOS models | `ios/AislandMobile/Models/WatchEvent.swift` |
+| iOS networking | `ios/AislandMobile/Network/BonjourDiscovery.swift`, `ios/AislandMobile/Network/ConnectionManager.swift`, `ios/AislandMobile/Network/SSEClient.swift`, `ios/AislandMobile/Network/WatchConnectivityManager.swift` |
+| iOS notifications | `ios/AislandMobile/Notifications/NotificationManager.swift` |
+| iOS views | `ios/AislandMobile/Views/EventDetailView.swift`, `ios/AislandMobile/Views/PairingView.swift`, `ios/AislandMobile/Views/SettingsView.swift` |
+| iOS assets | `ios/AislandMobile/Assets.xcassets/**` |
+| Watch app | `ios/AislandWatch/ContentView.swift`, `ios/AislandWatch/EventCardView.swift`, `ios/AislandWatch/HapticManager.swift`, `ios/AislandWatch/AislandWatchApp.swift`, `ios/AislandWatch/PrivacyInfo.xcprivacy`, `ios/AislandWatch/WatchSessionManager.swift` |
+| Watch assets | `ios/AislandWatch/Assets.xcassets/**` |
 | Shared mobile/watch messages | `ios/Shared/WatchMessage.swift` |
 
 ### Deleted macOS App-Side Watch Files
 
 | File | Reason |
 |---|---|
-| `Sources/OpenIslandCore/WatchHTTPEndpoint.swift` | Removes embedded HTTP/SSE server and Bonjour pairing surface. |
-| `Sources/OpenIslandCore/WatchNotificationRelay.swift` | Removes AppModel-to-Watch event relay and resolution callbacks. |
+| `Sources/AislandCore/WatchHTTPEndpoint.swift` | Removes embedded HTTP/SSE server and Bonjour pairing surface. |
+| `Sources/AislandCore/WatchNotificationRelay.swift` | Removes AppModel-to-Watch event relay and resolution callbacks. |
 
 ### macOS Files Cleaned In Place
 
 | File | Cleanup |
 |---|---|
-| `Sources/OpenIslandApp/AppModel.swift` | Remove watch notification defaults, relay lifecycle, pairing state, and event forwarding. |
-| `Sources/OpenIslandApp/Views/SettingsView.swift` | Remove Watch settings tab and `WatchSettingsPane`. |
+| `Sources/AislandApp/AppModel.swift` | Remove watch notification defaults, relay lifecycle, pairing state, and event forwarding. |
+| `Sources/AislandApp/Views/SettingsView.swift` | Remove Watch settings tab and `WatchSettingsPane`. |
 | `docs/index.md` | Remove Watch/iOS documentation section. |
 | `docs/roadmap.md` | Remove Watch/iOS roadmap row. |
 | `docs/roadmap.zh-CN.md` | Remove Watch/iOS roadmap row. |

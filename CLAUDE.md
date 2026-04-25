@@ -2,7 +2,7 @@
 
 ## What is this project?
 
-Open Island is a native macOS companion app for AI coding agents. It sits in the notch/top-bar area and monitors local agent sessions, surfaces permission requests, answers questions, and provides "jump back" to the correct terminal context. Local-first, no server dependency.
+Aisland is a native macOS companion app for AI coding agents. It sits in the notch/top-bar area and monitors local agent sessions, surfaces permission requests, answers questions, and provides "jump back" to the correct terminal context. Local-first, no server dependency.
 
 ## References
 
@@ -11,20 +11,20 @@ Open Island is a native macOS companion app for AI coding agents. It sits in the
 
 ## Architecture
 
-Four targets in one Swift package (`OpenIsland`):
+Four targets in one Swift package (`Aisland`):
 
-1. **OpenIslandApp** — SwiftUI + AppKit shell. Menu bar extra, overlay panel (notch/top-bar), and control center window. Entry point: `OpenIslandApp.swift` with `AppModel` as the central `@Observable` state owner.
-2. **OpenIslandCore** — Shared library. Models (`AgentSession`, `AgentEvent`, `SessionState`), bridge transport (Unix socket IPC with JSON line protocol), hook models/installers for both Codex and Claude Code, transcript discovery, session persistence/registry.
-3. **OpenIslandHooks** — Lightweight CLI executable invoked by agent hooks. Reads hook payload from stdin, forwards to app bridge via Unix socket, writes blocking JSON to stdout only when island denies a `PreToolUse`.
-4. **OpenIslandSetup** — Installer CLI for managing `~/.codex/config.toml` and `hooks.json`.
+1. **AislandApp** — SwiftUI + AppKit shell. Menu bar extra, overlay panel (notch/top-bar), and control center window. Entry point: `AislandApp.swift` with `AppModel` as the central `@Observable` state owner.
+2. **AislandCore** — Shared library. Models (`AgentSession`, `AgentEvent`, `SessionState`), bridge transport (Unix socket IPC with JSON line protocol), hook models/installers for both Codex and Claude Code, transcript discovery, session persistence/registry.
+3. **AislandHooks** — Lightweight CLI executable invoked by agent hooks. Reads hook payload from stdin, forwards to app bridge via Unix socket, writes blocking JSON to stdout only when island denies a `PreToolUse`.
+4. **AislandSetup** — Installer CLI for managing `~/.codex/config.toml` and `hooks.json`.
 
 ## Key data flow
 
 ### Codex path
-Codex → hooks.json → OpenIslandHooks (stdin/stdout) → Unix socket → BridgeServer → AppModel → UI
+Codex → hooks.json → AislandHooks (stdin/stdout) → Unix socket → BridgeServer → AppModel → UI
 
 ### Claude Code path
-Claude Code → settings.json hooks → OpenIslandHooks (stdin/stdout) → Unix socket → BridgeServer.handleClaudeHook → AppModel → UI
+Claude Code → settings.json hooks → AislandHooks (stdin/stdout) → Unix socket → BridgeServer.handleClaudeHook → AppModel → UI
 
 ### Session discovery (on launch)
 Restore cached sessions from registry → discover recent JSONL transcripts (`~/.claude/projects/`) → reconcile with active terminal processes → start live bridge.
@@ -41,8 +41,8 @@ Restore cached sessions from registry → discover recent JSONL transcripts (`~/
 ```bash
 swift build
 swift test
-swift run OpenIslandApp                            # run the app
-swift build -c release --product OpenIslandHooks   # build hook binary
+swift run AislandApp                            # run the app
+swift build -c release --product AislandHooks   # build hook binary
 ```
 
 Open `Package.swift` in Xcode for the app target. Requires macOS 14+, Swift 6.2.
@@ -89,15 +89,15 @@ Open `Package.swift` in Xcode for the app target. Requires macOS 14+, Swift 6.2.
 - **Bilingual required**: Every release MUST include both English and Chinese (Simplified) descriptions. Use the template in `.github/RELEASE_TEMPLATE.md`.
 - Before creating a release, fetch remote `main` and review ALL merged PRs since the last tag to avoid missing changes.
 - Each changelog entry follows the format: `- **Category**: English description (#PR)\n  中文描述 (#PR)`. For external contributors, append `— Thanks @username` to the English line.
-- The release title follows: `Open Island vX.Y.Z — Short English Title`
+- The release title follows: `Aisland vX.Y.Z — Short English Title`
 - The Installation section must be bilingual.
 - Release is triggered by pushing a `v*` tag to `main`. The GitHub Actions workflow builds, signs, notarizes, and publishes the DMG automatically.
 
 ## App Targets And Naming
 
-- `OpenIslandApp` (via `swift run OpenIslandApp` or the Xcode target) is the canonical development runtime.
-- `~/Applications/Open Island Dev.app` is a local bundle wrapper around the repo-built binary, not a separate product.
-- When launching `Open Island Dev.app`, refresh the bundle first with `zsh scripts/launch-dev-app.sh` instead of only `open -na` (avoids stale binaries).
+- `AislandApp` (via `swift run AislandApp` or the Xcode target) is the canonical development runtime.
+- `~/Applications/Aisland Dev.app` is a local bundle wrapper around the repo-built binary, not a separate product.
+- When launching `Aisland Dev.app`, refresh the bundle first with `zsh scripts/launch-dev-app.sh` instead of only `open -na` (avoids stale binaries).
 - **One-time setup**: run `zsh scripts/setup-dev-signing.sh` once to create a local self-signed code signing identity. Without it the dev bundle is ad-hoc signed, which changes cdhash every rebuild and silently invalidates any macOS TCC grant (Accessibility, Automation) you gave the previous build. Required when iterating on features that touch AX API (precision jump, keystroke/menu injection, etc.).
 - Use `scripts/harness.sh smoke` or `scripts/smoke-dev-app.sh` only for deterministic harness runs.
 - `/Applications/Vibe Island.app` and `https://vibeisland.app/` are closed-source reference baselines only — behavior benchmarks, not the development runtime.
@@ -125,20 +125,20 @@ Open `Package.swift` in Xcode for the app target. Requires macOS 14+, Swift 6.2.
 
 ## Important files
 
-- `Sources/OpenIslandApp/AppModel.swift` — Central app state, session management, bridge lifecycle
-- `Sources/OpenIslandApp/TerminalSessionAttachmentProbe.swift` — Ghostty/Terminal attachment matching
-- `Sources/OpenIslandApp/ActiveAgentProcessDiscovery.swift` — Process discovery via ps/lsof
-- `Sources/OpenIslandCore/SessionState.swift` — Pure state reducer for agent sessions
-- `Sources/OpenIslandCore/AgentSession.swift` — Core session model and related types
-- `Sources/OpenIslandCore/AgentEvent.swift` — Event enum driving all state transitions
-- `Sources/OpenIslandCore/BridgeTransport.swift` — Unix socket protocol, codec, envelope types
-- `Sources/OpenIslandCore/BridgeServer.swift` — Bridge server handling hook payloads
-- `Sources/OpenIslandCore/ClaudeHooks.swift` — Claude Code hook payload model and terminal detection
-- `Sources/OpenIslandCore/ClaudeTranscriptDiscovery.swift` — Discovers sessions from `~/.claude/projects/` JSONL files
-- `Sources/OpenIslandCore/ClaudeSessionRegistry.swift` — Persists/restores Claude sessions across app launches
-- `Sources/OpenIslandCore/CodexHooks.swift` — Codex hook payload model
-- `Sources/OpenIslandHooks/main.swift` — Hook CLI entry point
-- `Sources/OpenIslandApp/OverlayPanelController.swift` — Notch/top-bar overlay window
+- `Sources/AislandApp/AppModel.swift` — Central app state, session management, bridge lifecycle
+- `Sources/AislandApp/TerminalSessionAttachmentProbe.swift` — Ghostty/Terminal attachment matching
+- `Sources/AislandApp/ActiveAgentProcessDiscovery.swift` — Process discovery via ps/lsof
+- `Sources/AislandCore/SessionState.swift` — Pure state reducer for agent sessions
+- `Sources/AislandCore/AgentSession.swift` — Core session model and related types
+- `Sources/AislandCore/AgentEvent.swift` — Event enum driving all state transitions
+- `Sources/AislandCore/BridgeTransport.swift` — Unix socket protocol, codec, envelope types
+- `Sources/AislandCore/BridgeServer.swift` — Bridge server handling hook payloads
+- `Sources/AislandCore/ClaudeHooks.swift` — Claude Code hook payload model and terminal detection
+- `Sources/AislandCore/ClaudeTranscriptDiscovery.swift` — Discovers sessions from `~/.claude/projects/` JSONL files
+- `Sources/AislandCore/ClaudeSessionRegistry.swift` — Persists/restores Claude sessions across app launches
+- `Sources/AislandCore/CodexHooks.swift` — Codex hook payload model
+- `Sources/AislandHooks/main.swift` — Hook CLI entry point
+- `Sources/AislandApp/OverlayPanelController.swift` — Notch/top-bar overlay window
 - `docs/product.md` — Product scope and MVP boundary
 - `docs/architecture.md` — System design and engineering decisions
 - `AGENTS.md` — Working agreement for agent workflow

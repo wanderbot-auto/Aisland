@@ -1,6 +1,6 @@
 # Hook System
 
-OpenIsland receives hook events from supported AI agents (Codex and Claude Code) via the `OpenIslandHooks` CLI. The CLI forwards payloads to the app over a Unix socket and, when necessary, writes a directive back to stdout so the agent can act on it (e.g. block a tool call).
+Aisland receives hook events from supported AI agents (Codex and Claude Code) via the `AislandHooks` CLI. The CLI forwards payloads to the app over a Unix socket and, when necessary, writes a directive back to stdout so the agent can act on it (e.g. block a tool call).
 
 ## Architecture
 
@@ -8,13 +8,13 @@ OpenIsland receives hook events from supported AI agents (Codex and Claude Code)
 Agent (Codex / Claude Code)
   │  stdin: JSON payload
   ▼
-OpenIslandHooks CLI  (--source codex | --source claude)
+AislandHooks CLI  (--source codex | --source claude)
   │  Unix socket
   ▼
 BridgeServer → AppModel → UI
   │  BridgeResponse
   ▼
-OpenIslandHooks CLI
+AislandHooks CLI
   │  stdout: JSON directive (only when a response is needed)
   ▼
 Agent
@@ -22,14 +22,14 @@ Agent
 
 **Fail-open principle**: if the bridge is unavailable the hook process exits silently without writing to stdout, so the agent continues running unaffected.
 
-**Entry point**: [`Sources/OpenIslandHooks/main.swift`](../Sources/OpenIslandHooks/main.swift)
+**Entry point**: [`Sources/AislandHooks/main.swift`](../Sources/AislandHooks/main.swift)
 
 ---
 
 ## Codex Hooks (`--source codex`)
 
 **Payload type**: `CodexHookPayload`  
-**Source**: [`Sources/OpenIslandCore/CodexHooks.swift`](../Sources/OpenIslandCore/CodexHooks.swift)
+**Source**: [`Sources/AislandCore/CodexHooks.swift`](../Sources/AislandCore/CodexHooks.swift)
 
 ### Events
 
@@ -69,7 +69,7 @@ Agent
 The app can block a command by writing this to stdout:
 
 ```json
-{"decision": "block", "reason": "Blocked by Open Island"}
+{"decision": "block", "reason": "Blocked by Aisland"}
 ```
 
 All other events require no stdout response.
@@ -79,7 +79,7 @@ All other events require no stdout response.
 ## Claude Code Hooks (`--source claude`)
 
 **Payload type**: `ClaudeHookPayload`  
-**Source**: [`Sources/OpenIslandCore/ClaudeHooks.swift`](../Sources/OpenIslandCore/ClaudeHooks.swift)
+**Source**: [`Sources/AislandCore/ClaudeHooks.swift`](../Sources/AislandCore/ClaudeHooks.swift)
 
 ### Events
 
@@ -229,8 +229,8 @@ For iTerm, Terminal, and Ghostty the process additionally runs an AppleScript qu
 
 | File | Responsibility |
 |---|---|
-| [`Sources/OpenIslandHooks/main.swift`](../Sources/OpenIslandHooks/main.swift) | Hook CLI entry point — routes to Codex or Claude path |
-| [`Sources/OpenIslandCore/CodexHooks.swift`](../Sources/OpenIslandCore/CodexHooks.swift) | Codex payload model, output encoder, terminal detection |
-| [`Sources/OpenIslandCore/ClaudeHooks.swift`](../Sources/OpenIslandCore/ClaudeHooks.swift) | Claude Code payload model, directive types, output encoder |
-| [`Sources/OpenIslandCore/BridgeServer.swift`](../Sources/OpenIslandCore/BridgeServer.swift) | Unix socket server — handles incoming hook payloads |
-| [`Sources/OpenIslandCore/BridgeTransport.swift`](../Sources/OpenIslandCore/BridgeTransport.swift) | Protocol codec and envelope types |
+| [`Sources/AislandHooks/main.swift`](../Sources/AislandHooks/main.swift) | Hook CLI entry point — routes to Codex or Claude path |
+| [`Sources/AislandCore/CodexHooks.swift`](../Sources/AislandCore/CodexHooks.swift) | Codex payload model, output encoder, terminal detection |
+| [`Sources/AislandCore/ClaudeHooks.swift`](../Sources/AislandCore/ClaudeHooks.swift) | Claude Code payload model, directive types, output encoder |
+| [`Sources/AislandCore/BridgeServer.swift`](../Sources/AislandCore/BridgeServer.swift) | Unix socket server — handles incoming hook payloads |
+| [`Sources/AislandCore/BridgeTransport.swift`](../Sources/AislandCore/BridgeTransport.swift) | Protocol codec and envelope types |

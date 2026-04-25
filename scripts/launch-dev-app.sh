@@ -12,21 +12,21 @@ done
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 brand_script="$repo_root/scripts/generate_brand_icons.py"
-brand_icon="$repo_root/Assets/Brand/OpenIsland.icns"
-bundle_dir="$HOME/Applications/Open Island Dev.app"
+brand_icon="$repo_root/Assets/Brand/Aisland.icns"
+bundle_dir="$HOME/Applications/Aisland Dev.app"
 plist_path="$bundle_dir/Contents/Info.plist"
-bundle_binary="$bundle_dir/Contents/MacOS/OpenIslandApp"
+bundle_binary="$bundle_dir/Contents/MacOS/AislandApp"
 
 cd "$repo_root"
 
-swift build -c debug --product OpenIslandApp
-swift build -c debug --product OpenIslandHooks
-swift build -c debug --product OpenIslandSetup
+swift build -c debug --product AislandApp
+swift build -c debug --product AislandHooks
+swift build -c debug --product AislandSetup
 
 build_root="$(swift build -c debug --show-bin-path)"
-app_binary="$build_root/OpenIslandApp"
-hooks_binary="$build_root/OpenIslandHooks"
-setup_binary="$build_root/OpenIslandSetup"
+app_binary="$build_root/AislandApp"
+hooks_binary="$build_root/AislandHooks"
+setup_binary="$build_root/AislandSetup"
 
 python3 "$brand_script"
 if [ "$skip_setup" = false ]; then
@@ -36,24 +36,24 @@ fi
 mkdir -p "$bundle_dir/Contents/MacOS" "$bundle_dir/Contents/Helpers" "$bundle_dir/Contents/Resources" "$bundle_dir/Contents/Frameworks"
 
 # Kill any running instance before copying so the binary isn't locked.
-osascript -e 'tell application "Open Island Dev" to quit' 2>/dev/null || true
-pkill -9 -f "Open Island Dev" 2>/dev/null || true
+osascript -e 'tell application "Aisland Dev" to quit' 2>/dev/null || true
+pkill -9 -f "Aisland Dev" 2>/dev/null || true
 sleep 2
 
 command cp "$app_binary" "$bundle_binary"
-command cp "$hooks_binary" "$bundle_dir/Contents/Helpers/OpenIslandHooks"
-command cp "$setup_binary" "$bundle_dir/Contents/Helpers/OpenIslandSetup"
-command cp "$brand_icon" "$bundle_dir/Contents/Resources/OpenIsland.icns"
-chmod +x "$bundle_binary" "$bundle_dir/Contents/Helpers/OpenIslandHooks" "$bundle_dir/Contents/Helpers/OpenIslandSetup"
+command cp "$hooks_binary" "$bundle_dir/Contents/Helpers/AislandHooks"
+command cp "$setup_binary" "$bundle_dir/Contents/Helpers/AislandSetup"
+command cp "$brand_icon" "$bundle_dir/Contents/Resources/Aisland.icns"
+chmod +x "$bundle_binary" "$bundle_dir/Contents/Helpers/AislandHooks" "$bundle_dir/Contents/Helpers/AislandSetup"
 
 # Add rpath so the binary can find Sparkle.framework in Contents/Frameworks/.
 install_name_tool -add_rpath @loader_path/../Frameworks "$bundle_binary" 2>/dev/null || true
 
 # Copy SPM resource bundle to .app root — SPM's generated Bundle.module accessor
 # searches Bundle.main.bundleURL (the .app root), NOT Contents/Resources/.
-resource_bundle="$build_root/OpenIsland_OpenIslandApp.bundle"
+resource_bundle="$build_root/Aisland_AislandApp.bundle"
 if [ -d "$resource_bundle" ]; then
-    rm -rf "$bundle_dir/OpenIsland_OpenIslandApp.bundle"
+    rm -rf "$bundle_dir/Aisland_AislandApp.bundle"
     command cp -R "$resource_bundle" "$bundle_dir/"
 fi
 
@@ -72,15 +72,15 @@ cat > "$plist_path" <<EOF
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleExecutable</key>
-    <string>OpenIslandApp</string>
+    <string>AislandApp</string>
     <key>CFBundleIdentifier</key>
-    <string>app.openisland.dev</string>
+    <string>app.aisland.dev</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleIconFile</key>
-    <string>OpenIsland</string>
+    <string>Aisland</string>
     <key>CFBundleName</key>
-    <string>Open Island Dev</string>
+    <string>Aisland Dev</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -90,7 +90,7 @@ cat > "$plist_path" <<EOF
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>NSAppleEventsUsageDescription</key>
-    <string>Open Island needs automation access to focus Terminal and iTerm sessions for jump-back.</string>
+    <string>Aisland needs automation access to focus Terminal and iTerm sessions for jump-back.</string>
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>NSPrincipalClass</key>
@@ -109,7 +109,7 @@ EOF
 # Bundle.module falls back to the hardcoded .build/ path, so
 # localization still works. (Release builds use package-app.sh which
 # has its own resource bundle handling.)
-resource_bundle_name="OpenIsland_OpenIslandApp.bundle"
+resource_bundle_name="Aisland_AislandApp.bundle"
 root_bundle="$bundle_dir/$resource_bundle_name"
 resources_bundle="$bundle_dir/Contents/Resources/$resource_bundle_name"
 if [ -d "$root_bundle" ] && [ ! -L "$root_bundle" ]; then
@@ -129,8 +129,8 @@ fi
 # identity locally with zero Apple Developer Program involvement.
 sign_identity="-"
 if security find-identity -p codesigning -v "$HOME/Library/Keychains/login.keychain-db" 2>/dev/null \
-       | grep -q '"Open Island Dev Local"'; then
-    sign_identity="Open Island Dev Local"
+       | grep -q '"Aisland Dev Local"'; then
+    sign_identity="Aisland Dev Local"
 else
     echo
     echo "⚠ Using ad-hoc signing. macOS TCC grants (Accessibility, Automation)"

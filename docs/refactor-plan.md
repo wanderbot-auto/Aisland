@@ -1,10 +1,10 @@
 # Systematic Refactor Plan
 
-This document captures the current repository shape, complexity hotspots, and a staged refactoring route for simplifying Open Island without losing critical behavior.
+This document captures the current repository shape, complexity hotspots, and a staged refactoring route for simplifying Aisland without losing critical behavior.
 
 ## Goals
 
-- Keep the native macOS product centered on `OpenIslandApp`.
+- Keep the native macOS product centered on `AislandApp`.
 - Preserve fail-open hook behavior and local-first runtime guarantees.
 - Reduce the highest-coupling files before deleting or reshaping features.
 - Make every refactor slice independently reviewable, testable, and reversible.
@@ -16,10 +16,10 @@ The repository is primarily a Swift package with four products:
 
 | Target | Role |
 |---|---|
-| `OpenIslandApp` | SwiftUI + AppKit app shell, menu bar extra, overlay/notch panel, settings, control center, discovery, process monitoring, terminal jump-back. |
-| `OpenIslandCore` | Shared domain and runtime layer: session/event models, reducer, Unix socket transport, bridge server, hook payloads, installers, registries, and usage loading. |
-| `OpenIslandHooks` | Hook CLI invoked by supported agents. It reads stdin JSON, decodes by `--source`, forwards to the app bridge, and writes blocking directives only when needed. |
-| `OpenIslandSetup` | Setup CLI for installing, uninstalling, and checking managed Codex and Claude hooks. |
+| `AislandApp` | SwiftUI + AppKit app shell, menu bar extra, overlay/notch panel, settings, control center, discovery, process monitoring, terminal jump-back. |
+| `AislandCore` | Shared domain and runtime layer: session/event models, reducer, Unix socket transport, bridge server, hook payloads, installers, registries, and usage loading. |
+| `AislandHooks` | Hook CLI invoked by supported agents. It reads stdin JSON, decodes by `--source`, forwards to the app bridge, and writes blocking directives only when needed. |
+| `AislandSetup` | Setup CLI for installing, uninstalling, and checking managed Codex and Claude hooks. |
 
 Supporting areas:
 
@@ -45,34 +45,34 @@ Swift target footprint:
 
 | Area | Swift lines |
 |---|---:|
-| `Sources/OpenIslandApp` | 18,144 |
-| `Sources/OpenIslandCore` | 14,938 |
-| `Tests/OpenIslandCoreTests` | 5,212 |
-| `Tests/OpenIslandAppTests` | 3,298 |
-| `Sources/OpenIslandSetup` | 283 |
-| `Sources/OpenIslandHooks` | 135 |
+| `Sources/AislandApp` | 18,144 |
+| `Sources/AislandCore` | 14,938 |
+| `Tests/AislandCoreTests` | 5,212 |
+| `Tests/AislandAppTests` | 3,298 |
+| `Sources/AislandSetup` | 283 |
+| `Sources/AislandHooks` | 135 |
 
 Largest Swift files:
 
 | File | Lines | Primary concern |
 |---|---:|---|
-| `Sources/OpenIslandCore/BridgeServer.swift` | 2,534 | Socket server, command router, per-agent hook adapters, pending interaction store, event emission. |
-| `Sources/OpenIslandApp/Views/IslandPanelView.swift` | 2,375 | Root island UI, header, session list, rows, approvals, questions, replies, usage, menu bar content. |
-| `Sources/OpenIslandApp/AppModel.swift` | 1,449 | App-level observable state, bridge observer, user actions, overlay forwarding, discovery, monitoring, and persistence. |
-| `Sources/OpenIslandCore/ClaudeHooks.swift` | 1,385 | Claude-compatible payloads, directives, metadata, question, permission, subagent, and task parsing. |
-| `Sources/OpenIslandApp/TerminalSessionAttachmentProbe.swift` | 1,360 | Terminal session attachment probing and matching. |
-| `Sources/OpenIslandApp/TerminalJumpService.swift` | 1,318 | Multi-terminal jump-back implementation. |
-| `Sources/OpenIslandApp/HookInstallationCoordinator.swift` | 1,310 | App-facing hook setup status, install/uninstall, usage monitoring, health checks, repair. |
-| `Sources/OpenIslandApp/Views/SettingsView.swift` | 1,166 | Settings UI and agent/update setup sections. |
-| `Sources/OpenIslandCore/CodexSessionTracking.swift` | 1,140 | Codex rollout discovery, session store, reducer, and watcher. |
-| `Sources/OpenIslandApp/ProcessMonitoringCoordinator.swift` | 1,021 | Active process discovery and session liveness reconciliation. |
+| `Sources/AislandCore/BridgeServer.swift` | 2,534 | Socket server, command router, per-agent hook adapters, pending interaction store, event emission. |
+| `Sources/AislandApp/Views/IslandPanelView.swift` | 2,375 | Root island UI, header, session list, rows, approvals, questions, replies, usage, menu bar content. |
+| `Sources/AislandApp/AppModel.swift` | 1,449 | App-level observable state, bridge observer, user actions, overlay forwarding, discovery, monitoring, and persistence. |
+| `Sources/AislandCore/ClaudeHooks.swift` | 1,385 | Claude-compatible payloads, directives, metadata, question, permission, subagent, and task parsing. |
+| `Sources/AislandApp/TerminalSessionAttachmentProbe.swift` | 1,360 | Terminal session attachment probing and matching. |
+| `Sources/AislandApp/TerminalJumpService.swift` | 1,318 | Multi-terminal jump-back implementation. |
+| `Sources/AislandApp/HookInstallationCoordinator.swift` | 1,310 | App-facing hook setup status, install/uninstall, usage monitoring, health checks, repair. |
+| `Sources/AislandApp/Views/SettingsView.swift` | 1,166 | Settings UI and agent/update setup sections. |
+| `Sources/AislandCore/CodexSessionTracking.swift` | 1,140 | Codex rollout discovery, session store, reducer, and watcher. |
+| `Sources/AislandApp/ProcessMonitoringCoordinator.swift` | 1,021 | Active process discovery and session liveness reconciliation. |
 
 ## Key Runtime Flows
 
 ### Agent Hook To UI
 
-1. A supported agent invokes `OpenIslandHooks`.
-2. `OpenIslandHooksCLI` decodes stdin based on `--source`.
+1. A supported agent invokes `AislandHooks`.
+2. `AislandHooksCLI` decodes stdin based on `--source`.
 3. `BridgeCommandClient` sends a `BridgeCommand` over the local Unix socket.
 4. `BridgeServer` handles the command, translates payloads into `AgentEvent`s, and manages pending approval/question responses.
 5. `AppModel` observes bridge events and calls `SessionState.apply(_:)`.
@@ -80,7 +80,7 @@ Largest Swift files:
 
 ### App Startup
 
-1. `OpenIslandAppDelegate.applicationDidFinishLaunching` creates and starts `AppModel`.
+1. `AislandAppDelegate.applicationDidFinishLaunching` creates and starts `AppModel`.
 2. `AppModel.startIfNeeded` runs startup discovery, hook status refreshes, usage monitoring, update checks, overlay setup, and bridge startup.
 3. `LocalBridgeClient` registers as a bridge observer and streams `AgentEvent`s back into `AppModel`.
 

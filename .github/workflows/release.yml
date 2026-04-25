@@ -57,7 +57,7 @@ jobs:
           security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
 
           # Store notarytool credentials in the keychain
-          xcrun notarytool store-credentials "open-island-notary" \
+          xcrun notarytool store-credentials "aisland-notary" \
             --apple-id "${{ secrets.APPLE_ID }}" \
             --team-id "${{ secrets.APPLE_TEAM_ID }}" \
             --password "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}" \
@@ -68,23 +68,23 @@ jobs:
 
       - name: Build and package (signed)
         env:
-          OPEN_ISLAND_APP_NAME: "Open Island"
-          OPEN_ISLAND_BUNDLE_ID: "app.openisland.OpenIsland"
-          OPEN_ISLAND_VERSION: ${{ steps.version.outputs.version }}
-          OPEN_ISLAND_BUILD_NUMBER: ${{ github.run_number }}
-          OPEN_ISLAND_SIGN_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          OPEN_ISLAND_UNIVERSAL: "true"
+          AISLAND_APP_NAME: "Aisland"
+          AISLAND_BUNDLE_ID: "app.aisland.Aisland"
+          AISLAND_VERSION: ${{ steps.version.outputs.version }}
+          AISLAND_BUILD_NUMBER: ${{ github.run_number }}
+          AISLAND_SIGN_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          AISLAND_UNIVERSAL: "true"
         run: zsh scripts/package-app.sh
 
       - name: Verify artifacts
         run: |
-          test -f "output/package/Open Island.zip"
-          test -f "output/package/Open Island.dmg"
+          test -f "output/package/Aisland.zip"
+          test -f "output/package/Aisland.dmg"
           ls -lh output/package/
 
       - name: Verify code signature
         run: |
-          bundle="output/package/Open Island.app"
+          bundle="output/package/Aisland.app"
           echo "--- Signature info ---"
           codesign -dvv "$bundle"
           echo ""
@@ -93,17 +93,17 @@ jobs:
 
       - name: Verify bundle structure
         run: |
-          bundle="output/package/Open Island.app"
+          bundle="output/package/Aisland.app"
           echo "--- Bundle contents ---"
           find "$bundle" -maxdepth 3 -type f | sort
 
           # Required files
           for f in \
-            "Contents/MacOS/OpenIslandApp" \
-            "Contents/Helpers/OpenIslandHooks" \
-            "Contents/Helpers/OpenIslandSetup" \
-            "Contents/Resources/OpenIsland.icns" \
-            "Contents/Resources/OpenIsland_OpenIslandApp.bundle" \
+            "Contents/MacOS/AislandApp" \
+            "Contents/Helpers/AislandHooks" \
+            "Contents/Helpers/AislandSetup" \
+            "Contents/Resources/Aisland.icns" \
+            "Contents/Resources/Aisland_AislandApp.bundle" \
           ; do
             if [[ ! -e "$bundle/$f" ]]; then
               echo "::error::Missing required file: $f"
@@ -118,15 +118,15 @@ jobs:
         id: notarize
         continue-on-error: true
         env:
-          OPEN_ISLAND_APP_NAME: "Open Island"
+          AISLAND_APP_NAME: "Aisland"
         run: |
-          bundle="output/package/$OPEN_ISLAND_APP_NAME.app"
-          zip_path="output/package/$OPEN_ISLAND_APP_NAME.zip"
-          dmg_path="output/package/$OPEN_ISLAND_APP_NAME.dmg"
+          bundle="output/package/$AISLAND_APP_NAME.app"
+          zip_path="output/package/$AISLAND_APP_NAME.zip"
+          dmg_path="output/package/$AISLAND_APP_NAME.dmg"
 
           echo "Submitting for notarization..."
           xcrun notarytool submit "$zip_path" \
-            --keychain-profile "open-island-notary" \
+            --keychain-profile "aisland-notary" \
             --wait --timeout 10m || { echo "::warning::Notarization failed or timed out"; exit 1; }
 
           echo "Stapling app bundle..."
@@ -139,7 +139,7 @@ jobs:
           # Re-sign and notarize DMG
           codesign --force --sign "${{ secrets.APPLE_SIGNING_IDENTITY }}" --timestamp "$dmg_path"
           xcrun notarytool submit "$dmg_path" \
-            --keychain-profile "open-island-notary" \
+            --keychain-profile "aisland-notary" \
             --wait --timeout 10m || { echo "::warning::DMG notarization failed or timed out"; exit 1; }
           xcrun stapler staple -v "$dmg_path"
 
@@ -151,7 +151,7 @@ jobs:
           SPARKLE_EDDSA_KEY: ${{ secrets.SPARKLE_EDDSA_KEY }}
         run: |
           sign_tool=".build/artifacts/sparkle/Sparkle/bin/sign_update"
-          zip_path="output/package/Open Island.zip"
+          zip_path="output/package/Aisland.zip"
 
           if [[ -z "$SPARKLE_EDDSA_KEY" ]]; then
             echo "::warning::SPARKLE_EDDSA_KEY not set — skipping appcast update"
@@ -207,12 +207,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "$GITHUB_REF_NAME" \
-            --title "Open Island $GITHUB_REF_NAME" \
+            --title "Aisland $GITHUB_REF_NAME" \
             --generate-notes \
             --notes-start-tag "$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo '')" \
             --draft \
-            "output/package/Open Island.dmg#Open Island.dmg (macOS, Universal)" \
-            "output/package/Open Island.zip#Open Island.zip (macOS, Universal)"
+            "output/package/Aisland.dmg#Aisland.dmg (macOS, Universal)" \
+            "output/package/Aisland.zip#Aisland.zip (macOS, Universal)"
 
       - name: Append install instructions to release notes
         env:
@@ -232,7 +232,7 @@ jobs:
 
           ## Installation
 
-          1. Download **Open Island.dmg**, open it, and drag **Open Island** to **Applications**.
+          1. Download **Aisland.dmg**, open it, and drag **Aisland** to **Applications**.
           2. Requires **macOS 14+** (Apple Silicon and Intel).
 
           ${install_note}

@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="Assets/Brand/app-icon-cat.png" alt="Open Island" width="128" height="128">
+  <img src="Assets/Brand/app-icon-cat.png" alt="Aisland" width="128" height="128">
 </p>
 
-<h1 align="center">Open Island</h1>
+<h1 align="center">Aisland</h1>
 
 <p align="center">
   <strong>Why pay for a closed-source app just to monitor your coding agents?</strong>
@@ -27,20 +27,20 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/demo.gif" alt="Open Island in action" width="720">
+  <img src="docs/images/demo.gif" alt="Aisland in action" width="720">
 </p>
 
 ---
 
-## What is Open Island?
+## What is Aisland?
 
-Open Island sits in your Mac's **notch** (or top bar) and gives you a real-time control surface for your AI coding agents — session status, permission approvals, and instant jump-back to the right terminal. All without leaving your flow.
+Aisland sits in your Mac's **notch** (or top bar) and gives you a real-time control surface for your AI coding agents — session status, permission approvals, and instant jump-back to the right terminal. All without leaving your flow.
 
 Think of it as an open-source [Vibe Island](https://vibeisland.app/) — **free, local-first, and you own every bit of it**.
 
 > *You don't need to pay for a product you can vibe, since you are a vibe coder.*
 
-## Why Open Island?
+## Why Aisland?
 
 - **Open source** — GPL v3, fork it, mod it, ship your own version
 - **Local-first** — No server, no telemetry, no account. Everything runs on your Mac
@@ -115,7 +115,7 @@ cd open-vibe-island
 open Package.swift   # Opens in Xcode — hit Run
 ```
 
-On first launch, Open Island auto-discovers your active agent sessions and starts the live bridge. Hook installation is managed from the **Control Center** inside the app.
+On first launch, Aisland auto-discovers your active agent sessions and starts the live bridge. Hook installation is managed from the **Control Center** inside the app.
 
 > **Requirements**: macOS 14+, Swift 6.2, Xcode
 
@@ -124,7 +124,7 @@ On first launch, Open Island auto-discovers your active agent sessions and start
 ```
 Agent (Claude Code / Codex / OpenCode / General Agent)
   ↓ hook event
-OpenIslandHooks CLI (stdin → Unix socket)
+AislandHooks CLI (stdin → Unix socket)
   ↓ JSON envelope
 BridgeServer (in-app)
   ↓ state update
@@ -133,7 +133,7 @@ Notch overlay UI ← you see it here
 Jump back → correct terminal / IDE
 ```
 
-Hooks **fail open** — if Open Island isn't running, your agents continue unaffected.
+Hooks **fail open** — if Aisland isn't running, your agents continue unaffected.
 
 <details>
 <summary>Architecture details</summary>
@@ -142,10 +142,10 @@ Four targets in one Swift package:
 
 | Target | Role |
 |---|---|
-| **OpenIslandApp** | SwiftUI + AppKit shell — menu bar, overlay panel, control center, settings |
-| **OpenIslandCore** | Shared library — models, bridge transport (Unix socket IPC), hooks, session persistence |
-| **OpenIslandHooks** | Lightweight CLI invoked by agent hooks, forwards payloads via Unix socket |
-| **OpenIslandSetup** | Installer CLI for managing `~/.codex/config.toml` and hook entries |
+| **AislandApp** | SwiftUI + AppKit shell — menu bar, overlay panel, control center, settings |
+| **AislandCore** | Shared library — models, bridge transport (Unix socket IPC), hooks, session persistence |
+| **AislandHooks** | Lightweight CLI invoked by agent hooks, forwards payloads via Unix socket |
+| **AislandSetup** | Installer CLI for managing `~/.codex/config.toml` and hook entries |
 
 See [docs/architecture.md](docs/architecture.md) for the full system design.
 
@@ -174,14 +174,14 @@ Copy this prompt into your agent (Claude Code, Codex, etc.) to auto-generate a w
 <summary>Click to expand</summary>
 
 ```
-I'm having an issue with Open Island (https://github.com/Octane0411/open-vibe-island).
+I'm having an issue with Aisland (https://github.com/Octane0411/open-vibe-island).
 
 Please help me file a GitHub issue. Do the following:
 
 1. Collect my environment info:
    - Run `sw_vers` to get macOS version
    - Run `swift --version` to get Swift version
-   - Check if Open Island is running: `ps aux | grep -i "open.island\|OpenIslandApp" | grep -v grep`
+   - Check if Aisland is running: `ps aux | grep -i "aisland\|AislandApp" | grep -v grep`
    - Get the app version: `defaults read ~/Applications/Open\ Island\ Dev.app/Contents/Info.plist CFBundleShortVersionString 2>/dev/null || echo "unknown"`
    - Check which terminal I'm using
 
@@ -226,13 +226,13 @@ This section is written for agents.
 
 The open-source macOS companion for terminal-native AI coding.
 
-`Open Island` puts a lightweight control surface in your notch or top bar so you can keep an eye on live coding agents, follow session progress, and jump back to the right terminal without breaking flow.
+`Aisland` puts a lightweight control surface in your notch or top bar so you can keep an eye on live coding agents, follow session progress, and jump back to the right terminal without breaking flow.
 
 ### Why This Product Exists
 
 AI coding is becoming part of the daily development loop, but the surrounding control layer still too often means handing your machine over to a closed-source paid app.
 
-`Open Island` takes the opposite approach:
+`Aisland` takes the opposite approach:
 
 - Open source
 - Local first, no server dependency
@@ -246,7 +246,7 @@ Developers who already live in the terminal and want a better way to work with c
 ### Agent Integrations
 
 - **Codex CLI** — Full hook-based integration. Receives `SessionStart`, `UserPromptSubmit`, and `Stop` events by default. Reads 5-hour and 7-day account usage windows from local rollout files. Install/uninstall managed hooks from the control center or CLI.
-- **Codex Desktop App** — Detected via `__CFBundleIdentifier`; hook sessions tagged as `isCodexAppSession` so they follow desktop-app liveness (tied to `NSWorkspace.shared.runningApplications` rather than the CLI subprocess that exits after each turn). In addition to hooks, Open Island launches its own `codex app-server` subprocess and speaks JSON-RPC over stdio to receive live `thread/started`, `turn/started`, `turn/completed`, and `thread/closed` notifications. Clicking a session opens the exact conversation via the `codex://threads/<id>` URL scheme.
+- **Codex Desktop App** — Detected via `__CFBundleIdentifier`; hook sessions tagged as `isCodexAppSession` so they follow desktop-app liveness (tied to `NSWorkspace.shared.runningApplications` rather than the CLI subprocess that exits after each turn). In addition to hooks, Aisland launches its own `codex app-server` subprocess and speaks JSON-RPC over stdio to receive live `thread/started`, `turn/started`, `turn/completed`, and `thread/closed` notifications. Clicking a session opens the exact conversation via the `codex://threads/<id>` URL scheme.
 - **Claude Code** — Hook-based integration via `~/.claude/settings.json`. Discovers sessions from `~/.claude/projects/` JSONL transcripts. Persists and restores sessions across app launches. Managed status line bridge with opt-in installation. Reads cached 5-hour and 7-day usage windows.
 - **OpenCode** — JS plugin integration via `~/.config/opencode/plugins/`. Plugin auto-installed on first launch. Receives session lifecycle, tool use, permission, and question events. Permission approval and question answering flows supported. Process detection via `ps`.
 ### Terminal Support
@@ -278,10 +278,10 @@ Four targets in one Swift package:
 
 | Target | Role |
 |---|---|
-| **OpenIslandApp** | SwiftUI + AppKit shell — menu bar, overlay panel, control center, settings |
-| **OpenIslandCore** | Shared library — models, bridge transport (Unix socket IPC), hooks, session persistence |
-| **OpenIslandHooks** | Lightweight CLI invoked by agent hooks, forwards payloads via Unix socket |
-| **OpenIslandSetup** | Installer CLI for managing `~/.codex/config.toml` and hook entries |
+| **AislandApp** | SwiftUI + AppKit shell — menu bar, overlay panel, control center, settings |
+| **AislandCore** | Shared library — models, bridge transport (Unix socket IPC), hooks, session persistence |
+| **AislandHooks** | Lightweight CLI invoked by agent hooks, forwards payloads via Unix socket |
+| **AislandSetup** | Installer CLI for managing `~/.codex/config.toml` and hook entries |
 
 ### Quick Start (Agent)
 
@@ -297,24 +297,24 @@ Build a local `.app` bundle:
 zsh scripts/package-app.sh
 ```
 
-That script creates `output/package/Open Island.app` and `output/package/Open Island.zip`. Pass `OPEN_ISLAND_SIGN_IDENTITY` to sign the bundle. See [docs/packaging.md](docs/packaging.md) for the full path, including notarization.
+That script creates `output/package/Aisland.app` and `output/package/Aisland.zip`. Pass `AISLAND_SIGN_IDENTITY` to sign the bundle. See [docs/packaging.md](docs/packaging.md) for the full path, including notarization.
 
 #### Connect Codex
 
 Open the package in Xcode to run the macOS app target. On launch, the app restores its local cache, scans recent `~/.codex/sessions/**/rollout-*.jsonl` files for existing Codex sessions, and starts the live bridge for new hook events.
 
-The control center shows live Codex hook install status from `~/.codex`, and can install or uninstall managed hook entries directly. Installs copy the helper into `~/Library/Application Support/OpenIsland/bin/OpenIslandHooks` so repo renames do not break existing hooks.
+The control center shows live Codex hook install status from `~/.codex`, and can install or uninstall managed hook entries directly. Installs copy the helper into `~/Library/Application Support/Aisland/bin/AislandHooks` so repo renames do not break existing hooks.
 
 ```bash
-swift build -c release --product OpenIslandHooks
-swift run OpenIslandSetup install
-swift run OpenIslandSetup status
-swift run OpenIslandSetup uninstall
+swift build -c release --product AislandHooks
+swift run AislandSetup install
+swift run AislandSetup status
+swift run AislandSetup uninstall
 ```
 
 #### Connect Claude Code
 
-Claude usage setup is available from the app's control center and remains opt-in. The bridge writes a managed `statusLine.command` to `~/.open-island/bin/open-island-statusline`, caches `rate_limits` into `/tmp/open-island-rl.json`, and refuses to overwrite an existing custom status line automatically.
+Claude usage setup is available from the app's control center and remains opt-in. The bridge writes a managed `statusLine.command` to `~/.aisland/bin/aisland-statusline`, caches `rate_limits` into `/tmp/aisland-rl.json`, and refuses to overwrite an existing custom status line automatically.
 
 ### Repository Map
 
