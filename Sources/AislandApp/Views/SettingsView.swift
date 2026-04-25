@@ -151,26 +151,10 @@ struct SettingsView: View {
 struct GeneralSettingsPane: View {
     var model: AppModel
 
-    @State private var launchAtLogin = false
-
     private var lang: LanguageManager { model.lang }
 
     var body: some View {
         Form {
-            Section(lang.t("settings.section.system")) {
-                Toggle(lang.t("settings.general.launchAtLogin"), isOn: $launchAtLogin)
-
-                Picker(lang.t("settings.general.monitor"), selection: Binding(
-                    get: { model.overlayDisplaySelectionID },
-                    set: { model.overlayDisplaySelectionID = $0 }
-                )) {
-                    Text(lang.t("settings.general.automatic")).tag(OverlayDisplayOption.automaticID)
-                    ForEach(model.overlayDisplayOptions) { option in
-                        Text(option.title).tag(option.id)
-                    }
-                }
-            }
-
             Section(lang.t("settings.general.language")) {
                 Picker(lang.t("settings.general.language"), selection: Binding(
                     get: { lang.language },
@@ -184,7 +168,6 @@ struct GeneralSettingsPane: View {
             }
 
             Section(lang.t("settings.general.behavior")) {
-                Toggle(lang.t("settings.general.autoCollapse"), isOn: .constant(true))
                 Toggle(lang.t("settings.general.showDockIcon"), isOn: Binding(
                     get: { model.showDockIcon },
                     set: { model.showDockIcon = $0 }
