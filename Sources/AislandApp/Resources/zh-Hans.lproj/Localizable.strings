@@ -6,6 +6,7 @@
 /* Settings - Tab Labels */
 "settings.tab.general" = "通用";
 "settings.tab.display" = "显示";
+"settings.tab.usage" = "用量";
 "settings.tab.sound" = "声音";
 "settings.tab.shortcuts" = "快捷键";
 
@@ -80,6 +81,27 @@
 "settings.display.layoutMode" = "布局模式";
 "settings.display.islandHeader" = "岛屿标题栏";
 "settings.display.showCodexUsageInHeader" = "在岛屿标题栏显示 Codex 用量";
+
+"usage.title" = "令牌用量";
+"usage.subtitle" = "自动从本地 Claude Code 和 Codex 的 JSONL 日志导入。";
+"usage.sources" = "来源";
+"usage.refreshing" = "刷新中";
+"usage.refresh" = "刷新";
+"usage.period" = "时间范围";
+"usage.period.day" = "按日";
+"usage.period.month" = "按月";
+"usage.period.session" = "按会话";
+"usage.list.day" = "每日汇总";
+"usage.list.month" = "每月汇总";
+"usage.list.session" = "会话汇总";
+"usage.inputTokens" = "输入 token";
+"usage.outputTokens" = "输出 token";
+"usage.totalTokens" = "总 token";
+"usage.entries" = "记录数";
+"usage.files" = "文件数";
+"usage.groups" = "分组数";
+"usage.empty.title" = "暂无用量数据";
+"usage.empty.subtitle" = "打开 Claude Code 或 Codex，Aisland 会在后台导入 JSONL 日志。";
 
 /* Settings - Sound */
 "settings.sound.notifications" = "通知音效";

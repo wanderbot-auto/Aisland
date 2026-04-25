@@ -6,6 +6,7 @@
 /* Settings - Tab Labels */
 "settings.tab.general" = "General";
 "settings.tab.display" = "Display";
+"settings.tab.usage" = "Usage";
 "settings.tab.sound" = "Sound";
 "settings.tab.shortcuts" = "Shortcuts";
 
@@ -80,6 +81,27 @@
 "settings.display.layoutMode" = "Layout Mode";
 "settings.display.islandHeader" = "Island Header";
 "settings.display.showCodexUsageInHeader" = "Show Codex usage in island header";
+
+"usage.title" = "Token usage";
+"usage.subtitle" = "Auto-imported from local Claude Code and Codex JSONL logs.";
+"usage.sources" = "Sources";
+"usage.refreshing" = "Refreshing";
+"usage.refresh" = "Refresh";
+"usage.period" = "Time range";
+"usage.period.day" = "Day";
+"usage.period.month" = "Month";
+"usage.period.session" = "Session";
+"usage.list.day" = "Daily summary";
+"usage.list.month" = "Monthly summary";
+"usage.list.session" = "Session summary";
+"usage.inputTokens" = "Input tokens";
+"usage.outputTokens" = "Output tokens";
+"usage.totalTokens" = "Total tokens";
+"usage.entries" = "Entries";
+"usage.files" = "Files";
+"usage.groups" = "Groups";
+"usage.empty.title" = "No usage data yet";
+"usage.empty.subtitle" = "Open Claude Code or Codex and let Aisland import the JSONL logs in the background.";
 
 /* Settings - Sound */
 "settings.sound.notifications" = "Notification Sounds";

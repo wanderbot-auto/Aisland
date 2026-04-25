@@ -6,6 +6,7 @@
 /* Settings - Tab Labels */
 "settings.tab.general" = "一般";
 "settings.tab.display" = "顯示";
+"settings.tab.usage" = "用量";
 "settings.tab.sound" = "聲音";
 "settings.tab.shortcuts" = "快捷鍵";
 
@@ -80,6 +81,27 @@
 "settings.display.layoutMode" = "版面模式";
 "settings.display.islandHeader" = "島嶼標題列";
 "settings.display.showCodexUsageInHeader" = "在島嶼標題列顯示 Codex 用量";
+
+"usage.title" = "Token 用量";
+"usage.subtitle" = "自動從本機 Claude Code 與 Codex 的 JSONL 日誌匯入。";
+"usage.sources" = "來源";
+"usage.refreshing" = "重新整理中";
+"usage.refresh" = "重新整理";
+"usage.period" = "時間範圍";
+"usage.period.day" = "按日";
+"usage.period.month" = "按月";
+"usage.period.session" = "按會話";
+"usage.list.day" = "每日彙總";
+"usage.list.month" = "每月彙總";
+"usage.list.session" = "會話彙總";
+"usage.inputTokens" = "輸入 token";
+"usage.outputTokens" = "輸出 token";
+"usage.totalTokens" = "總 token";
+"usage.entries" = "記錄數";
+"usage.files" = "檔案數";
+"usage.groups" = "分組數";
+"usage.empty.title" = "尚無用量資料";
+"usage.empty.subtitle" = "打開 Claude Code 或 Codex，Aisland 會在背景匯入 JSONL 日誌。";
 
 /* Settings - Sound */
 "settings.sound.notifications" = "通知音效";

@@ -59,6 +59,7 @@ final class AppModel {
     let overlay = OverlayUICoordinator()
     let discovery = SessionDiscoveryCoordinator()
     let monitoring = ProcessMonitoringCoordinator()
+    let usageAnalytics = UsageAnalyticsCoordinator()
     let codexAppServer = CodexAppServerCoordinator()
     let updateChecker = UpdateChecker()
 
@@ -97,6 +98,10 @@ final class AppModel {
     var codexUsageStatusTitle: String { hooks.codexUsageStatusTitle }
     var codexUsageStatusSummary: String { hooks.codexUsageStatusSummary }
     var codexUsageSummaryText: String? { hooks.codexUsageSummaryText }
+    var usageAnalyticsIsRefreshing: Bool { usageAnalytics.isRefreshing }
+    var usageAnalyticsLastRefreshError: String? { usageAnalytics.lastRefreshError }
+    var usageAnalyticsLastRefreshedAt: Date? { usageAnalytics.lastRefreshedAt }
+    var usageAnalyticsLastRefreshReport: UsageAnalyticsRefreshReport? { usageAnalytics.lastRefreshReport }
     var openCodePluginStatus: OpenCodePluginInstallationStatus? { hooks.openCodePluginStatus }
     var isOpenCodeSetupBusy: Bool { hooks.isOpenCodeSetupBusy }
     var openCodePluginStatusTitle: String { hooks.openCodePluginStatusTitle }
@@ -129,6 +134,11 @@ final class AppModel {
     func refreshOpenCodePluginStatus() { hooks.refreshOpenCodePluginStatus() }
     func refreshClaudeUsageState() { hooks.refreshClaudeUsageState() }
     func refreshCodexUsageState() { hooks.refreshCodexUsageState() }
+    func refreshUsageAnalytics() { usageAnalytics.refreshNow() }
+    func startUsageAnalyticsMonitoringIfNeeded() { usageAnalytics.startMonitoringIfNeeded() }
+    func usageAnalyticsSnapshot(for period: UsageAggregationPeriod) -> UsageAnalyticsSnapshot? {
+        usageAnalytics.snapshot(for: period)
+    }
     func installCodexHooks() { hooks.installCodexHooks() }
     func uninstallCodexHooks() { hooks.uninstallCodexHooks() }
     func installClaudeHooks() { hooks.installClaudeHooks() }
@@ -663,6 +673,8 @@ final class AppModel {
                 hooks.refreshCodexUsageState()
                 hooks.startCodexUsageMonitoringIfNeeded()
             }
+            usageAnalytics.refreshNow()
+            usageAnalytics.startMonitoringIfNeeded()
             updateChecker.startIfNeeded()
 
         } else {

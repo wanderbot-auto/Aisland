@@ -8,6 +8,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     case general
     case setup
     case display
+    case usage
     case sound
     case appearance
     case shortcuts
@@ -20,6 +21,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .setup:      lang.t("settings.tab.setup")
         case .appearance: lang.t("settings.tab.appearance")
         case .display:    lang.t("settings.tab.display")
+        case .usage:      lang.t("settings.tab.usage")
         case .sound:      lang.t("settings.tab.sound")
         case .shortcuts:  lang.t("settings.tab.shortcuts")
         }
@@ -31,6 +33,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .setup:      "arrow.down.circle.fill"
         case .appearance: "paintbrush.fill"
         case .display:    "textformat.size"
+        case .usage:      "chart.bar.xaxis"
         case .sound:      "speaker.wave.2.fill"
         case .shortcuts:  "keyboard.fill"
         }
@@ -42,6 +45,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .setup:      .orange
         case .appearance: .purple
         case .display:    .blue
+        case .usage:      .mint
         case .sound:      .green
         case .shortcuts:  .gray
         }
@@ -51,6 +55,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         switch self {
         case .general, .setup, .display, .sound, .appearance: .system
         case .shortcuts:                                      .advanced
+        case .usage:                                          .system
         }
     }
 }
@@ -131,6 +136,8 @@ struct SettingsView: View {
                 AppearanceSettingsPane(model: model)
             case .display:
                 DisplaySettingsPane(model: model)
+            case .usage:
+                UsageAnalyticsPane(model: model)
             case .sound:
                 SoundSettingsPane(model: model)
             case .shortcuts:
