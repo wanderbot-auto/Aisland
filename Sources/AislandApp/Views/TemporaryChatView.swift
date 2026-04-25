@@ -1,4 +1,5 @@
 import SwiftUI
+@preconcurrency import MarkdownUI
 
 struct TemporaryChatView: View {
     var model: AppModel
@@ -49,8 +50,10 @@ struct TemporaryChatView: View {
                         emptyState
                     } else {
                         ForEach(model.temporaryChatMessages) { message in
-                            TemporaryChatBubble(message: message)
-                                .id(message.id)
+                            if !message.content.isEmpty {
+                                TemporaryChatBubble(message: message)
+                                    .id(message.id)
+                            }
                         }
                     }
 
@@ -160,9 +163,7 @@ private struct TemporaryChatBubble: View {
         HStack {
             if isUser { Spacer(minLength: 44) }
 
-            Text(message.content)
-                .font(.system(size: 12.5, weight: .medium))
-                .foregroundStyle(.white.opacity(isUser ? 0.92 : 0.82))
+            bubbleContent
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 9)
@@ -178,6 +179,129 @@ private struct TemporaryChatBubble: View {
             if !isUser { Spacer(minLength: 44) }
         }
     }
+
+    @ViewBuilder
+    private var bubbleContent: some View {
+        if isUser {
+            Text(message.content)
+                .font(.system(size: 12.5, weight: .medium))
+                .foregroundStyle(.white.opacity(0.92))
+        } else {
+            Markdown(message.content)
+                .markdownTheme(.temporaryChat)
+                .markdownImageProvider(.default)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+        }
+    }
+}
+
+private extension MarkdownUI.Theme {
+    @MainActor static let temporaryChat = Theme()
+        .text {
+            ForegroundColor(.white.opacity(0.84))
+            FontSize(12.5)
+            FontWeight(.medium)
+        }
+        .link {
+            ForegroundColor(.cyan)
+        }
+        .strong {
+            FontWeight(.bold)
+            ForegroundColor(.white.opacity(0.9))
+        }
+        .code {
+            FontFamilyVariant(.monospaced)
+            FontSize(12)
+            ForegroundColor(.white.opacity(0.9))
+            BackgroundColor(.white.opacity(0.09))
+        }
+        .codeBlock { configuration in
+            configuration.label
+                .markdownTextStyle {
+                    FontFamilyVariant(.monospaced)
+                    FontSize(12)
+                    ForegroundColor(.white.opacity(0.86))
+                }
+                .padding(10)
+                .background(Color.black.opacity(0.22))
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .markdownMargin(top: 6, bottom: 6)
+        }
+        .heading1 { configuration in
+            configuration.label
+                .markdownTextStyle {
+                    FontSize(15)
+                    FontWeight(.bold)
+                    ForegroundColor(.white.opacity(0.9))
+                }
+                .markdownMargin(top: 6, bottom: 3)
+        }
+        .heading2 { configuration in
+            configuration.label
+                .markdownTextStyle {
+                    FontSize(14)
+                    FontWeight(.bold)
+                    ForegroundColor(.white.opacity(0.9))
+                }
+                .markdownMargin(top: 6, bottom: 3)
+        }
+        .heading3 { configuration in
+            configuration.label
+                .markdownTextStyle {
+                    FontSize(13)
+                    FontWeight(.semibold)
+                    ForegroundColor(.white.opacity(0.9))
+                }
+                .markdownMargin(top: 5, bottom: 2)
+        }
+        .blockquote { configuration in
+            configuration.label
+                .markdownTextStyle {
+                    ForegroundColor(.white.opacity(0.62))
+                    FontSize(12.5)
+                }
+                .padding(.leading, 10)
+                .overlay(alignment: .leading) {
+                    Rectangle()
+                        .fill(Color.cyan.opacity(0.35))
+                        .frame(width: 3)
+                }
+        }
+        .image { configuration in
+            configuration.label
+                .frame(maxWidth: .infinity, maxHeight: 180)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(.white.opacity(0.10), lineWidth: 1)
+                )
+                .markdownMargin(top: 6, bottom: 6)
+        }
+        .listItem { configuration in
+            configuration.label
+                .markdownMargin(top: 2, bottom: 2)
+        }
+        .table { configuration in
+            configuration.label
+                .fixedSize(horizontal: false, vertical: true)
+                .markdownTableBorderStyle(.init(.allBorders, color: .white.opacity(0.14), strokeStyle: .init(lineWidth: 1)))
+                .markdownTableBackgroundStyle(
+                    .alternatingRows(Color.white.opacity(0.03), Color.white.opacity(0.07))
+                )
+                .markdownMargin(top: 4, bottom: 8)
+        }
+        .tableCell { configuration in
+            configuration.label
+                .markdownTextStyle {
+                    if configuration.row == 0 {
+                        FontWeight(.semibold)
+                    }
+                }
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.vertical, 5)
+                .padding(.horizontal, 8)
+                .relativeLineSpacing(.em(0.2))
+        }
 }
 
 private struct ChatSecondaryButtonStyle: ButtonStyle {

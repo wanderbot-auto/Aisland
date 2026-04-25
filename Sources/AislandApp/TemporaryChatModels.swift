@@ -17,4 +17,8 @@ struct TemporaryChatMessage: Identifiable, Codable, Equatable, Sendable {
         self.content = content
         self.createdAt = createdAt
     }
+
+    func replacingContent(_ newContent: String) -> TemporaryChatMessage {
+        TemporaryChatMessage(id: id, role: role, content: newContent, createdAt: createdAt)
+    }
 }

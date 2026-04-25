@@ -15,6 +15,22 @@ import TogetherAIProvider
 
 struct TemporaryChatClient: Sendable {
     func complete(messages: [TemporaryChatMessage], configuration: LLMChatConfiguration) async throws -> String {
+        let stream = try stream(messages: messages, configuration: configuration)
+        var content = ""
+        for try await chunk in stream {
+            content.append(chunk)
+        }
+        content = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !content.isEmpty else {
+            throw TemporaryChatError.emptyResponse
+        }
+        return content
+    }
+
+    func stream(
+        messages: [TemporaryChatMessage],
+        configuration: LLMChatConfiguration
+    ) throws -> AsyncThrowingStream<String, Error> {
         guard !configuration.effectiveModel.isEmpty else {
             throw TemporaryChatError.missingModel
         }
@@ -25,15 +41,26 @@ struct TemporaryChatClient: Sendable {
         }
 
         let model = try languageModel(for: configuration)
-        let result = try await generateText(
+        let result = try streamText(
             model: model,
             messages: messages.map(\.modelMessage)
         )
-        let content = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !content.isEmpty else {
-            throw TemporaryChatError.emptyResponse
+
+        return AsyncThrowingStream { continuation in
+            let task = Task {
+                do {
+                    for try await chunk in result.textStream {
+                        continuation.yield(chunk)
+                    }
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+            continuation.onTermination = { _ in
+                task.cancel()
+            }
         }
-        return content
     }
 
     private func languageModel(for configuration: LLMChatConfiguration) throws -> any LanguageModelV3 {

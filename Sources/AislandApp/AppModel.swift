@@ -12,6 +12,11 @@ extension Notification.Name {
     static let openIslandSelectSetupTab = Notification.Name("openIslandSelectSetupTab")
 }
 
+typealias TemporaryChatStreamFactory = @Sendable (
+    [TemporaryChatMessage],
+    LLMChatConfiguration
+) throws -> AsyncThrowingStream<String, Error>
+
 @MainActor
 @Observable
 final class AppModel {
@@ -424,6 +429,9 @@ final class AppModel {
     @ObservationIgnored
     private let isNotificationSessionAlreadyFrontmost: @Sendable (AgentSession) async -> Bool
 
+    @ObservationIgnored
+    private let temporaryChatStream: TemporaryChatStreamFactory
+
 
     @ObservationIgnored
     var harnessRuntimeMonitor: HarnessRuntimeMonitor?
@@ -441,10 +449,14 @@ final class AppModel {
         },
         isNotificationSessionAlreadyFrontmost: @escaping @Sendable (AgentSession) async -> Bool = { session in
             await ForegroundTerminalSessionProbe().matches(session: session)
+        },
+        temporaryChatStream: @escaping TemporaryChatStreamFactory = { messages, configuration in
+            try TemporaryChatClient().stream(messages: messages, configuration: configuration)
         }
     ) {
         self.terminalJumpAction = terminalJumpAction
         self.isNotificationSessionAlreadyFrontmost = isNotificationSessionAlreadyFrontmost
+        self.temporaryChatStream = temporaryChatStream
         UserDefaults.standard.register(defaults: [
             Self.showDockIconDefaultsKey: true,
             Self.hapticFeedbackEnabledDefaultsKey: false,
@@ -960,31 +972,54 @@ final class AppModel {
 
         temporaryChatLastError = nil
         temporaryChatMessages.append(TemporaryChatMessage(role: .user, content: prompt))
+        let messages = temporaryChatMessages
+        let configuration = temporaryChatConfiguration
+        let assistantMessage = TemporaryChatMessage(role: .assistant, content: "")
+        temporaryChatMessages.append(assistantMessage)
         temporaryChatIsSending = true
         lastActionMessage = "Sending temporary chat message…"
 
-        let messages = temporaryChatMessages
-        let configuration = temporaryChatConfiguration
-
-        Task { [weak self] in
+        Task.detached { [weak self, temporaryChatStream] in
             do {
-                let reply = try await TemporaryChatClient().complete(
-                    messages: messages,
-                    configuration: configuration
-                )
-                guard let self else { return }
-                self.temporaryChatMessages.append(
-                    TemporaryChatMessage(role: .assistant, content: reply)
-                )
-                self.temporaryChatIsSending = false
-                self.lastActionMessage = "Temporary chat reply received."
+                let stream = try temporaryChatStream(messages, configuration)
+                var reply = ""
+                for try await chunk in stream where !chunk.isEmpty {
+                    reply.append(chunk)
+                    await self?.replaceTemporaryChatMessage(id: assistantMessage.id, content: reply)
+                }
+
+                let trimmedReply = reply.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !trimmedReply.isEmpty else {
+                    throw TemporaryChatError.emptyResponse
+                }
+                await self?.finishTemporaryChatMessage(id: assistantMessage.id, content: trimmedReply)
             } catch {
-                guard let self else { return }
-                self.temporaryChatLastError = error.localizedDescription
-                self.temporaryChatIsSending = false
-                self.lastActionMessage = "Temporary chat failed: \(error.localizedDescription)"
+                await self?.failTemporaryChatMessage(id: assistantMessage.id, error: error)
             }
         }
+    }
+
+    private func replaceTemporaryChatMessage(id: UUID, content: String) {
+        guard let index = temporaryChatMessages.firstIndex(where: { $0.id == id }) else {
+            return
+        }
+        temporaryChatMessages[index] = temporaryChatMessages[index].replacingContent(content)
+    }
+
+    private func finishTemporaryChatMessage(id: UUID, content: String) {
+        replaceTemporaryChatMessage(id: id, content: content)
+        temporaryChatIsSending = false
+        lastActionMessage = "Temporary chat reply received."
+    }
+
+    private func failTemporaryChatMessage(id: UUID, error: Error) {
+        if let index = temporaryChatMessages.firstIndex(where: { $0.id == id }),
+           temporaryChatMessages[index].content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            temporaryChatMessages.remove(at: index)
+        }
+        temporaryChatLastError = error.localizedDescription
+        temporaryChatIsSending = false
+        lastActionMessage = "Temporary chat failed: \(error.localizedDescription)"
     }
 
     // MARK: - Shortcut settings
