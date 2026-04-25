@@ -6,7 +6,7 @@
 /* Settings - Tab Labels */
 "settings.tab.general" = "一般";
 "settings.tab.display" = "顯示";
-"settings.tab.usage" = "用量";
+"settings.tab.usage" = "統計";
 "settings.tab.sound" = "聲音";
 "settings.tab.shortcuts" = "快捷鍵";
 
@@ -81,6 +81,11 @@
 "settings.display.layoutMode" = "版面模式";
 "settings.display.islandHeader" = "島嶼標題列";
 "settings.display.showCodexUsageInHeader" = "在島嶼標題列顯示 Codex 用量";
+"settings.display.tokenUsageDisplay" = "今日 token 用量";
+"settings.display.tokenUsageDisplay.claude" = "Claude";
+"settings.display.tokenUsageDisplay.codex" = "Codex";
+"settings.display.tokenUsageDisplay.both" = "同時顯示";
+"settings.display.tokenUsageDisplay.help" = "選擇在島嶼標題列顯示哪些來源的今日 token 總量。";
 
 "usage.title" = "Token 用量";
 "usage.subtitle" = "自動從本機 Claude Code 與 Codex 的 JSONL 日誌匯入。";
@@ -102,6 +107,11 @@
 "usage.groups" = "分組數";
 "usage.empty.title" = "尚無用量資料";
 "usage.empty.subtitle" = "打開 Claude Code 或 Codex，Aisland 會在背景匯入 JSONL 日誌。";
+"usage.today.title" = "今日按來源統計";
+"usage.today.subtitle" = "這些總量會用於島嶼標題列顯示。";
+"usage.today.islandDisplay" = "島嶼顯示";
+"usage.today.onIsland" = "顯示中";
+"usage.today.tokenBreakdown" = "%@ 輸入 · %@ 輸出";
 
 /* Settings - Sound */
 "settings.sound.notifications" = "通知音效";

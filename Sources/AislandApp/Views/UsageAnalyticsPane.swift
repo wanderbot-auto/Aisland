@@ -22,6 +22,8 @@ struct UsageAnalyticsPane: View {
                 }
                 .pickerStyle(.segmented)
 
+                todayProviderSection
+
                 if let snapshot {
                     summaryGrid(for: snapshot)
                     bucketSection(for: snapshot)
@@ -38,6 +40,51 @@ struct UsageAnalyticsPane: View {
                 model.refreshUsageAnalytics()
             }
         }
+    }
+
+    private var todayProviderSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(lang.t("usage.today.title"))
+                        .font(.system(size: 15, weight: .semibold))
+                    Text(lang.t("usage.today.subtitle"))
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 12)
+
+                Picker(lang.t("usage.today.islandDisplay"), selection: Binding(
+                    get: { model.islandTokenUsageDisplayMode },
+                    set: { model.islandTokenUsageDisplayMode = $0 }
+                )) {
+                    ForEach(IslandTokenUsageDisplayMode.allCases) { mode in
+                        Text(mode.displayName(lang)).tag(mode)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.segmented)
+                .frame(width: 240)
+            }
+
+            LazyVGrid(columns: [
+                GridItem(.adaptive(minimum: 180), spacing: 12)
+            ], alignment: .leading, spacing: 12) {
+                ForEach(UsageLogProvider.allCases, id: \.self) { provider in
+                    todayProviderCard(provider)
+                }
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(.white.opacity(0.04))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(.white.opacity(0.08))
+        )
     }
 
     private var header: some View {
@@ -237,6 +284,57 @@ struct UsageAnalyticsPane: View {
                 .strokeBorder(accent.opacity(0.18))
         )
     }
+
+    private func todayProviderCard(_ provider: UsageLogProvider) -> some View {
+        let totals = model.todayUsageProviderTotals.first { $0.provider == provider }
+        let isShownOnIsland = model.shouldDisplayTodayTokenUsage(for: provider)
+
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Text(provider.displayName)
+                    .font(.system(size: 12, weight: .semibold))
+                if isShownOnIsland {
+                    Text(lang.t("usage.today.onIsland"))
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.black.opacity(0.78))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(providerAccent(provider).opacity(0.9), in: Capsule())
+                }
+            }
+
+            Text((totals?.totalTokens ?? 0).formatted())
+                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .foregroundStyle(providerAccent(provider))
+
+            Text(lang.t(
+                "usage.today.tokenBreakdown",
+                (totals?.inputTokens ?? 0).formatted(),
+                (totals?.outputTokens ?? 0).formatted()
+            ))
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, minHeight: 104, alignment: .leading)
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(.white.opacity(isShownOnIsland ? 0.06 : 0.03))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(providerAccent(provider).opacity(isShownOnIsland ? 0.24 : 0.1))
+        )
+    }
+
+    private func providerAccent(_ provider: UsageLogProvider) -> Color {
+        switch provider {
+        case .claude:
+            .orange
+        case .codex:
+            .cyan
+        }
+    }
 }
 
 private extension UsageAggregationPeriod {
@@ -259,6 +357,19 @@ private extension UsageAggregationPeriod {
             lang.t("usage.list.month")
         case .session:
             lang.t("usage.list.session")
+        }
+    }
+}
+
+private extension IslandTokenUsageDisplayMode {
+    func displayName(_ lang: LanguageManager) -> String {
+        switch self {
+        case .claude:
+            lang.t("settings.display.tokenUsageDisplay.claude")
+        case .codex:
+            lang.t("settings.display.tokenUsageDisplay.codex")
+        case .both:
+            lang.t("settings.display.tokenUsageDisplay.both")
         }
     }
 }

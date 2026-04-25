@@ -657,69 +657,22 @@ struct IslandPanelView: View {
     }
 
     private var openedUsageProviders: [UsageProviderPresentation] {
-        var providers: [UsageProviderPresentation] = []
-
-        if let snapshot = model.claudeUsageSnapshot,
-           snapshot.isEmpty == false {
-            var windows: [UsageWindowPresentation] = []
-
-            if let fiveHour = snapshot.fiveHour {
-                windows.append(
-                    UsageWindowPresentation(
-                        id: "claude-5h",
-                        label: "5h",
-                        usedPercentage: fiveHour.usedPercentage,
-                        resetsAt: fiveHour.resetsAt
-                    )
-                )
+        UsageLogProvider.allCases.compactMap { provider in
+            guard model.shouldDisplayTodayTokenUsage(for: provider),
+                  let totals = model.todayUsageProviderTotals.first(where: { $0.provider == provider }),
+                  totals.totalTokens > 0 else {
+                return nil
             }
 
-            if let sevenDay = snapshot.sevenDay {
-                windows.append(
-                    UsageWindowPresentation(
-                        id: "claude-7d",
-                        label: "7d",
-                        usedPercentage: sevenDay.usedPercentage,
-                        resetsAt: sevenDay.resetsAt
-                    )
-                )
-            }
-
-            if windows.isEmpty == false {
-                providers.append(
-                    UsageProviderPresentation(
-                        id: "claude",
-                        title: "Claude",
-                        windows: windows
-                    )
-                )
-            }
+            return UsageProviderPresentation(
+                id: provider.rawValue,
+                title: provider.displayName,
+                totalTokens: totals.totalTokens,
+                inputTokens: totals.inputTokens,
+                outputTokens: totals.outputTokens,
+                entryCount: totals.entryCount
+            )
         }
-
-        if model.showCodexUsage,
-           let snapshot = model.codexUsageSnapshot,
-           snapshot.isEmpty == false {
-            let windows = snapshot.windows.map { window in
-                UsageWindowPresentation(
-                    id: "codex-\(window.key)",
-                    label: window.label,
-                    usedPercentage: window.usedPercentage,
-                    resetsAt: window.resetsAt
-                )
-            }
-
-            if windows.isEmpty == false {
-                providers.append(
-                    UsageProviderPresentation(
-                        id: "codex",
-                        title: "Codex",
-                        windows: windows
-                    )
-                )
-            }
-        }
-
-        return providers
     }
 
     private func splitUsageProviders(
@@ -810,20 +763,32 @@ struct IslandPanelView: View {
     }
 
     private func usageProviderChip(_ provider: UsageProviderPresentation) -> some View {
-        let window = provider.primaryWindow
         return HStack(spacing: 4) {
             Text(provider.title)
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.86))
 
-            Text("\(window.roundedUsedPercentage)%")
+            Text(Self.compactTokenCount(provider.totalTokens))
                 .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(usageColor(for: window.usedPercentage))
+                .foregroundStyle(.mint.opacity(0.95))
         }
         .padding(.horizontal, 7)
         .padding(.vertical, 3)
         .background(.white.opacity(0.07), in: Capsule())
         .help(provider.helpText)
+    }
+
+    private static func compactTokenCount(_ count: Int) -> String {
+        switch count {
+        case 1_000_000...:
+            return String(format: "%.1fM", Double(count) / 1_000_000)
+        case 10_000...:
+            return "\(count / 1_000)K"
+        case 1_000...:
+            return String(format: "%.1fK", Double(count) / 1_000)
+        default:
+            return count.formatted()
+        }
     }
 
     private func screenID(for screen: NSScreen) -> String {
@@ -841,46 +806,18 @@ struct IslandPanelView: View {
             .foregroundStyle(.white.opacity(opacity))
     }
 
-    private func usageColor(for percentage: Double) -> Color {
-        switch percentage {
-        case 90...:
-            .red.opacity(0.95)
-        case 70..<90:
-            .orange.opacity(0.95)
-        default:
-            .green.opacity(0.95)
-        }
-    }
 }
 
 private struct UsageProviderPresentation: Identifiable {
     let id: String
     let title: String
-    let windows: [UsageWindowPresentation]
-
-    var primaryWindow: UsageWindowPresentation {
-        windows.max(by: { $0.usedPercentage < $1.usedPercentage }) ?? windows[0]
-    }
+    let totalTokens: Int
+    let inputTokens: Int
+    let outputTokens: Int
+    let entryCount: Int
 
     var helpText: String {
-        windows.map { window in
-            if let resetsAt = window.resetsAt {
-                return "\(title) \(window.label): \(window.roundedUsedPercentage)% · resets \(resetsAt.formatted(date: .omitted, time: .shortened))"
-            }
-            return "\(title) \(window.label): \(window.roundedUsedPercentage)%"
-        }
-        .joined(separator: "\n")
-    }
-}
-
-private struct UsageWindowPresentation: Identifiable {
-    let id: String
-    let label: String
-    let usedPercentage: Double
-    let resetsAt: Date?
-
-    var roundedUsedPercentage: Int {
-        Int(usedPercentage.rounded())
+        "\(title) today: \(totalTokens.formatted()) tokens · \(inputTokens.formatted()) in · \(outputTokens.formatted()) out · \(entryCount.formatted()) entries"
     }
 }
 

@@ -44,3 +44,11 @@ enum IslandPixelShapeStyle: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 }
+
+enum IslandTokenUsageDisplayMode: String, CaseIterable, Identifiable {
+    case claude
+    case codex
+    case both
+
+    var id: String { rawValue }
+}

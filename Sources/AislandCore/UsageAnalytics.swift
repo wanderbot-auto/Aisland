@@ -136,6 +136,42 @@ public struct UsageAnalyticsSnapshot: Equatable, Codable, Sendable {
     }
 }
 
+
+public struct UsageAnalyticsProviderTotals: Equatable, Codable, Sendable, Identifiable {
+    public var provider: UsageLogProvider
+    public var inputTokens: Int
+    public var outputTokens: Int
+    public var totalTokens: Int
+    public var entryCount: Int
+    public var sourceFileCount: Int
+    public var firstSeenAt: Date?
+    public var lastSeenAt: Date?
+
+    public init(
+        provider: UsageLogProvider,
+        inputTokens: Int,
+        outputTokens: Int,
+        totalTokens: Int,
+        entryCount: Int,
+        sourceFileCount: Int,
+        firstSeenAt: Date?,
+        lastSeenAt: Date?
+    ) {
+        self.provider = provider
+        self.inputTokens = inputTokens
+        self.outputTokens = outputTokens
+        self.totalTokens = totalTokens
+        self.entryCount = entryCount
+        self.sourceFileCount = sourceFileCount
+        self.firstSeenAt = firstSeenAt
+        self.lastSeenAt = lastSeenAt
+    }
+
+    public var id: String {
+        provider.rawValue
+    }
+}
+
 public struct UsageAnalyticsRefreshReport: Equatable, Codable, Sendable {
     public var scannedFileCount: Int
     public var ingestedFileCount: Int
@@ -264,6 +300,18 @@ public final class UsageAnalyticsStore: @unchecked Sendable {
                 result[period] = try loadSnapshot(for: period, db: db)
             }
             return result
+        }
+    }
+
+    public func providerTotals(
+        on date: Date = Date.now,
+        calendar: Calendar = .current
+    ) throws -> [UsageAnalyticsProviderTotals] {
+        try withDatabase { db in
+            try execute(db, sql: "PRAGMA journal_mode=WAL;")
+            try execute(db, sql: "PRAGMA synchronous=NORMAL;")
+            try ensureSchema(db)
+            return try loadProviderTotals(on: date, calendar: calendar, db: db)
         }
     }
 
@@ -475,6 +523,59 @@ public final class UsageAnalyticsStore: @unchecked Sendable {
                 firstSeenAt: Self.date(fromSQLColumnAt: 5, in: stmt),
                 lastSeenAt: Self.date(fromSQLColumnAt: 6, in: stmt)
             )
+        }
+    }
+
+    private func loadProviderTotals(
+        on date: Date,
+        calendar: Calendar,
+        db: OpaquePointer
+    ) throws -> [UsageAnalyticsProviderTotals] {
+        let startOfDay = calendar.startOfDay(for: date)
+        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
+            return []
+        }
+
+        let sql = """
+        SELECT
+            provider,
+            COALESCE(SUM(input_tokens), 0),
+            COALESCE(SUM(output_tokens), 0),
+            COALESCE(SUM(total_tokens), 0),
+            COUNT(*),
+            COUNT(DISTINCT source_file_path),
+            MIN(occurred_at),
+            MAX(occurred_at)
+        FROM usage_samples
+        WHERE occurred_at >= ? AND occurred_at < ?
+        GROUP BY provider
+        ORDER BY provider ASC;
+        """
+
+        return try withPreparedStatement(db, sql: sql) { stmt in
+            sqlite3_bind_double(stmt, 1, startOfDay.timeIntervalSince1970)
+            sqlite3_bind_double(stmt, 2, endOfDay.timeIntervalSince1970)
+
+            var rows: [UsageAnalyticsProviderTotals] = []
+            while sqlite3_step(stmt) == SQLITE_ROW {
+                guard let provider = Self.provider(fromSQLColumnAt: 0, in: stmt) else {
+                    continue
+                }
+
+                rows.append(
+                    UsageAnalyticsProviderTotals(
+                        provider: provider,
+                        inputTokens: Int(sqlite3_column_int64(stmt, 1)),
+                        outputTokens: Int(sqlite3_column_int64(stmt, 2)),
+                        totalTokens: Int(sqlite3_column_int64(stmt, 3)),
+                        entryCount: Int(sqlite3_column_int64(stmt, 4)),
+                        sourceFileCount: Int(sqlite3_column_int64(stmt, 5)),
+                        firstSeenAt: Self.date(fromSQLColumnAt: 6, in: stmt),
+                        lastSeenAt: Self.date(fromSQLColumnAt: 7, in: stmt)
+                    )
+                )
+            }
+            return rows
         }
     }
 

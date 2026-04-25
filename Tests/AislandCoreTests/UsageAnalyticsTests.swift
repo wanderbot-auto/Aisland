@@ -86,6 +86,12 @@ struct UsageAnalyticsTests {
         let daySnapshot = try store.snapshot(for: .day)
         let monthSnapshot = try store.snapshot(for: .month)
         let sessionSnapshot = try store.snapshot(for: .session)
+        var utcCalendar = Calendar(identifier: .gregorian)
+        utcCalendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let aprilThird = ISO8601DateFormatter().date(from: "2026-04-03T12:00:00Z")!
+        let aprilFourth = ISO8601DateFormatter().date(from: "2026-04-04T12:00:00Z")!
+        let aprilThirdProviderTotals = try store.providerTotals(on: aprilThird, calendar: utcCalendar)
+        let aprilFourthProviderTotals = try store.providerTotals(on: aprilFourth, calendar: utcCalendar)
 
         #expect(report.scannedFileCount == 2)
         #expect(report.ingestedFileCount == 2)
@@ -103,6 +109,13 @@ struct UsageAnalyticsTests {
         #expect(sessionSnapshot.buckets.contains(where: { $0.key == "claude-session-1" && $0.totalTokens == 265 }))
         #expect(sessionSnapshot.buckets.contains(where: { $0.key == "codex-session-1" && $0.totalTokens == 270 }))
         #expect(sessionSnapshot.totals.totalTokens == 535)
+        #expect(aprilThirdProviderTotals.count == 1)
+        #expect(aprilThirdProviderTotals.first?.provider == .claude)
+        #expect(aprilThirdProviderTotals.first?.totalTokens == 265)
+        #expect(aprilThirdProviderTotals.first?.entryCount == 2)
+        #expect(aprilFourthProviderTotals.count == 1)
+        #expect(aprilFourthProviderTotals.first?.provider == .codex)
+        #expect(aprilFourthProviderTotals.first?.totalTokens == 270)
     }
 
     @Test

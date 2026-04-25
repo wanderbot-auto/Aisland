@@ -230,14 +230,36 @@ struct DisplaySettingsPane: View {
             }
 
             Section(lang.t("settings.display.islandHeader")) {
-                Toggle(lang.t("settings.display.showCodexUsageInHeader"), isOn: Binding(
-                    get: { model.showCodexUsage },
-                    set: { model.showCodexUsage = $0 }
-                ))
+                Picker(lang.t("settings.display.tokenUsageDisplay"), selection: Binding(
+                    get: { model.islandTokenUsageDisplayMode },
+                    set: { model.islandTokenUsageDisplayMode = $0 }
+                )) {
+                    ForEach(IslandTokenUsageDisplayMode.allCases) { mode in
+                        Text(mode.displayName(lang)).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                Text(lang.t("settings.display.tokenUsageDisplay.help"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
         .navigationTitle(lang.t("settings.tab.display"))
+    }
+}
+
+private extension IslandTokenUsageDisplayMode {
+    func displayName(_ lang: LanguageManager) -> String {
+        switch self {
+        case .claude:
+            lang.t("settings.display.tokenUsageDisplay.claude")
+        case .codex:
+            lang.t("settings.display.tokenUsageDisplay.codex")
+        case .both:
+            lang.t("settings.display.tokenUsageDisplay.both")
+        }
     }
 }
 

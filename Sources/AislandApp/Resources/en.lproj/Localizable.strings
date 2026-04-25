@@ -6,7 +6,7 @@
 /* Settings - Tab Labels */
 "settings.tab.general" = "General";
 "settings.tab.display" = "Display";
-"settings.tab.usage" = "Usage";
+"settings.tab.usage" = "Statistics";
 "settings.tab.sound" = "Sound";
 "settings.tab.shortcuts" = "Shortcuts";
 
@@ -81,6 +81,11 @@
 "settings.display.layoutMode" = "Layout Mode";
 "settings.display.islandHeader" = "Island Header";
 "settings.display.showCodexUsageInHeader" = "Show Codex usage in island header";
+"settings.display.tokenUsageDisplay" = "Today token usage";
+"settings.display.tokenUsageDisplay.claude" = "Claude";
+"settings.display.tokenUsageDisplay.codex" = "Codex";
+"settings.display.tokenUsageDisplay.both" = "Both";
+"settings.display.tokenUsageDisplay.help" = "Choose which provider totals appear in the island header.";
 
 "usage.title" = "Token usage";
 "usage.subtitle" = "Auto-imported from local Claude Code and Codex JSONL logs.";
@@ -102,6 +107,11 @@
 "usage.groups" = "Groups";
 "usage.empty.title" = "No usage data yet";
 "usage.empty.subtitle" = "Open Claude Code or Codex and let Aisland import the JSONL logs in the background.";
+"usage.today.title" = "Today by provider";
+"usage.today.subtitle" = "These totals power the island header.";
+"usage.today.islandDisplay" = "Island display";
+"usage.today.onIsland" = "ON ISLAND";
+"usage.today.tokenBreakdown" = "%@ in · %@ out";
 
 /* Settings - Sound */
 "settings.sound.notifications" = "Notification Sounds";

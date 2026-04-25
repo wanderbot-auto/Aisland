@@ -24,6 +24,7 @@ final class AppModel {
     private static let islandPixelShapeStyleDefaultsKey = "appearance.island.pixelShapeStyle"
     private static let islandStatusColorsDefaultsKey = "appearance.island.statusColors"
     private static let showCodexUsageDefaultsKey = "app.showCodexUsage"
+    private static let islandTokenUsageDisplayModeDefaultsKey = "island.tokenUsage.displayMode"
     private static let completionReplyEnabledDefaultsKey = "feature.completionReply.enabled"
     private static let suppressFrontmostNotificationsDefaultsKey = "app.suppressFrontmostNotifications"
 
@@ -102,6 +103,7 @@ final class AppModel {
     var usageAnalyticsLastRefreshError: String? { usageAnalytics.lastRefreshError }
     var usageAnalyticsLastRefreshedAt: Date? { usageAnalytics.lastRefreshedAt }
     var usageAnalyticsLastRefreshReport: UsageAnalyticsRefreshReport? { usageAnalytics.lastRefreshReport }
+    var todayUsageProviderTotals: [UsageAnalyticsProviderTotals] { usageAnalytics.todayProviderTotals }
     var openCodePluginStatus: OpenCodePluginInstallationStatus? { hooks.openCodePluginStatus }
     var isOpenCodeSetupBusy: Bool { hooks.isOpenCodeSetupBusy }
     var openCodePluginStatusTitle: String { hooks.openCodePluginStatusTitle }
@@ -138,6 +140,16 @@ final class AppModel {
     func startUsageAnalyticsMonitoringIfNeeded() { usageAnalytics.startMonitoringIfNeeded() }
     func usageAnalyticsSnapshot(for period: UsageAggregationPeriod) -> UsageAnalyticsSnapshot? {
         usageAnalytics.snapshot(for: period)
+    }
+    func shouldDisplayTodayTokenUsage(for provider: UsageLogProvider) -> Bool {
+        switch islandTokenUsageDisplayMode {
+        case .claude:
+            provider == .claude
+        case .codex:
+            provider == .codex
+        case .both:
+            provider == .claude || provider == .codex
+        }
     }
     func installCodexHooks() { hooks.installCodexHooks() }
     func uninstallCodexHooks() { hooks.uninstallCodexHooks() }
@@ -202,6 +214,13 @@ final class AppModel {
         didSet {
             guard hasFinishedInit, showCodexUsage != oldValue else { return }
             UserDefaults.standard.set(showCodexUsage, forKey: Self.showCodexUsageDefaultsKey)
+        }
+    }
+    var islandTokenUsageDisplayMode: IslandTokenUsageDisplayMode = .both {
+        didSet {
+            guard hasFinishedInit, islandTokenUsageDisplayMode != oldValue else { return }
+            UserDefaults.standard.set(islandTokenUsageDisplayMode.rawValue, forKey: Self.islandTokenUsageDisplayModeDefaultsKey)
+            refreshOverlayPlacementIfVisible()
         }
     }
     var completionReplyEnabled: Bool = false {
@@ -390,13 +409,20 @@ final class AppModel {
         showDockIcon = UserDefaults.standard.bool(forKey: Self.showDockIconDefaultsKey)
         hapticFeedbackEnabled = UserDefaults.standard.bool(forKey: Self.hapticFeedbackEnabledDefaultsKey)
         suppressFrontmostNotifications = UserDefaults.standard.bool(forKey: Self.suppressFrontmostNotificationsDefaultsKey)
-        if UserDefaults.standard.object(forKey: Self.showCodexUsageDefaultsKey) != nil {
+        let hasSavedCodexUsagePreference = UserDefaults.standard.object(forKey: Self.showCodexUsageDefaultsKey) != nil
+        if hasSavedCodexUsagePreference {
             showCodexUsage = UserDefaults.standard.bool(forKey: Self.showCodexUsageDefaultsKey)
         } else {
             showCodexUsage = FileManager.default.fileExists(
                 atPath: CodexRolloutDiscovery.defaultRootURL.path
             )
         }
+        let migratedTokenUsageMode: IslandTokenUsageDisplayMode = hasSavedCodexUsagePreference
+            ? (showCodexUsage ? .both : .claude)
+            : .both
+        islandTokenUsageDisplayMode = IslandTokenUsageDisplayMode(
+            rawValue: UserDefaults.standard.string(forKey: Self.islandTokenUsageDisplayModeDefaultsKey) ?? ""
+        ) ?? migratedTokenUsageMode
         completionReplyEnabled = UserDefaults.standard.bool(forKey: Self.completionReplyEnabledDefaultsKey)
         islandAppearanceMode = IslandAppearanceMode(
             rawValue: UserDefaults.standard.string(forKey: Self.islandAppearanceModeDefaultsKey) ?? ""
