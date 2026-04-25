@@ -77,6 +77,8 @@
 "settings.display.diagnostics" = "Diagnostics";
 "settings.display.currentScreen" = "Current Screen";
 "settings.display.layoutMode" = "Layout Mode";
+"settings.display.islandHeader" = "Island Header";
+"settings.display.showCodexUsageInHeader" = "Show Codex usage in island header";
 
 /* Settings - Sound */
 "settings.sound.notifications" = "Notification Sounds";

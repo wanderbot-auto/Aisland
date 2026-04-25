@@ -77,6 +77,8 @@
 "settings.display.diagnostics" = "诊断";
 "settings.display.currentScreen" = "当前屏幕";
 "settings.display.layoutMode" = "布局模式";
+"settings.display.islandHeader" = "岛屿标题栏";
+"settings.display.showCodexUsageInHeader" = "在岛屿标题栏显示 Codex 用量";
 
 /* Settings - Sound */
 "settings.sound.notifications" = "通知音效";

@@ -67,7 +67,7 @@ enum SettingsSection: String, CaseIterable {
     }
 
     var tabs: [SettingsTab] {
-        SettingsTab.allCases.filter { $0.section == self }
+        SettingsTab.allCases.filter { $0.section == self && $0 != .shortcuts }
     }
 }
 
@@ -99,15 +99,17 @@ struct SettingsView: View {
     private var sidebar: some View {
         List(selection: $selectedTab) {
             ForEach(SettingsSection.allCases, id: \.self) { section in
-                Section(section.header(lang)) {
-                    ForEach(section.tabs) { tab in
-                        Label {
-                            Text(tab.label(lang))
-                        } icon: {
-                            Image(systemName: tab.icon)
-                                .foregroundStyle(tab.iconColor)
+                if !section.tabs.isEmpty {
+                    Section(section.header(lang)) {
+                        ForEach(section.tabs) { tab in
+                            Label {
+                                Text(tab.label(lang))
+                            } icon: {
+                                Image(systemName: tab.icon)
+                                    .foregroundStyle(tab.iconColor)
+                            }
+                            .tag(tab)
                         }
-                        .tag(tab)
                     }
                 }
             }
@@ -218,6 +220,13 @@ struct DisplaySettingsPane: View {
                     LabeledContent(lang.t("settings.display.currentScreen"), value: diag.targetScreenName)
                     LabeledContent(lang.t("settings.display.layoutMode"), value: diag.modeDescription)
                 }
+            }
+
+            Section(lang.t("settings.display.islandHeader")) {
+                Toggle(lang.t("settings.display.showCodexUsageInHeader"), isOn: Binding(
+                    get: { model.showCodexUsage },
+                    set: { model.showCodexUsage = $0 }
+                ))
             }
         }
         .formStyle(.grouped)
@@ -378,10 +387,6 @@ struct SetupSettingsPane: View {
                     Text(lang.t("settings.general.uninstallConfirmMessage.claudeUsage"))
                 }
 
-                Toggle(lang.t("settings.general.showCodexUsage"), isOn: Binding(
-                    get: { model.showCodexUsage },
-                    set: { model.showCodexUsage = $0 }
-                ))
             } header: {
                 HStack(spacing: 4) {
                     Text(lang.t("setup.section.usage"))
@@ -736,6 +741,7 @@ struct RemoteConnectionSection: View {
     var model: AppModel
 
     @State private var copiedCommand: String?
+    @State private var isExpanded = false
 
     private var remoteSessionCount: Int {
         model.state.sessions.filter(\.isRemote).count
@@ -762,72 +768,53 @@ struct RemoteConnectionSection: View {
 
     var body: some View {
         Section {
-            VStack(alignment: .leading, spacing: 12) {
-                // Status
-                HStack {
-                    Label("SSH Remote", systemImage: "network")
-                    Spacer()
-                    if remoteSessionCount > 0 {
-                        HStack(spacing: 4) {
-                            Circle()
-                                .fill(.green)
-                                .frame(width: 7, height: 7)
-                            Text("\(remoteSessionCount) active")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    } else {
-                        Text("No remote sessions")
-                            .font(.caption)
+            DisclosureGroup(isExpanded: $isExpanded) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Monitor Claude Code running on remote servers via SSH.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    remoteSetupStep(
+                        number: "1",
+                        title: "Deploy hooks to remote server",
+                        description: "Run from the Aisland repo directory:",
+                        command: setupCommand
+                    )
+
+                    remoteSetupStep(
+                        number: "2",
+                        title: "Connect with socket forwarding",
+                        description: "Add to ~/.ssh/config (recommended):",
+                        command: sshConfigSnippet,
+                        multiline: true
+                    )
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Or connect directly:")
+                            .font(.system(size: 10.5))
                             .foregroundStyle(.tertiary)
+                        copyableCommand(sshCommand)
+                    }
+
+                    HStack(alignment: .top, spacing: 6) {
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.blue.opacity(0.8))
+                            .padding(.top, 1)
+                        Text("The remote sshd needs `StreamLocalBindUnlink yes` in /etc/ssh/sshd_config for reliable reconnects.")
+                            .font(.system(size: 10.5))
+                            .foregroundStyle(.secondary)
                     }
                 }
-
-                Text("Monitor Claude Code running on remote servers via SSH.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                // Step 1
-                remoteSetupStep(
-                    number: "1",
-                    title: "Deploy hooks to remote server",
-                    description: "Run from the Aisland repo directory:",
-                    command: setupCommand
-                )
-
-                // Step 2
-                remoteSetupStep(
-                    number: "2",
-                    title: "Connect with socket forwarding",
-                    description: "Add to ~/.ssh/config (recommended):",
-                    command: sshConfigSnippet,
-                    multiline: true
-                )
-
-                // Step 2 alternative
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Or connect directly:")
-                        .font(.system(size: 10.5))
-                        .foregroundStyle(.tertiary)
-                    copyableCommand(sshCommand)
-                }
-
-                // Tip
-                HStack(alignment: .top, spacing: 6) {
-                    Image(systemName: "info.circle")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.blue.opacity(0.8))
-                        .padding(.top, 1)
-                    Text("The remote sshd needs `StreamLocalBindUnlink yes` in /etc/ssh/sshd_config for reliable reconnects.")
-                        .font(.system(size: 10.5))
+                .padding(.top, 8)
+            } label: {
+                HStack {
+                    Label("Remote sessions: \(remoteSessionCount)", systemImage: "network")
+                    Spacer()
+                    Text("Beta")
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-            }
-        } header: {
-            HStack(spacing: 4) {
-                Text("Remote")
-                Text("Beta")
-                    .foregroundStyle(.tertiary)
             }
         }
     }
