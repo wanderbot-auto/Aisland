@@ -20,7 +20,9 @@ final class OverlayPanelController {
     // = 52.  The extra 14 pt avoids the card bottom being clipped by the .clipped() modifier when
     // the measured height is not yet available (first notification render).
     private static let openedContentVerticalInsets: CGFloat = 52
+    private static let openedSurfaceSwitcherHeight: CGFloat = 44
     private static let openedEmptyStateHeight: CGFloat = 108
+    private static let openedTemporaryChatHeight: CGFloat = 390
     // Approval card: header row (~72) + actionableBody padding (16*2 + 14 bottom) + body content (~186)
     // Bumped to 310 to ensure the estimated panel height is never smaller than the actual rendered card.
     private static let approvalCardHeight: CGFloat = 310
@@ -48,7 +50,7 @@ final class OverlayPanelController {
     }
 
     nonisolated static func shouldActivatePanel(for reason: NotchOpenReason?) -> Bool {
-        reason == .click
+        reason == .click || reason == .shortcut
     }
 
     func availableDisplayOptions() -> [OverlayDisplayOption] {
@@ -548,8 +550,12 @@ final class OverlayPanelController {
             sessions: model.islandListSessions
         )
 
+        if model.islandSurface == .temporaryChat {
+            return Self.openedTemporaryChatHeight
+        }
+
         if visibleSessions.isEmpty {
-            return Self.openedEmptyStateHeight
+            return Self.openedEmptyStateHeight + Self.openedSurfaceSwitcherHeight
         }
 
         let actionableID = model.islandSurface.sessionID
@@ -586,7 +592,7 @@ final class OverlayPanelController {
         let listHeight = rowsHeight + spacingHeight
         // Cap long histories so the opened island remains glanceable.
         let cappedListHeight = min(listHeight, Self.maxSessionListHeight)
-        return cappedListHeight + Self.openedContentVerticalInsets
+        return cappedListHeight + Self.openedContentVerticalInsets + Self.openedSurfaceSwitcherHeight
     }
 
     /// Additional height for the actionable session's inline action area.

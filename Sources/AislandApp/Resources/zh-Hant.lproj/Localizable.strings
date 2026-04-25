@@ -232,3 +232,24 @@
 /* Window Titles */
 "window.settings" = "Aisland 設定";
 "window.debug" = "Aisland 除錯";
+
+/* AI Chat */
+"settings.tab.ai" = "AI 對話";
+"settings.ai.provider" = "服務商";
+"settings.ai.provider.help" = "臨時對話會使用目前服務商；長期整合的 Swift AI SDK 可在選型後替換。";
+"settings.ai.connection" = "連線";
+"settings.ai.model" = "模型";
+"settings.ai.baseURL" = "Base URL";
+"settings.ai.apiKey" = "API Key";
+"settings.ai.keychainHelp" = "API Key 會儲存到 macOS Keychain。";
+"settings.ai.shortcut" = "快捷鍵";
+"settings.ai.openChat" = "開啟對話";
+"settings.ai.shortcutHelp" = "使用該全域快捷鍵展開 island 並聚焦臨時對話輸入框。";
+"island.surface.sessions" = "任務";
+"island.surface.chat" = "提問";
+"chat.title" = "臨時對話";
+"chat.clear" = "清除";
+"chat.waiting" = "等待回覆…";
+"chat.empty.title" = "不離開 island 也能提問";
+"chat.empty.subtitle" = "適合快速詢問 LLM；已監控的 agent 任務仍在任務標籤中。";
+"chat.placeholder" = "快速問一個問題…";

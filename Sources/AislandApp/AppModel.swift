@@ -27,6 +27,9 @@ final class AppModel {
     private static let islandTokenUsageDisplayModeDefaultsKey = "island.tokenUsage.displayMode"
     private static let completionReplyEnabledDefaultsKey = "feature.completionReply.enabled"
     private static let suppressFrontmostNotificationsDefaultsKey = "app.suppressFrontmostNotifications"
+    private static let llmProviderDefaultsKey = "llm.chat.provider"
+    private static let llmModelDefaultsKey = "llm.chat.model"
+    private static let llmBaseURLDefaultsKey = "llm.chat.baseURL"
 
     static let defaultStatusColors: [SessionPhase: String] = [
         .running: "#6E9FFF",
@@ -63,6 +66,7 @@ final class AppModel {
     let usageAnalytics = UsageAnalyticsCoordinator()
     let codexAppServer = CodexAppServerCoordinator()
     let updateChecker = UpdateChecker()
+    let shortcutController = IslandShortcutController()
 
     var notchStatus: NotchStatus {
         get { overlay.notchStatus }
@@ -254,6 +258,40 @@ final class AppModel {
             NotificationSoundService.selectedSoundName = selectedSoundName
         }
     }
+    var temporaryChatProvider: LLMProviderKind = .openAI {
+        didSet {
+            guard temporaryChatProvider != oldValue else { return }
+            UserDefaults.standard.set(temporaryChatProvider.rawValue, forKey: Self.llmProviderDefaultsKey)
+            if temporaryChatModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                || temporaryChatModel == oldValue.defaultModel {
+                temporaryChatModel = temporaryChatProvider.defaultModel
+            }
+            if temporaryChatBaseURL == oldValue.defaultBaseURL {
+                temporaryChatBaseURL = temporaryChatProvider.defaultBaseURL
+            }
+        }
+    }
+    var temporaryChatModel: String = LLMProviderKind.openAI.defaultModel {
+        didSet {
+            guard temporaryChatModel != oldValue else { return }
+            UserDefaults.standard.set(temporaryChatModel, forKey: Self.llmModelDefaultsKey)
+        }
+    }
+    var temporaryChatBaseURL: String = LLMProviderKind.openAI.defaultBaseURL {
+        didSet {
+            guard temporaryChatBaseURL != oldValue else { return }
+            UserDefaults.standard.set(temporaryChatBaseURL, forKey: Self.llmBaseURLDefaultsKey)
+        }
+    }
+    var temporaryChatAPIKey: String = "" {
+        didSet {
+            guard temporaryChatAPIKey != oldValue else { return }
+            TemporaryChatKeychain.saveAPIKey(temporaryChatAPIKey)
+        }
+    }
+    var temporaryChatMessages: [TemporaryChatMessage] = []
+    var temporaryChatIsSending = false
+    var temporaryChatLastError: String?
     var overlayDisplaySelectionID: String {
         get { overlay.overlayDisplaySelectionID }
         set { overlay.overlayDisplaySelectionID = newValue }
@@ -424,6 +462,14 @@ final class AppModel {
             rawValue: UserDefaults.standard.string(forKey: Self.islandTokenUsageDisplayModeDefaultsKey) ?? ""
         ) ?? migratedTokenUsageMode
         completionReplyEnabled = UserDefaults.standard.bool(forKey: Self.completionReplyEnabledDefaultsKey)
+        temporaryChatProvider = LLMProviderKind(
+            rawValue: UserDefaults.standard.string(forKey: Self.llmProviderDefaultsKey) ?? ""
+        ) ?? .openAI
+        temporaryChatModel = UserDefaults.standard.string(forKey: Self.llmModelDefaultsKey)
+            ?? temporaryChatProvider.defaultModel
+        temporaryChatBaseURL = UserDefaults.standard.string(forKey: Self.llmBaseURLDefaultsKey)
+            ?? temporaryChatProvider.defaultBaseURL
+        temporaryChatAPIKey = TemporaryChatKeychain.loadAPIKey()
         islandAppearanceMode = IslandAppearanceMode(
             rawValue: UserDefaults.standard.string(forKey: Self.islandAppearanceModeDefaultsKey) ?? ""
         ) ?? .default
@@ -842,6 +888,71 @@ final class AppModel {
     var shouldAutoCollapseOnMouseLeave: Bool { overlay.shouldAutoCollapseOnMouseLeave }
     var autoCollapseOnMouseLeaveRequiresPriorSurfaceEntry: Bool { overlay.autoCollapseOnMouseLeaveRequiresPriorSurfaceEntry }
     var showsNotificationCard: Bool { overlay.showsNotificationCard }
+
+    // MARK: - Temporary chat
+
+    var temporaryChatConfiguration: LLMChatConfiguration {
+        LLMChatConfiguration(
+            provider: temporaryChatProvider,
+            model: temporaryChatModel,
+            baseURL: temporaryChatBaseURL,
+            apiKey: temporaryChatAPIKey
+        )
+    }
+
+    func openTemporaryChatFromShortcut() {
+        notchOpen(reason: .shortcut, surface: .temporaryChat)
+    }
+
+    func showSessionListSurface() {
+        islandSurface = .sessionList()
+        refreshOverlayPlacementIfVisible()
+    }
+
+    func showTemporaryChatSurface() {
+        islandSurface = .temporaryChat
+        refreshOverlayPlacementIfVisible()
+    }
+
+    func clearTemporaryChat() {
+        temporaryChatMessages.removeAll()
+        temporaryChatLastError = nil
+    }
+
+    func sendTemporaryChatMessage(_ text: String) {
+        let prompt = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !prompt.isEmpty, !temporaryChatIsSending else {
+            return
+        }
+
+        temporaryChatLastError = nil
+        temporaryChatMessages.append(TemporaryChatMessage(role: .user, content: prompt))
+        temporaryChatIsSending = true
+        lastActionMessage = "Sending temporary chat message…"
+
+        let messages = temporaryChatMessages
+        let configuration = temporaryChatConfiguration
+
+        Task { [weak self] in
+            do {
+                let reply = try await TemporaryChatClient().complete(
+                    messages: messages,
+                    configuration: configuration
+                )
+                guard let self else { return }
+                self.temporaryChatMessages.append(
+                    TemporaryChatMessage(role: .assistant, content: reply)
+                )
+                self.temporaryChatIsSending = false
+                self.lastActionMessage = "Temporary chat reply received."
+            } catch {
+                guard let self else { return }
+                self.temporaryChatLastError = error.localizedDescription
+                self.temporaryChatIsSending = false
+                self.lastActionMessage = "Temporary chat failed: \(error.localizedDescription)"
+            }
+        }
+    }
 
     func loadDebugSnapshot(
         _ snapshot: IslandDebugSnapshot,

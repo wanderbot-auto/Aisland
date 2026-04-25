@@ -233,3 +233,24 @@
 /* Window Titles */
 "window.settings" = "Aisland Settings";
 "window.debug" = "Aisland Debug";
+
+/* AI Chat */
+"settings.tab.ai" = "AI Chat";
+"settings.ai.provider" = "Provider";
+"settings.ai.provider.help" = "Temporary chat uses the selected provider until a Swift AI SDK is chosen for the long-term integration.";
+"settings.ai.connection" = "Connection";
+"settings.ai.model" = "Model";
+"settings.ai.baseURL" = "Base URL";
+"settings.ai.apiKey" = "API Key";
+"settings.ai.keychainHelp" = "The API key is saved in the macOS Keychain.";
+"settings.ai.shortcut" = "Shortcut";
+"settings.ai.openChat" = "Open chat";
+"settings.ai.shortcutHelp" = "Use this global shortcut to expand the island and focus the temporary chat input.";
+"island.surface.sessions" = "Sessions";
+"island.surface.chat" = "Ask";
+"chat.title" = "Temporary chat";
+"chat.clear" = "Clear";
+"chat.waiting" = "Waiting for reply…";
+"chat.empty.title" = "Ask without leaving the island";
+"chat.empty.subtitle" = "Use this scratchpad for quick LLM questions; monitored agent sessions remain available in the Sessions tab.";
+"chat.placeholder" = "Ask a quick question…";

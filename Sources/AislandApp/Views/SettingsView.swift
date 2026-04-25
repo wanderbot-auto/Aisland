@@ -7,6 +7,7 @@ import AislandCore
 enum SettingsTab: String, CaseIterable, Identifiable {
     case general
     case setup
+    case ai
     case display
     case usage
     case sound
@@ -19,6 +20,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         switch self {
         case .general:    lang.t("settings.tab.general")
         case .setup:      lang.t("settings.tab.setup")
+        case .ai:         lang.t("settings.tab.ai")
         case .appearance: lang.t("settings.tab.appearance")
         case .display:    lang.t("settings.tab.display")
         case .usage:      lang.t("settings.tab.usage")
@@ -31,6 +33,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         switch self {
         case .general:    "gearshape.fill"
         case .setup:      "arrow.down.circle.fill"
+        case .ai:         "sparkles"
         case .appearance: "paintbrush.fill"
         case .display:    "textformat.size"
         case .usage:      "chart.bar.xaxis"
@@ -43,6 +46,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         switch self {
         case .general:    .gray
         case .setup:      .orange
+        case .ai:         .cyan
         case .appearance: .purple
         case .display:    .blue
         case .usage:      .mint
@@ -53,7 +57,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
 
     var section: SettingsSection {
         switch self {
-        case .general, .setup, .display, .sound, .appearance: .system
+        case .general, .setup, .ai, .display, .sound, .appearance: .system
         case .shortcuts:                                      .advanced
         case .usage:                                          .system
         }
@@ -132,6 +136,8 @@ struct SettingsView: View {
                 GeneralSettingsPane(model: model)
             case .setup:
                 SetupSettingsPane(model: model)
+            case .ai:
+                LLMSettingsPane(model: model)
             case .appearance:
                 AppearanceSettingsPane(model: model)
             case .display:
@@ -198,6 +204,63 @@ struct GeneralSettingsPane: View {
         }
         .formStyle(.grouped)
         .navigationTitle(lang.t("settings.tab.general"))
+    }
+}
+
+// MARK: - AI Chat
+
+struct LLMSettingsPane: View {
+    var model: AppModel
+
+    private var lang: LanguageManager { model.lang }
+
+    var body: some View {
+        Form {
+            Section(lang.t("settings.ai.provider")) {
+                Picker(lang.t("settings.ai.provider"), selection: Binding(
+                    get: { model.temporaryChatProvider },
+                    set: { model.temporaryChatProvider = $0 }
+                )) {
+                    ForEach(LLMProviderKind.allCases) { provider in
+                        Text(provider.displayName).tag(provider)
+                    }
+                }
+
+                Text(lang.t("settings.ai.provider.help"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section(lang.t("settings.ai.connection")) {
+                TextField(lang.t("settings.ai.model"), text: Binding(
+                    get: { model.temporaryChatModel },
+                    set: { model.temporaryChatModel = $0 }
+                ))
+                TextField(lang.t("settings.ai.baseURL"), text: Binding(
+                    get: { model.temporaryChatBaseURL },
+                    set: { model.temporaryChatBaseURL = $0 }
+                ))
+                SecureField(lang.t("settings.ai.apiKey"), text: Binding(
+                    get: { model.temporaryChatAPIKey },
+                    set: { model.temporaryChatAPIKey = $0 }
+                ))
+                Text(lang.t("settings.ai.keychainHelp"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section(lang.t("settings.ai.shortcut")) {
+                LabeledContent(
+                    lang.t("settings.ai.openChat"),
+                    value: IslandShortcutController.shortcutDescription
+                )
+                Text(lang.t("settings.ai.shortcutHelp"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
+        .navigationTitle(lang.t("settings.tab.ai"))
     }
 }
 

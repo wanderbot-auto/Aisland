@@ -3,11 +3,14 @@ import AislandCore
 
 enum IslandSurface: Equatable {
     case sessionList(actionableSessionID: String? = nil)
+    case temporaryChat
 
     var sessionID: String? {
         switch self {
         case let .sessionList(actionableSessionID):
             actionableSessionID
+        case .temporaryChat:
+            nil
         }
     }
 

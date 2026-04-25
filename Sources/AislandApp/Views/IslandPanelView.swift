@@ -449,7 +449,13 @@ struct IslandPanelView: View {
                 installHooksHint
             }
 
-            if model.shouldShowSessionBootstrapPlaceholder {
+            if !isNotificationMode {
+                surfaceSwitcher
+            }
+
+            if model.islandSurface == .temporaryChat {
+                TemporaryChatView(model: model)
+            } else if model.shouldShowSessionBootstrapPlaceholder {
                 sessionBootstrapPlaceholder
             } else if model.islandListSessions.isEmpty {
                 emptyState
@@ -460,6 +466,49 @@ struct IslandPanelView: View {
         .padding(.horizontal, 18)
         .padding(.top, 8)
         .padding(.bottom, 0)
+    }
+
+    private var surfaceSwitcher: some View {
+        HStack(spacing: 4) {
+            surfaceButton(
+                title: model.lang.t("island.surface.sessions"),
+                systemName: "terminal.fill",
+                isSelected: model.islandSurface != .temporaryChat
+            ) {
+                model.showSessionListSurface()
+            }
+
+            surfaceButton(
+                title: model.lang.t("island.surface.chat"),
+                systemName: "bubble.left.and.sparkles.fill",
+                isSelected: model.islandSurface == .temporaryChat
+            ) {
+                model.showTemporaryChatSurface()
+            }
+        }
+        .padding(3)
+        .background(.white.opacity(0.07), in: Capsule())
+    }
+
+    private func surfaceButton(
+        title: String,
+        systemName: String,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: systemName)
+                    .font(.system(size: 10, weight: .semibold))
+                Text(title)
+                    .font(.system(size: 11, weight: .semibold))
+            }
+            .foregroundStyle(isSelected ? Color.black.opacity(0.86) : Color.white.opacity(0.58))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
+            .background(isSelected ? Color.cyan : Color.clear, in: Capsule())
+        }
+        .buttonStyle(.plain)
     }
 
     /// Persistent hint at the top of the expanded island while no agent

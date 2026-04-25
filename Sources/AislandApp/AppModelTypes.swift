@@ -12,6 +12,7 @@ enum NotchOpenReason: Equatable {
     case click
     case hover
     case notification
+    case shortcut
     case boot
 }
 

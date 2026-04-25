@@ -28,6 +28,7 @@ final class AislandAppDelegate: NSObject, NSApplicationDelegate {
                 shouldPerformBootAnimation: harnessLaunchConfiguration.shouldPerformBootAnimation,
                 loadRuntimeState: harnessLaunchConfiguration.scenario == nil
             )
+            model.shortcutController.start(model: model)
             harnessRuntimeMonitor.recordMilestone("modelStarted")
 
             if let scenario = harnessLaunchConfiguration.scenario {
@@ -114,6 +115,12 @@ struct AislandApp: App {
                     appDelegate.model.showSettings()
                 }
                 .keyboardShortcut(",", modifiers: .command)
+            }
+            CommandMenu("Island") {
+                Button("Open Temporary Chat") {
+                    appDelegate.model.openTemporaryChatFromShortcut()
+                }
+                .keyboardShortcut(.space, modifiers: [.control, .option])
             }
         }
 
