@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 @preconcurrency import MarkdownUI
 
@@ -5,6 +6,7 @@ struct TemporaryChatView: View {
     var model: AppModel
 
     @State private var draft = ""
+    @State private var showsClearConfirmation = false
     @FocusState private var isInputFocused: Bool
 
     private var lang: LanguageManager { model.lang }
@@ -18,6 +20,12 @@ struct TemporaryChatView: View {
         .onAppear {
             isInputFocused = true
         }
+        .confirmationDialog(lang.t("chat.clearConfirm.title"), isPresented: $showsClearConfirmation) {
+            Button(lang.t("chat.clear"), role: .destructive) {
+                model.clearTemporaryChat()
+            }
+            Button(lang.t("chat.clearConfirm.cancel"), role: .cancel) {}
+        }
     }
 
     private var header: some View {
@@ -30,16 +38,71 @@ struct TemporaryChatView: View {
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.white.opacity(0.42))
                     .lineLimit(1)
+                tokenUsageView
             }
 
             Spacer(minLength: 0)
 
+            if model.temporaryChatIsSending {
+                Button(lang.t("chat.stop")) {
+                    model.cancelTemporaryChatResponse()
+                }
+                .buttonStyle(ChatSecondaryButtonStyle())
+            } else if model.temporaryChatMessages.contains(where: { $0.role == .user }) {
+                Button(lang.t("chat.retry")) {
+                    model.retryLastTemporaryChatMessage()
+                }
+                .buttonStyle(ChatSecondaryButtonStyle())
+            }
+
             Button(lang.t("chat.clear")) {
-                model.clearTemporaryChat()
+                showsClearConfirmation = true
             }
             .buttonStyle(ChatSecondaryButtonStyle())
             .disabled(model.temporaryChatMessages.isEmpty || model.temporaryChatIsSending)
         }
+    }
+
+    private var tokenUsageView: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(tokenUsageSummary)
+                .font(.system(size: 10.5, weight: .medium))
+                .foregroundStyle(.white.opacity(0.38))
+                .lineLimit(1)
+
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color.white.opacity(0.08))
+                    Capsule()
+                        .fill(model.temporaryChatTokenStats.contextRatio > 0.8 ? Color.orange.opacity(0.76) : Color.cyan.opacity(0.66))
+                        .frame(width: max(3, proxy.size.width * model.temporaryChatTokenStats.contextRatio))
+                }
+            }
+            .frame(height: 3)
+        }
+        .frame(maxWidth: 230, alignment: .leading)
+    }
+
+    private var tokenUsageSummary: String {
+        let stats = model.temporaryChatTokenStats
+        let source = stats.source == .provider ? lang.t("chat.token.provider") : lang.t("chat.token.estimated")
+        return lang.t(
+            "chat.token.summary",
+            Self.formatTokenCount(stats.inputTokens),
+            "\(stats.contextPercentage)%",
+            source
+        )
+    }
+
+    private static func formatTokenCount(_ value: Int) -> String {
+        if value >= 1_000_000 {
+            return String(format: "%.1fM", Double(value) / 1_000_000)
+        }
+        if value >= 1_000 {
+            return String(format: "%.1fk", Double(value) / 1_000)
+        }
+        return value.formatted()
     }
 
     private var messages: some View {
@@ -51,7 +114,7 @@ struct TemporaryChatView: View {
                     } else {
                         ForEach(model.temporaryChatMessages) { message in
                             if !message.content.isEmpty {
-                                TemporaryChatBubble(message: message)
+                                TemporaryChatBubble(message: message, lang: lang)
                                     .id(message.id)
                             }
                         }
@@ -156,6 +219,7 @@ struct TemporaryChatView: View {
 
 private struct TemporaryChatBubble: View {
     let message: TemporaryChatMessage
+    let lang: LanguageManager
 
     private var isUser: Bool { message.role == .user }
 
@@ -180,17 +244,24 @@ private struct TemporaryChatBubble: View {
         }
     }
 
-    @ViewBuilder
     private var bubbleContent: some View {
-        if isUser {
-            Text(message.content)
-                .font(.system(size: 12.5, weight: .medium))
-                .foregroundStyle(.white.opacity(0.92))
-        } else {
-            Markdown(message.content)
-                .markdownTheme(.temporaryChat)
-                .markdownImageProvider(.default)
-                .frame(maxWidth: .infinity, alignment: .topLeading)
+        Group {
+            if isUser {
+                Text(message.content)
+                    .font(.system(size: 12.5, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.92))
+            } else {
+                Markdown(message.content)
+                    .markdownTheme(.temporaryChat)
+                    .markdownImageProvider(.default)
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+            }
+        }
+        .contextMenu {
+            Button(isUser ? lang.t("chat.copy.prompt") : lang.t("chat.copy.reply")) {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(message.content, forType: .string)
+            }
         }
     }
 }

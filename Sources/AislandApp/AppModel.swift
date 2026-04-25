@@ -15,7 +15,7 @@ extension Notification.Name {
 typealias TemporaryChatStreamFactory = @Sendable (
     [TemporaryChatMessage],
     LLMChatConfiguration
-) throws -> AsyncThrowingStream<String, Error>
+) throws -> AsyncThrowingStream<TemporaryChatStreamEvent, Error>
 
 @MainActor
 @Observable
@@ -32,9 +32,9 @@ final class AppModel {
     private static let islandTokenUsageDisplayModeDefaultsKey = "island.tokenUsage.displayMode"
     private static let completionReplyEnabledDefaultsKey = "feature.completionReply.enabled"
     private static let suppressFrontmostNotificationsDefaultsKey = "app.suppressFrontmostNotifications"
-    private static let llmProviderDefaultsKey = "llm.chat.provider"
-    private static let llmModelDefaultsKey = "llm.chat.model"
-    private static let llmBaseURLDefaultsKey = "llm.chat.baseURL"
+    private static let legacyLLMProviderDefaultsKey = "llm.chat.provider"
+    private static let legacyLLMModelDefaultsKey = "llm.chat.model"
+    private static let legacyLLMBaseURLDefaultsKey = "llm.chat.baseURL"
     private static let islandShortcutsDefaultsKey = "island.shortcuts"
 
     static let defaultStatusColors: [SessionPhase: String] = [
@@ -267,7 +267,6 @@ final class AppModel {
     var temporaryChatProvider: LLMProviderKind = .openAI {
         didSet {
             guard temporaryChatProvider != oldValue else { return }
-            UserDefaults.standard.set(temporaryChatProvider.rawValue, forKey: Self.llmProviderDefaultsKey)
             if temporaryChatModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 || temporaryChatModel == oldValue.defaultModel {
                 temporaryChatModel = temporaryChatProvider.defaultModel
@@ -275,27 +274,42 @@ final class AppModel {
             if temporaryChatBaseURL == oldValue.defaultBaseURL {
                 temporaryChatBaseURL = temporaryChatProvider.defaultBaseURL
             }
+            isRestoringTemporaryChatAPIKey = true
+            temporaryChatAPIKey = temporaryChatAPIKeyLoader(temporaryChatProvider)
+            isRestoringTemporaryChatAPIKey = false
+            refreshTemporaryChatTokenStats()
+            persistTemporaryChatConfigurationIfReady()
         }
     }
     var temporaryChatModel: String = LLMProviderKind.openAI.defaultModel {
         didSet {
             guard temporaryChatModel != oldValue else { return }
-            UserDefaults.standard.set(temporaryChatModel, forKey: Self.llmModelDefaultsKey)
+            refreshTemporaryChatTokenStats()
+            persistTemporaryChatConfigurationIfReady()
         }
     }
     var temporaryChatBaseURL: String = LLMProviderKind.openAI.defaultBaseURL {
         didSet {
             guard temporaryChatBaseURL != oldValue else { return }
-            UserDefaults.standard.set(temporaryChatBaseURL, forKey: Self.llmBaseURLDefaultsKey)
+            persistTemporaryChatConfigurationIfReady()
         }
     }
     var temporaryChatAPIKey: String = "" {
         didSet {
-            guard temporaryChatAPIKey != oldValue else { return }
-            TemporaryChatKeychain.saveAPIKey(temporaryChatAPIKey)
+            guard hasFinishedInit, !isRestoringTemporaryChatAPIKey, temporaryChatAPIKey != oldValue else { return }
+            temporaryChatAPIKeySaver(temporaryChatAPIKey, temporaryChatProvider)
         }
     }
-    var temporaryChatMessages: [TemporaryChatMessage] = []
+    var temporaryChatMessages: [TemporaryChatMessage] = [] {
+        didSet {
+            refreshTemporaryChatTokenStats()
+        }
+    }
+    var temporaryChatTokenStats = TemporaryChatTokenStats.estimate(
+        messages: [],
+        provider: .openAI,
+        model: LLMProviderKind.openAI.defaultModel
+    )
     var temporaryChatIsSending = false
     var temporaryChatLastError: String?
     var shortcuts: [IslandShortcutAction: IslandKeyboardShortcut] = IslandKeyboardShortcut.defaultShortcuts {
@@ -432,6 +446,15 @@ final class AppModel {
     @ObservationIgnored
     private let temporaryChatStream: TemporaryChatStreamFactory
 
+    @ObservationIgnored
+    private let temporaryChatConfigurationStore: TemporaryChatConfigurationStore
+
+    @ObservationIgnored
+    private let temporaryChatAPIKeyLoader: @Sendable (LLMProviderKind) -> String
+
+    @ObservationIgnored
+    private let temporaryChatAPIKeySaver: @Sendable (String, LLMProviderKind) -> Void
+
 
     @ObservationIgnored
     var harnessRuntimeMonitor: HarnessRuntimeMonitor?
@@ -443,6 +466,12 @@ final class AppModel {
     @ObservationIgnored
     private var notificationPresentationTask: Task<Void, Never>?
 
+    @ObservationIgnored
+    private var temporaryChatTask: Task<Void, Never>?
+
+    @ObservationIgnored
+    private var isRestoringTemporaryChatAPIKey = false
+
     init(
         terminalJumpAction: @escaping @Sendable (JumpTarget) throws -> String = { target in
             try TerminalJumpService().jump(to: target)
@@ -452,11 +481,17 @@ final class AppModel {
         },
         temporaryChatStream: @escaping TemporaryChatStreamFactory = { messages, configuration in
             try TemporaryChatClient().stream(messages: messages, configuration: configuration)
-        }
+        },
+        temporaryChatConfigurationStore: TemporaryChatConfigurationStore = TemporaryChatConfigurationStore(),
+        temporaryChatAPIKeyLoader: @escaping @Sendable (LLMProviderKind) -> String = { TemporaryChatKeychain.loadAPIKey(for: $0) },
+        temporaryChatAPIKeySaver: @escaping @Sendable (String, LLMProviderKind) -> Void = { TemporaryChatKeychain.saveAPIKey($0, for: $1) }
     ) {
         self.terminalJumpAction = terminalJumpAction
         self.isNotificationSessionAlreadyFrontmost = isNotificationSessionAlreadyFrontmost
         self.temporaryChatStream = temporaryChatStream
+        self.temporaryChatConfigurationStore = temporaryChatConfigurationStore
+        self.temporaryChatAPIKeyLoader = temporaryChatAPIKeyLoader
+        self.temporaryChatAPIKeySaver = temporaryChatAPIKeySaver
         UserDefaults.standard.register(defaults: [
             Self.showDockIconDefaultsKey: true,
             Self.hapticFeedbackEnabledDefaultsKey: false,
@@ -483,14 +518,14 @@ final class AppModel {
             rawValue: UserDefaults.standard.string(forKey: Self.islandTokenUsageDisplayModeDefaultsKey) ?? ""
         ) ?? migratedTokenUsageMode
         completionReplyEnabled = UserDefaults.standard.bool(forKey: Self.completionReplyEnabledDefaultsKey)
-        temporaryChatProvider = LLMProviderKind(
-            rawValue: UserDefaults.standard.string(forKey: Self.llmProviderDefaultsKey) ?? ""
-        ) ?? .openAI
-        temporaryChatModel = UserDefaults.standard.string(forKey: Self.llmModelDefaultsKey)
-            ?? temporaryChatProvider.defaultModel
-        temporaryChatBaseURL = UserDefaults.standard.string(forKey: Self.llmBaseURLDefaultsKey)
-            ?? temporaryChatProvider.defaultBaseURL
-        temporaryChatAPIKey = TemporaryChatKeychain.loadAPIKey()
+        let storedChatConfiguration = Self.loadTemporaryChatConfiguration(
+            store: temporaryChatConfigurationStore
+        )
+        temporaryChatProvider = storedChatConfiguration.provider
+        temporaryChatModel = storedChatConfiguration.model
+        temporaryChatBaseURL = storedChatConfiguration.baseURL
+        temporaryChatAPIKey = temporaryChatAPIKeyLoader(temporaryChatProvider)
+        refreshTemporaryChatTokenStats()
         shortcuts = Self.loadShortcuts()
         islandAppearanceMode = IslandAppearanceMode(
             rawValue: UserDefaults.standard.string(forKey: Self.islandAppearanceModeDefaultsKey) ?? ""
@@ -913,6 +948,61 @@ final class AppModel {
 
     // MARK: - Temporary chat
 
+    private static func loadTemporaryChatConfiguration(
+        store: TemporaryChatConfigurationStore,
+        userDefaults: UserDefaults = .standard
+    ) -> TemporaryChatStoredConfiguration {
+        if let stored = try? store.loadConfiguration() {
+            return stored
+        }
+
+        let provider = LLMProviderKind(
+            rawValue: userDefaults.string(forKey: legacyLLMProviderDefaultsKey) ?? ""
+        ) ?? .openAI
+        let migrated = TemporaryChatStoredConfiguration(
+            provider: provider,
+            model: userDefaults.string(forKey: legacyLLMModelDefaultsKey) ?? provider.defaultModel,
+            baseURL: userDefaults.string(forKey: legacyLLMBaseURLDefaultsKey) ?? provider.defaultBaseURL
+        )
+        try? store.saveConfiguration(migrated)
+        return migrated
+    }
+
+    private func persistTemporaryChatConfigurationIfReady() {
+        guard hasFinishedInit else { return }
+        do {
+            try temporaryChatConfigurationStore.saveConfiguration(TemporaryChatStoredConfiguration(
+                provider: temporaryChatProvider,
+                model: temporaryChatModel,
+                baseURL: temporaryChatBaseURL
+            ))
+        } catch {
+            lastActionMessage = "Temporary chat configuration save failed: \(error.localizedDescription)"
+        }
+    }
+
+    private func refreshTemporaryChatTokenStats(source: TemporaryChatTokenStatsSource = .estimated) {
+        switch source {
+        case .estimated:
+            temporaryChatTokenStats = TemporaryChatTokenStats.estimate(
+                messages: temporaryChatMessages,
+                provider: temporaryChatProvider,
+                model: temporaryChatModel
+            )
+        case .provider:
+            break
+        }
+    }
+
+    private func noteTemporaryChatUsage(_ usage: TemporaryChatUsage, configuration: LLMChatConfiguration) {
+        guard let inputTokens = usage.inputTokens else { return }
+        temporaryChatTokenStats = TemporaryChatTokenStats.providerReported(
+            inputTokens: inputTokens,
+            provider: configuration.provider,
+            model: configuration.effectiveModel
+        )
+    }
+
     var temporaryChatConfiguration: LLMChatConfiguration {
         LLMChatConfiguration(
             provider: temporaryChatProvider,
@@ -960,8 +1050,27 @@ final class AppModel {
     }
 
     func clearTemporaryChat() {
+        temporaryChatTask?.cancel()
+        temporaryChatTask = nil
         temporaryChatMessages.removeAll()
         temporaryChatLastError = nil
+        temporaryChatIsSending = false
+    }
+
+    func cancelTemporaryChatResponse() {
+        guard temporaryChatIsSending else { return }
+        temporaryChatTask?.cancel()
+    }
+
+    func retryLastTemporaryChatMessage() {
+        guard !temporaryChatIsSending,
+              let lastUserIndex = temporaryChatMessages.lastIndex(where: { $0.role == .user }) else {
+            return
+        }
+
+        let prompt = temporaryChatMessages[lastUserIndex].content
+        temporaryChatMessages = Array(temporaryChatMessages.prefix(upTo: lastUserIndex))
+        sendTemporaryChatMessage(prompt)
     }
 
     func sendTemporaryChatMessage(_ text: String) {
@@ -979,13 +1088,20 @@ final class AppModel {
         temporaryChatIsSending = true
         lastActionMessage = "Sending temporary chat message…"
 
-        Task.detached { [weak self, temporaryChatStream] in
+        let task = Task.detached { [weak self, temporaryChatStream] in
             do {
                 let stream = try temporaryChatStream(messages, configuration)
                 var reply = ""
-                for try await chunk in stream where !chunk.isEmpty {
-                    reply.append(chunk)
-                    await self?.replaceTemporaryChatMessage(id: assistantMessage.id, content: reply)
+                for try await event in stream {
+                    switch event {
+                    case let .text(chunk) where !chunk.isEmpty:
+                        reply.append(chunk)
+                        await self?.replaceTemporaryChatMessage(id: assistantMessage.id, content: reply)
+                    case let .usage(usage):
+                        await self?.noteTemporaryChatUsage(usage, configuration: configuration)
+                    case .text:
+                        continue
+                    }
                 }
 
                 let trimmedReply = reply.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -994,9 +1110,14 @@ final class AppModel {
                 }
                 await self?.finishTemporaryChatMessage(id: assistantMessage.id, content: trimmedReply)
             } catch {
-                await self?.failTemporaryChatMessage(id: assistantMessage.id, error: error)
+                if Task.isCancelled {
+                    await self?.cancelTemporaryChatMessage(id: assistantMessage.id)
+                } else {
+                    await self?.failTemporaryChatMessage(id: assistantMessage.id, error: error)
+                }
             }
         }
+        temporaryChatTask = task
     }
 
     private func replaceTemporaryChatMessage(id: UUID, content: String) {
@@ -1007,9 +1128,24 @@ final class AppModel {
     }
 
     private func finishTemporaryChatMessage(id: UUID, content: String) {
+        let reportedStats = temporaryChatTokenStats.source == .provider ? temporaryChatTokenStats : nil
         replaceTemporaryChatMessage(id: id, content: content)
+        if let reportedStats {
+            temporaryChatTokenStats = reportedStats
+        }
         temporaryChatIsSending = false
+        temporaryChatTask = nil
         lastActionMessage = "Temporary chat reply received."
+    }
+
+    private func cancelTemporaryChatMessage(id: UUID) {
+        if let index = temporaryChatMessages.firstIndex(where: { $0.id == id }),
+           temporaryChatMessages[index].content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            temporaryChatMessages.remove(at: index)
+        }
+        temporaryChatIsSending = false
+        temporaryChatTask = nil
+        lastActionMessage = "Temporary chat response stopped."
     }
 
     private func failTemporaryChatMessage(id: UUID, error: Error) {
@@ -1019,6 +1155,7 @@ final class AppModel {
         }
         temporaryChatLastError = error.localizedDescription
         temporaryChatIsSending = false
+        temporaryChatTask = nil
         lastActionMessage = "Temporary chat failed: \(error.localizedDescription)"
     }
 

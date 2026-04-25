@@ -241,7 +241,7 @@
 "settings.ai.model" = "模型";
 "settings.ai.baseURL" = "Base URL";
 "settings.ai.apiKey" = "API Key";
-"settings.ai.keychainHelp" = "API Key 會儲存到 macOS Keychain。";
+"settings.ai.keychainHelp" = "API Key 會按服務商儲存到 macOS Keychain；模型和 Base URL 會儲存到本機資料庫。";
 "settings.ai.shortcut" = "快捷鍵";
 "settings.ai.openChat" = "開啟對話";
 "settings.ai.shortcutHelp" = "使用該全域快捷鍵展開 island 並聚焦臨時對話輸入框。";
@@ -250,6 +250,15 @@
 "chat.title" = "臨時對話";
 "chat.clear" = "清除";
 "chat.waiting" = "等待回覆…";
+"chat.stop" = "停止";
+"chat.retry" = "重試";
+"chat.clearConfirm.title" = "清空這個臨時對話？";
+"chat.clearConfirm.cancel" = "取消";
+"chat.token.summary" = "%@ 輸入 · %@ 上下文 · %@";
+"chat.token.estimated" = "估算";
+"chat.token.provider" = "服務商";
+"chat.copy.prompt" = "複製提問";
+"chat.copy.reply" = "複製回覆";
 "chat.empty.title" = "不離開 island 也能提問";
 "chat.empty.subtitle" = "適合快速詢問 LLM；已監控的 agent 任務仍在任務標籤中。";
 "chat.placeholder" = "快速問一個問題…";

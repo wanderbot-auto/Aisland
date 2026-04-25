@@ -242,7 +242,7 @@
 "settings.ai.model" = "Model";
 "settings.ai.baseURL" = "Base URL";
 "settings.ai.apiKey" = "API Key";
-"settings.ai.keychainHelp" = "The API key is saved in the macOS Keychain.";
+"settings.ai.keychainHelp" = "API keys are saved per provider in macOS Keychain. Model and Base URL are saved in the local database.";
 "settings.ai.shortcut" = "Shortcut";
 "settings.ai.openChat" = "Open chat";
 "settings.ai.shortcutHelp" = "Use this global shortcut to expand the island and focus the temporary chat input.";
@@ -251,6 +251,15 @@
 "chat.title" = "Temporary chat";
 "chat.clear" = "Clear";
 "chat.waiting" = "Waiting for reply…";
+"chat.stop" = "Stop";
+"chat.retry" = "Retry";
+"chat.clearConfirm.title" = "Clear this temporary chat?";
+"chat.clearConfirm.cancel" = "Cancel";
+"chat.token.summary" = "%@ input · %@ context · %@";
+"chat.token.estimated" = "estimated";
+"chat.token.provider" = "provider";
+"chat.copy.prompt" = "Copy prompt";
+"chat.copy.reply" = "Copy reply";
 "chat.empty.title" = "Ask without leaving the island";
 "chat.empty.subtitle" = "Use this scratchpad for quick LLM questions; monitored agent sessions remain available in the Sessions tab.";
 "chat.placeholder" = "Ask a quick question…";

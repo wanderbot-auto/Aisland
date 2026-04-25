@@ -17,8 +17,10 @@ struct TemporaryChatClient: Sendable {
     func complete(messages: [TemporaryChatMessage], configuration: LLMChatConfiguration) async throws -> String {
         let stream = try stream(messages: messages, configuration: configuration)
         var content = ""
-        for try await chunk in stream {
-            content.append(chunk)
+        for try await event in stream {
+            if case let .text(chunk) = event {
+                content.append(chunk)
+            }
         }
         content = content.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !content.isEmpty else {
@@ -30,7 +32,7 @@ struct TemporaryChatClient: Sendable {
     func stream(
         messages: [TemporaryChatMessage],
         configuration: LLMChatConfiguration
-    ) throws -> AsyncThrowingStream<String, Error> {
+    ) throws -> AsyncThrowingStream<TemporaryChatStreamEvent, Error> {
         guard !configuration.effectiveModel.isEmpty else {
             throw TemporaryChatError.missingModel
         }
@@ -49,8 +51,19 @@ struct TemporaryChatClient: Sendable {
         return AsyncThrowingStream { continuation in
             let task = Task {
                 do {
-                    for try await chunk in result.textStream {
-                        continuation.yield(chunk)
+                    for try await part in result.fullStream {
+                        switch part {
+                        case let .textDelta(_, text, _):
+                            continuation.yield(.text(text))
+                        case let .finish(_, _, totalUsage):
+                            continuation.yield(.usage(TemporaryChatUsage(
+                                inputTokens: totalUsage.inputTokens,
+                                outputTokens: totalUsage.outputTokens,
+                                totalTokens: totalUsage.totalTokens
+                            )))
+                        default:
+                            continue
+                        }
                     }
                     continuation.finish()
                 } catch {
