@@ -253,3 +253,20 @@
 "chat.empty.title" = "不離開 island 也能提問";
 "chat.empty.subtitle" = "適合快速詢問 LLM；已監控的 agent 任務仍在任務標籤中。";
 "chat.placeholder" = "快速問一個問題…";
+
+/* Shortcut Settings */
+"settings.shortcuts.global" = "全域快捷鍵";
+"settings.shortcuts.navigation" = "Island 導航";
+"settings.shortcuts.openIsland" = "展開 island";
+"settings.shortcuts.openIsland.help" = "顯示目前 island 介面，不指定具體標籤頁。";
+"settings.shortcuts.openSessions" = "開啟任務標籤";
+"settings.shortcuts.openSessions.help" = "直接展開到已監控的 agent 任務。";
+"settings.shortcuts.openChat" = "開啟對話標籤";
+"settings.shortcuts.openChat.help" = "直接展開到臨時 LLM 對話。";
+"settings.shortcuts.record" = "錄製";
+"settings.shortcuts.recording" = "按下快捷鍵…";
+"settings.shortcuts.reset" = "重設快捷鍵";
+"settings.shortcuts.tabKey" = "切換 island 標籤";
+"settings.shortcuts.tabKey.help" = "當 island 取得焦點時，按 Tab 在精簡圖示標籤之間切換。";
+"settings.ai.provider.search" = "搜尋服務商或模型";
+"settings.ai.models" = "推薦模型";

@@ -471,7 +471,7 @@ struct IslandPanelView: View {
     private var surfaceSwitcher: some View {
         HStack(spacing: 4) {
             surfaceButton(
-                title: model.lang.t("island.surface.sessions"),
+                accessibilityLabel: model.lang.t("island.surface.sessions"),
                 systemName: "terminal.fill",
                 isSelected: model.islandSurface != .temporaryChat
             ) {
@@ -479,7 +479,7 @@ struct IslandPanelView: View {
             }
 
             surfaceButton(
-                title: model.lang.t("island.surface.chat"),
+                accessibilityLabel: model.lang.t("island.surface.chat"),
                 systemName: "bubble.left.and.sparkles.fill",
                 isSelected: model.islandSurface == .temporaryChat
             ) {
@@ -488,27 +488,24 @@ struct IslandPanelView: View {
         }
         .padding(3)
         .background(.white.opacity(0.07), in: Capsule())
+        .frame(maxWidth: 94)
     }
 
     private func surfaceButton(
-        title: String,
+        accessibilityLabel: String,
         systemName: String,
         isSelected: Bool,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: systemName)
-                    .font(.system(size: 10, weight: .semibold))
-                Text(title)
-                    .font(.system(size: 11, weight: .semibold))
-            }
+            Image(systemName: systemName)
+                .font(.system(size: 10.5, weight: .semibold))
             .foregroundStyle(isSelected ? Color.black.opacity(0.86) : Color.white.opacity(0.58))
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
+            .frame(width: 39, height: 24)
             .background(isSelected ? Color.cyan : Color.clear, in: Capsule())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(accessibilityLabel)
     }
 
     /// Persistent hint at the top of the expanded island while no agent

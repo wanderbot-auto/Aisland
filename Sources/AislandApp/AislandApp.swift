@@ -117,10 +117,12 @@ struct AislandApp: App {
                 .keyboardShortcut(",", modifiers: .command)
             }
             CommandMenu("Island") {
-                Button("Open Temporary Chat") {
-                    appDelegate.model.openTemporaryChatFromShortcut()
+                Button("Open Island") {
+                    appDelegate.model.performShortcutAction(.openIsland)
                 }
-                .keyboardShortcut(.space, modifiers: [.control, .option])
+                Button("Open Temporary Chat") {
+                    appDelegate.model.performShortcutAction(.openChat)
+                }
             }
         }
 

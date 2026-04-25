@@ -254,3 +254,20 @@
 "chat.empty.title" = "不离开 island 也能提问";
 "chat.empty.subtitle" = "适合快速咨询 LLM；已监控的 agent 任务仍在任务标签中。";
 "chat.placeholder" = "快速问一个问题…";
+
+/* Shortcut Settings */
+"settings.shortcuts.global" = "全局快捷键";
+"settings.shortcuts.navigation" = "Island 导航";
+"settings.shortcuts.openIsland" = "展开 island";
+"settings.shortcuts.openIsland.help" = "显示当前 island 界面，不指定具体标签页。";
+"settings.shortcuts.openSessions" = "打开任务标签";
+"settings.shortcuts.openSessions.help" = "直接展开到已监控的 agent 任务。";
+"settings.shortcuts.openChat" = "打开对话标签";
+"settings.shortcuts.openChat.help" = "直接展开到临时 LLM 对话。";
+"settings.shortcuts.record" = "录制";
+"settings.shortcuts.recording" = "按下快捷键…";
+"settings.shortcuts.reset" = "重置快捷键";
+"settings.shortcuts.tabKey" = "切换 island 标签";
+"settings.shortcuts.tabKey.help" = "当 island 获得焦点时，按 Tab 在紧凑图标标签之间切换。";
+"settings.ai.provider.search" = "搜索服务商或模型";
+"settings.ai.models" = "推荐模型";

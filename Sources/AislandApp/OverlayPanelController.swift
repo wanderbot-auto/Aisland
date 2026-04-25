@@ -181,6 +181,7 @@ final class OverlayPanelController {
     private func presentPanel(_ panel: NSPanel, activates: Bool) {
         if activates {
             panel.makeKeyAndOrderFront(nil)
+            panel.makeFirstResponder(panel.contentView)
         } else {
             panel.orderFrontRegardless()
         }
@@ -734,6 +735,10 @@ final class NotchHostingView<Content: View>: NSHostingView<Content> {
         false
     }
 
+    override var acceptsFirstResponder: Bool {
+        true
+    }
+
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
         true
     }
@@ -745,6 +750,15 @@ final class NotchHostingView<Content: View>: NSHostingView<Content> {
         // instead of firing its action.
         window?.makeKey()
         super.mouseDown(with: event)
+    }
+
+    override func keyDown(with event: NSEvent) {
+        guard event.keyCode == 48, let model = notchController?.model else {
+            super.keyDown(with: event)
+            return
+        }
+
+        model.cycleIslandSurface(backwards: event.modifierFlags.contains(.shift))
     }
 
     required init(rootView: Content) {

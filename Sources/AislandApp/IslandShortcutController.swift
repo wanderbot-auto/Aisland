@@ -3,15 +3,48 @@ import Carbon.HIToolbox
 
 @MainActor
 final class IslandShortcutController {
-    static let shortcutDescription = "Control + Option + Space"
+    static let shortcutDescription = IslandKeyboardShortcut.defaultShortcuts[.openIsland]?.displayText ?? "Control + Option + Space"
 
     private weak var model: AppModel?
     private var eventHandler: EventHandlerRef?
-    private var hotKeyRef: EventHotKeyRef?
+    private var hotKeyRefs: [IslandShortcutAction: EventHotKeyRef] = [:]
+    private var actionsByHotKeyID: [UInt32: IslandShortcutAction] = [:]
 
     func start(model: AppModel) {
         self.model = model
-        guard eventHandler == nil, hotKeyRef == nil else { return }
+        installHandlerIfNeeded()
+        reloadShortcuts(model.shortcuts)
+    }
+
+    func reloadShortcuts(_ shortcuts: [IslandShortcutAction: IslandKeyboardShortcut]) {
+        unregisterHotKeys()
+
+        for action in IslandShortcutAction.allCases {
+            guard let shortcut = shortcuts[action], shortcut.isValid else { continue }
+            var hotKeyRef: EventHotKeyRef?
+            let hotKeyID = EventHotKeyID(signature: Self.hotKeySignature, id: action.hotKeyID)
+            let status = RegisterEventHotKey(
+                shortcut.keyCode,
+                shortcut.carbonModifiers,
+                hotKeyID,
+                GetApplicationEventTarget(),
+                0,
+                &hotKeyRef
+            )
+            guard status == noErr, let hotKeyRef else { continue }
+            hotKeyRefs[action] = hotKeyRef
+            actionsByHotKeyID[action.hotKeyID] = action
+        }
+    }
+
+    func stop() {
+        unregisterHotKeys()
+        if let eventHandler { RemoveEventHandler(eventHandler) }
+        eventHandler = nil
+    }
+
+    private func installHandlerIfNeeded() {
+        guard eventHandler == nil else { return }
 
         var eventType = EventTypeSpec(
             eventClass: OSType(kEventClassKeyboard),
@@ -21,13 +54,23 @@ final class IslandShortcutController {
         let userData = Unmanaged.passUnretained(self).toOpaque()
         InstallEventHandler(
             GetApplicationEventTarget(),
-            { _, _, userData in
-                guard let userData else { return noErr }
+            { _, eventRef, userData in
+                guard let userData, let eventRef else { return noErr }
                 let controller = Unmanaged<IslandShortcutController>
                     .fromOpaque(userData)
                     .takeUnretainedValue()
+                var hotKeyID = EventHotKeyID()
+                GetEventParameter(
+                    eventRef,
+                    EventParamName(kEventParamDirectObject),
+                    EventParamType(typeEventHotKeyID),
+                    nil,
+                    MemoryLayout<EventHotKeyID>.size,
+                    nil,
+                    &hotKeyID
+                )
                 Task { @MainActor in
-                    controller.openTemporaryChat()
+                    controller.performAction(forHotKeyID: hotKeyID.id)
                 }
                 return noErr
             },
@@ -36,27 +79,19 @@ final class IslandShortcutController {
             userData,
             &eventHandler
         )
-
-        let hotKeyID = EventHotKeyID(signature: Self.hotKeySignature, id: 1)
-        RegisterEventHotKey(
-            UInt32(kVK_Space),
-            UInt32(controlKey | optionKey),
-            hotKeyID,
-            GetApplicationEventTarget(),
-            0,
-            &hotKeyRef
-        )
     }
 
-    func stop() {
-        if let hotKeyRef { UnregisterEventHotKey(hotKeyRef) }
-        if let eventHandler { RemoveEventHandler(eventHandler) }
-        hotKeyRef = nil
-        eventHandler = nil
+    private func performAction(forHotKeyID id: UInt32) {
+        guard let action = actionsByHotKeyID[id] else { return }
+        model?.performShortcutAction(action)
     }
 
-    private func openTemporaryChat() {
-        model?.openTemporaryChatFromShortcut()
+    private func unregisterHotKeys() {
+        for ref in hotKeyRefs.values {
+            UnregisterEventHotKey(ref)
+        }
+        hotKeyRefs.removeAll()
+        actionsByHotKeyID.removeAll()
     }
 
     private static let hotKeySignature: OSType = 0x4169_736C // "Aisl"

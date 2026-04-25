@@ -30,6 +30,7 @@ final class AppModel {
     private static let llmProviderDefaultsKey = "llm.chat.provider"
     private static let llmModelDefaultsKey = "llm.chat.model"
     private static let llmBaseURLDefaultsKey = "llm.chat.baseURL"
+    private static let islandShortcutsDefaultsKey = "island.shortcuts"
 
     static let defaultStatusColors: [SessionPhase: String] = [
         .running: "#6E9FFF",
@@ -292,6 +293,14 @@ final class AppModel {
     var temporaryChatMessages: [TemporaryChatMessage] = []
     var temporaryChatIsSending = false
     var temporaryChatLastError: String?
+    var shortcuts: [IslandShortcutAction: IslandKeyboardShortcut] = IslandKeyboardShortcut.defaultShortcuts {
+        didSet {
+            guard hasFinishedInit else { return }
+            persistShortcuts()
+            shortcutController.reloadShortcuts(shortcuts)
+        }
+    }
+    var recordingShortcutAction: IslandShortcutAction?
     var overlayDisplaySelectionID: String {
         get { overlay.overlayDisplaySelectionID }
         set { overlay.overlayDisplaySelectionID = newValue }
@@ -470,6 +479,7 @@ final class AppModel {
         temporaryChatBaseURL = UserDefaults.standard.string(forKey: Self.llmBaseURLDefaultsKey)
             ?? temporaryChatProvider.defaultBaseURL
         temporaryChatAPIKey = TemporaryChatKeychain.loadAPIKey()
+        shortcuts = Self.loadShortcuts()
         islandAppearanceMode = IslandAppearanceMode(
             rawValue: UserDefaults.standard.string(forKey: Self.islandAppearanceModeDefaultsKey) ?? ""
         ) ?? .default
@@ -904,6 +914,26 @@ final class AppModel {
         notchOpen(reason: .shortcut, surface: .temporaryChat)
     }
 
+    func performShortcutAction(_ action: IslandShortcutAction) {
+        switch action {
+        case .openIsland:
+            notchOpen(reason: .shortcut, surface: islandSurface == .temporaryChat ? .temporaryChat : .sessionList())
+        case .openSessions:
+            notchOpen(reason: .shortcut, surface: .sessionList())
+        case .openChat:
+            notchOpen(reason: .shortcut, surface: .temporaryChat)
+        }
+    }
+
+    func cycleIslandSurface(backwards: Bool = false) {
+        switch islandSurface {
+        case .temporaryChat:
+            showSessionListSurface()
+        case .sessionList:
+            showTemporaryChatSurface()
+        }
+    }
+
     func showSessionListSurface() {
         islandSurface = .sessionList()
         refreshOverlayPlacementIfVisible()
@@ -952,6 +982,56 @@ final class AppModel {
                 self.lastActionMessage = "Temporary chat failed: \(error.localizedDescription)"
             }
         }
+    }
+
+    // MARK: - Shortcut settings
+
+    func shortcutDescription(for action: IslandShortcutAction) -> String {
+        shortcuts[action]?.displayText ?? "—"
+    }
+
+    func startRecordingShortcut(_ action: IslandShortcutAction) {
+        recordingShortcutAction = action
+    }
+
+    func cancelRecordingShortcut() {
+        recordingShortcutAction = nil
+    }
+
+    func captureShortcutEvent(_ event: NSEvent) {
+        guard let action = recordingShortcutAction,
+              let shortcut = IslandKeyboardShortcut(event: event) else {
+            return
+        }
+
+        shortcuts[action] = shortcut
+        recordingShortcutAction = nil
+        lastActionMessage = "Updated shortcut for \(action.rawValue) to \(shortcut.displayText)."
+    }
+
+    func resetShortcutsToDefaults() {
+        shortcuts = IslandKeyboardShortcut.defaultShortcuts
+        recordingShortcutAction = nil
+    }
+
+    private static func loadShortcuts() -> [IslandShortcutAction: IslandKeyboardShortcut] {
+        guard let data = UserDefaults.standard.data(forKey: islandShortcutsDefaultsKey),
+              let decoded = try? JSONDecoder().decode([String: IslandKeyboardShortcut].self, from: data) else {
+            return IslandKeyboardShortcut.defaultShortcuts
+        }
+
+        var merged = IslandKeyboardShortcut.defaultShortcuts
+        for (rawAction, shortcut) in decoded {
+            guard let action = IslandShortcutAction(rawValue: rawAction) else { continue }
+            merged[action] = shortcut
+        }
+        return merged
+    }
+
+    private func persistShortcuts() {
+        let encoded = Dictionary(uniqueKeysWithValues: shortcuts.map { ($0.key.rawValue, $0.value) })
+        guard let data = try? JSONEncoder().encode(encoded) else { return }
+        UserDefaults.standard.set(data, forKey: Self.islandShortcutsDefaultsKey)
     }
 
     func loadDebugSnapshot(

@@ -12,10 +12,10 @@ struct TemporaryChatConfigurationTests {
     }
 
     @Test
-    func openRouterUsesOpenAICompatibleTransport() {
-        #expect(LLMProviderKind.openRouter.usesOpenAICompatibleChatCompletions)
-        #expect(LLMProviderKind.openAI.usesOpenAICompatibleChatCompletions)
-        #expect(!LLMProviderKind.anthropic.usesOpenAICompatibleChatCompletions)
+    func providerSearchTokensIncludeProviderAndModelNames() {
+        #expect(LLMProviderKind.openRouter.searchTokens.contains(where: { $0.contains("openrouter") }))
+        #expect(LLMProviderKind.anthropic.searchTokens.contains(where: { $0.contains("claude") }))
+        #expect(LLMProviderKind.googleGemini.searchTokens.contains(where: { $0.contains("gemini") }))
     }
 
     @Test

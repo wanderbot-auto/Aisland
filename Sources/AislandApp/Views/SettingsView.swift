@@ -76,7 +76,7 @@ enum SettingsSection: String, CaseIterable {
     }
 
     var tabs: [SettingsTab] {
-        SettingsTab.allCases.filter { $0.section == self && $0 != .shortcuts }
+        SettingsTab.allCases.filter { $0.section == self }
     }
 }
 
@@ -147,7 +147,7 @@ struct SettingsView: View {
             case .sound:
                 SoundSettingsPane(model: model)
             case .shortcuts:
-                PlaceholderSettingsPane(model: model, titleKey: "settings.tab.shortcuts", subtitleKey: "settings.shortcuts.comingSoon")
+                ShortcutSettingsPane(model: model)
             }
 
             if model.updateChecker.hasUpdate, let version = model.updateChecker.latestVersion {
@@ -211,18 +211,49 @@ struct GeneralSettingsPane: View {
 
 struct LLMSettingsPane: View {
     var model: AppModel
+    @State private var providerSearchText = ""
 
     private var lang: LanguageManager { model.lang }
+    private var filteredProviders: [LLMProviderKind] {
+        let query = providerSearchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !query.isEmpty else { return LLMProviderKind.allCases }
+        return LLMProviderKind.allCases.filter { provider in
+            provider.searchTokens.contains(where: { $0.contains(query) })
+        }
+    }
 
     var body: some View {
         Form {
             Section(lang.t("settings.ai.provider")) {
-                Picker(lang.t("settings.ai.provider"), selection: Binding(
-                    get: { model.temporaryChatProvider },
-                    set: { model.temporaryChatProvider = $0 }
-                )) {
-                    ForEach(LLMProviderKind.allCases) { provider in
-                        Text(provider.displayName).tag(provider)
+                TextField(lang.t("settings.ai.provider.search"), text: $providerSearchText)
+                    .textFieldStyle(.roundedBorder)
+
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 148), spacing: 8)], spacing: 8) {
+                    ForEach(filteredProviders) { provider in
+                        Button {
+                            model.temporaryChatProvider = provider
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: provider.systemImageName)
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .frame(width: 18)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(provider.displayName)
+                                        .font(.system(size: 12, weight: .semibold))
+                                    Text(provider.shortName)
+                                        .font(.system(size: 10, weight: .medium))
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer(minLength: 0)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(model.temporaryChatProvider == provider ? Color.accentColor.opacity(0.20) : Color.secondary.opacity(0.08))
+                            )
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
 
@@ -249,10 +280,16 @@ struct LLMSettingsPane: View {
                     .foregroundStyle(.secondary)
             }
 
+            Section(lang.t("settings.ai.models")) {
+                ForEach(Array(model.temporaryChatProvider.popularModels), id: \.self) { modelName in
+                    suggestedModelButton(modelName)
+                }
+            }
+
             Section(lang.t("settings.ai.shortcut")) {
                 LabeledContent(
                     lang.t("settings.ai.openChat"),
-                    value: IslandShortcutController.shortcutDescription
+                    value: model.shortcutDescription(for: .openChat)
                 )
                 Text(lang.t("settings.ai.shortcutHelp"))
                     .font(.caption)
@@ -261,6 +298,120 @@ struct LLMSettingsPane: View {
         }
         .formStyle(.grouped)
         .navigationTitle(lang.t("settings.tab.ai"))
+    }
+
+    private func suggestedModelButton(_ modelName: String) -> some View {
+        Button {
+            model.temporaryChatModel = modelName
+        } label: {
+            HStack {
+                Text(modelName)
+                Spacer()
+                if model.temporaryChatModel == modelName {
+                    Image(systemName: "checkmark")
+                        .foregroundStyle(Color.accentColor)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Shortcuts
+
+struct ShortcutSettingsPane: View {
+    var model: AppModel
+
+    private var lang: LanguageManager { model.lang }
+
+    var body: some View {
+        Form {
+            Section(lang.t("settings.shortcuts.global")) {
+                ForEach(IslandShortcutAction.allCases) { action in
+                    shortcutRow(action)
+                }
+
+                Button(lang.t("settings.shortcuts.reset")) {
+                    model.resetShortcutsToDefaults()
+                }
+            }
+
+            Section(lang.t("settings.shortcuts.navigation")) {
+                LabeledContent(lang.t("settings.shortcuts.tabKey"), value: "Tab")
+                Text(lang.t("settings.shortcuts.tabKey.help"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
+        .navigationTitle(lang.t("settings.tab.shortcuts"))
+    }
+
+    private func shortcutRow(_ action: IslandShortcutAction) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(action.title(lang))
+                    .font(.system(size: 13, weight: .semibold))
+                Text(action.detail(lang))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: 12)
+
+            Text(model.recordingShortcutAction == action
+                ? lang.t("settings.shortcuts.recording")
+                : model.shortcutDescription(for: action))
+                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(.secondary.opacity(0.12), in: Capsule())
+                .background(
+                    ShortcutCaptureView(isRecording: model.recordingShortcutAction == action) { event in
+                        model.captureShortcutEvent(event)
+                    }
+                )
+
+            Button(model.recordingShortcutAction == action
+                ? lang.t("settings.general.cancel")
+                : lang.t("settings.shortcuts.record")) {
+                if model.recordingShortcutAction == action {
+                    model.cancelRecordingShortcut()
+                } else {
+                    model.startRecordingShortcut(action)
+                }
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+private struct ShortcutCaptureView: NSViewRepresentable {
+    var isRecording: Bool
+    var onCapture: (NSEvent) -> Void
+
+    func makeNSView(context: Context) -> CaptureView {
+        let view = CaptureView()
+        view.onCapture = onCapture
+        return view
+    }
+
+    func updateNSView(_ nsView: CaptureView, context: Context) {
+        nsView.onCapture = onCapture
+        guard isRecording else { return }
+        DispatchQueue.main.async {
+            nsView.window?.makeFirstResponder(nsView)
+        }
+    }
+
+    final class CaptureView: NSView {
+        var onCapture: ((NSEvent) -> Void)?
+
+        override var acceptsFirstResponder: Bool { true }
+
+        override func keyDown(with event: NSEvent) {
+            onCapture?(event)
+        }
     }
 }
 

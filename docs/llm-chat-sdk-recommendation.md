@@ -1,42 +1,42 @@
-# LLM Chat SDK Recommendation
+# LLM Chat SDK Decision
 
 Aisland is expanding from a single-purpose agent-session monitor into a two-core-feature app:
 
 1. monitor local coding-agent sessions and surface attention/completion states;
 2. open the island for short-lived LLM conversations without leaving the current workflow.
 
-## Current implementation slice
+## Decision
 
-- `Control + Option + Space` opens the island directly into temporary chat.
-- Settings now has an **AI Chat** pane for provider, model, base URL, and API key.
-- API keys are stored in macOS Keychain.
-- The temporary client currently supports OpenAI-compatible chat completions, Anthropic Messages, Gemini `generateContent`, and OpenRouter via direct `URLSession` calls.
+Use [teunlao/swift-ai-sdk](https://github.com/teunlao/swift-ai-sdk) as the provider-agnostic SDK layer.
 
-This keeps the app usable while leaving the final SDK choice reversible.
+The SDK was selected because its API is built around provider-agnostic `generateText` / `streamText` calls while still exposing provider modules for OpenAI, Anthropic, Google, Groq, Mistral, Perplexity, DeepSeek, xAI, Together AI, and OpenAI-compatible endpoints. This matches Aisland's direction: users should choose a model provider in Settings without the island UI depending on one vendor.
 
-## GitHub SDK survey
+## Current integration
 
-Collected on 2026-04-25 with the GitHub repository API.
+- `Package.swift` now depends on `swift-ai-sdk` `from: "0.17.6"`.
+- `TemporaryChatClient` builds the selected provider's SDK model, then calls `generateText(model:messages:)`.
+- Settings exposes searchable provider cards plus suggested models for each provider.
+- API keys remain stored in macOS Keychain.
+- Custom and OpenRouter-style providers use `OpenAICompatibleProvider`.
 
-| Candidate | Stars | License | Updated | Notes |
-| --- | ---: | --- | --- | --- |
-| [MacPaw/OpenAI](https://github.com/MacPaw/OpenAI) | 2,894 | MIT | 2026-04-25 | Highest-star Swift OpenAI client found; good default if we choose OpenAI-first. |
-| [adamrushy/OpenAISwift](https://github.com/adamrushy/OpenAISwift) | 1,708 | MIT | 2026-04-24 | Mature OpenAI wrapper, but narrower than a multi-provider chat strategy. |
-| [OpenDive/OpenAIKit](https://github.com/OpenDive/OpenAIKit) | 273 | MIT | 2026-04-21 | Smaller OpenAI-only package. |
-| [SwiftBeta/SwiftOpenAI](https://github.com/SwiftBeta/SwiftOpenAI) | 247 | MIT | 2026-03-26 | Smaller OpenAI-only package. |
-| [PreternaturalAI/AI](https://github.com/PreternaturalAI/AI) | 225 | MIT | 2026-04-15 | Multi-provider generative-AI framework; promising for app-level abstraction. |
-| [teunlao/swift-ai-sdk](https://github.com/teunlao/swift-ai-sdk) | 125 | Apache-2.0 | 2026-04-22 | Unified Swift SDK inspired by Vercel AI SDK; best match for provider-agnostic chat if we accept lower stars. |
-| [GeorgeLyon/SwiftClaude](https://github.com/GeorgeLyon/SwiftClaude) | 73 | MIT | 2026-04-24 | Anthropic-focused SDK; useful only if Claude becomes the primary provider. |
-| [fumito-ito/AnthropicSwiftSDK](https://github.com/fumito-ito/AnthropicSwiftSDK) | 18 | Apache-2.0 | 2026-02-12 | Anthropic-only and low adoption. |
+## Provider scope
 
-## Recommendation
+Initial provider list:
 
-Default recommendation: **teunlao/swift-ai-sdk** if Aisland wants the temporary-chat feature to support mainstream providers with one abstraction. It is lower-star than OpenAI-only packages, so we should keep the current in-house `TemporaryChatClient` as a fallback until the SDK proves stable in tests.
+- OpenAI
+- Anthropic Claude
+- Google Gemini
+- OpenRouter
+- Groq
+- Mistral AI
+- Perplexity
+- DeepSeek
+- xAI
+- Together AI
+- Custom OpenAI-compatible endpoint
 
-Conservative alternative: **MacPaw/OpenAI** if we want the highest-adoption Swift package and are comfortable making OpenAI-compatible providers the first-class path, then add native Claude/Gemini adapters later.
+## Follow-up ideas
 
-Avoid for now: adding separate provider-specific SDKs for every vendor. That would raise dependency surface area before the chat UX and settings model stabilize.
-
-## Proposed next integration step
-
-After choosing the SDK, replace `TemporaryChatClient` behind the existing `LLMChatConfiguration` and `TemporaryChatMessage` boundary. The island UI and settings pane should not need a large rewrite.
+- Add streaming token updates into the island chat transcript.
+- Add provider-specific validation for base URLs and API keys.
+- Add a remote model-list fetcher where providers expose a stable model listing API.

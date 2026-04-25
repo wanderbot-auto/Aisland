@@ -254,3 +254,20 @@
 "chat.empty.title" = "Ask without leaving the island";
 "chat.empty.subtitle" = "Use this scratchpad for quick LLM questions; monitored agent sessions remain available in the Sessions tab.";
 "chat.placeholder" = "Ask a quick question…";
+
+/* Shortcut Settings */
+"settings.shortcuts.global" = "Global shortcuts";
+"settings.shortcuts.navigation" = "Island navigation";
+"settings.shortcuts.openIsland" = "Expand island";
+"settings.shortcuts.openIsland.help" = "Show the current island surface without choosing a specific tab.";
+"settings.shortcuts.openSessions" = "Open sessions tab";
+"settings.shortcuts.openSessions.help" = "Expand the island directly to monitored agent sessions.";
+"settings.shortcuts.openChat" = "Open chat tab";
+"settings.shortcuts.openChat.help" = "Expand the island directly to temporary LLM chat.";
+"settings.shortcuts.record" = "Record";
+"settings.shortcuts.recording" = "Press keys…";
+"settings.shortcuts.reset" = "Reset Shortcuts";
+"settings.shortcuts.tabKey" = "Switch island tab";
+"settings.shortcuts.tabKey.help" = "When the island is focused, press Tab to cycle between compact icon tabs.";
+"settings.ai.provider.search" = "Search providers or models";
+"settings.ai.models" = "Suggested models";
