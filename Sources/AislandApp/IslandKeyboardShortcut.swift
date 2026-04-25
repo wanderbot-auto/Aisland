@@ -37,7 +37,9 @@ struct IslandKeyboardShortcut: Codable, Equatable, Sendable {
     var keyCode: UInt32
     var modifiers: UInt32
 
-    var isValid: Bool { keyCode > 0 && modifiers != 0 }
+    var isValid: Bool {
+        modifiers != 0 && !Self.isModifierKeyCode(Int(keyCode))
+    }
 
     var displayText: String {
         modifierDisplay + keyDisplayName
@@ -64,7 +66,7 @@ struct IslandKeyboardShortcut: Codable, Equatable, Sendable {
         if flags.contains(.option) { modifiers |= Self.optionMask }
         if flags.contains(.control) { modifiers |= Self.controlMask }
         if flags.contains(.shift) { modifiers |= Self.shiftMask }
-        guard modifiers != 0 else { return nil }
+        guard modifiers != 0, !Self.isModifierKeyCode(Int(event.keyCode)) else { return nil }
         self.init(keyCode: UInt32(event.keyCode), modifiers: modifiers)
     }
 
@@ -134,4 +136,17 @@ struct IslandKeyboardShortcut: Codable, Equatable, Sendable {
     private static let optionMask: UInt32 = 1 << 1
     private static let controlMask: UInt32 = 1 << 2
     private static let shiftMask: UInt32 = 1 << 3
+
+    private static func isModifierKeyCode(_ keyCode: Int) -> Bool {
+        switch keyCode {
+        case kVK_Command, kVK_RightCommand,
+             kVK_Shift, kVK_RightShift,
+             kVK_Option, kVK_RightOption,
+             kVK_Control, kVK_RightControl,
+             kVK_Function:
+            true
+        default:
+            false
+        }
+    }
 }

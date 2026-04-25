@@ -543,6 +543,11 @@ private struct ShortcutCaptureView: NSViewRepresentable {
         override func keyDown(with event: NSEvent) {
             onCapture?(event)
         }
+
+        override func performKeyEquivalent(with event: NSEvent) -> Bool {
+            onCapture?(event)
+            return true
+        }
     }
 }
 

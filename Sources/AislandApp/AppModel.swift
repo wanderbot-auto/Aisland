@@ -926,22 +926,25 @@ final class AppModel {
     }
 
     func cycleIslandSurface(backwards: Bool = false) {
-        switch islandSurface {
-        case .temporaryChat:
-            showSessionListSurface()
-        case .sessionList:
-            showTemporaryChatSurface()
+        guard let nextSurface = islandSurface.nextSwitchableSurface(backwards: backwards) else {
+            return
         }
+
+        islandSurface = nextSurface
+        refreshOverlayPlacementIfVisible()
+    }
+
+    func showIslandSurface(_ tab: IslandSurfaceTab) {
+        islandSurface = tab.selectionSurface
+        refreshOverlayPlacementIfVisible()
     }
 
     func showSessionListSurface() {
-        islandSurface = .sessionList()
-        refreshOverlayPlacementIfVisible()
+        showIslandSurface(.sessions)
     }
 
     func showTemporaryChatSurface() {
-        islandSurface = .temporaryChat
-        refreshOverlayPlacementIfVisible()
+        showIslandSurface(.chat)
     }
 
     func clearTemporaryChat() {

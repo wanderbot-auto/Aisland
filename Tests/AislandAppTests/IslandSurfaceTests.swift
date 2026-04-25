@@ -123,4 +123,18 @@ struct IslandSurfaceTests {
         #expect(!surface.autoDismissesWhenPresentedAsNotification(session: approvalSession))
         #expect(surface.autoDismissesWhenPresentedAsNotification(session: completedSession))
     }
+
+    @Test
+    func switchableTabsCycleForwardAndBackward() {
+        #expect(IslandSurface.sessionList().nextSwitchableSurface() == .temporaryChat)
+        #expect(IslandSurface.temporaryChat.nextSwitchableSurface() == .sessionList())
+        #expect(IslandSurface.sessionList().nextSwitchableSurface(backwards: true) == .temporaryChat)
+    }
+
+    @Test
+    func notificationSurfacesDoNotParticipateInTabCycling() {
+        let actionableSurface = IslandSurface.sessionList(actionableSessionID: "session-1")
+        #expect(actionableSurface.nextSwitchableSurface() == nil)
+        #expect(actionableSurface.switchableTab == nil)
+    }
 }

@@ -1,9 +1,58 @@
 import Foundation
 import AislandCore
 
+enum IslandSurfaceTab: String, CaseIterable, Identifiable {
+    case sessions
+    case chat
+
+    var id: String { rawValue }
+
+    var systemImageName: String {
+        switch self {
+        case .sessions:
+            "terminal.fill"
+        case .chat:
+            "bubble.left.and.sparkles.fill"
+        }
+    }
+
+    var accessibilityLabelKey: String {
+        switch self {
+        case .sessions:
+            "island.surface.sessions"
+        case .chat:
+            "island.surface.chat"
+        }
+    }
+
+    var selectionSurface: IslandSurface {
+        switch self {
+        case .sessions:
+            .sessionList()
+        case .chat:
+            .temporaryChat
+        }
+    }
+
+    func matches(_ surface: IslandSurface) -> Bool {
+        switch (self, surface) {
+        case (.sessions, .sessionList):
+            true
+        case (.chat, .temporaryChat):
+            true
+        default:
+            false
+        }
+    }
+}
+
 enum IslandSurface: Equatable {
     case sessionList(actionableSessionID: String? = nil)
     case temporaryChat
+
+    static var switchableTabs: [IslandSurfaceTab] {
+        IslandSurfaceTab.allCases
+    }
 
     var sessionID: String? {
         switch self {
@@ -16,6 +65,36 @@ enum IslandSurface: Equatable {
 
     var isNotificationCard: Bool {
         sessionID != nil
+    }
+
+    var switchableTab: IslandSurfaceTab? {
+        guard !isNotificationCard else {
+            return nil
+        }
+
+        switch self {
+        case .sessionList:
+            return IslandSurfaceTab.sessions
+        case .temporaryChat:
+            return IslandSurfaceTab.chat
+        }
+    }
+
+    func nextSwitchableSurface(backwards: Bool = false) -> IslandSurface? {
+        guard let currentTab = switchableTab else {
+            return nil
+        }
+
+        let tabs = Self.switchableTabs
+        guard tabs.count > 1,
+              let currentIndex = tabs.firstIndex(of: currentTab) else {
+            return nil
+        }
+
+        let nextIndex = backwards
+            ? (currentIndex - 1 + tabs.count) % tabs.count
+            : (currentIndex + 1) % tabs.count
+        return tabs[nextIndex].selectionSurface
     }
 
     func autoDismissesWhenPresentedAsNotification(session: AgentSession?) -> Bool {

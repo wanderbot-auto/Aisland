@@ -470,42 +470,30 @@ struct IslandPanelView: View {
 
     private var surfaceSwitcher: some View {
         HStack(spacing: 4) {
-            surfaceButton(
-                accessibilityLabel: model.lang.t("island.surface.sessions"),
-                systemName: "terminal.fill",
-                isSelected: model.islandSurface != .temporaryChat
-            ) {
-                model.showSessionListSurface()
-            }
-
-            surfaceButton(
-                accessibilityLabel: model.lang.t("island.surface.chat"),
-                systemName: "bubble.left.and.sparkles.fill",
-                isSelected: model.islandSurface == .temporaryChat
-            ) {
-                model.showTemporaryChatSurface()
+            ForEach(IslandSurface.switchableTabs) { tab in
+                surfaceButton(tab: tab) {
+                    model.showIslandSurface(tab)
+                }
             }
         }
         .padding(3)
         .background(.white.opacity(0.07), in: Capsule())
-        .frame(maxWidth: 94)
+        .frame(maxWidth: CGFloat(IslandSurface.switchableTabs.count) * 43 + 8)
     }
 
     private func surfaceButton(
-        accessibilityLabel: String,
-        systemName: String,
-        isSelected: Bool,
+        tab: IslandSurfaceTab,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            Image(systemName: systemName)
+            Image(systemName: tab.systemImageName)
                 .font(.system(size: 10.5, weight: .semibold))
-            .foregroundStyle(isSelected ? Color.black.opacity(0.86) : Color.white.opacity(0.58))
-            .frame(width: 39, height: 24)
-            .background(isSelected ? Color.cyan : Color.clear, in: Capsule())
+                .foregroundStyle(tab.matches(model.islandSurface) ? Color.black.opacity(0.86) : Color.white.opacity(0.58))
+                .frame(width: 39, height: 24)
+                .background(tab.matches(model.islandSurface) ? Color.cyan : Color.clear, in: Capsule())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(accessibilityLabel)
+        .accessibilityLabel(model.lang.t(tab.accessibilityLabelKey))
     }
 
     /// Persistent hint at the top of the expanded island while no agent

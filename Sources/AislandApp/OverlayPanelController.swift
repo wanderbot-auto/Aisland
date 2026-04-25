@@ -141,6 +141,7 @@ final class OverlayPanelController {
 
         let hostingView = NotchHostingView(rootView: IslandPanelView(model: model))
         hostingView.notchController = self
+        panel.overlayController = self
         panel.contentView = hostingView
 
         computeNotchRect(screen: resolveTargetScreen())
@@ -722,8 +723,18 @@ final class OverlayPanelController {
 // MARK: - NotchPanel
 
 private final class NotchPanel: NSPanel {
+    weak var overlayController: OverlayPanelController?
+
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
+
+    override func sendEvent(_ event: NSEvent) {
+        if overlayController?.handlePanelKeyEvent(event) == true {
+            return
+        }
+
+        super.sendEvent(event)
+    }
 }
 
 // MARK: - NotchHostingView
@@ -753,12 +764,10 @@ final class NotchHostingView<Content: View>: NSHostingView<Content> {
     }
 
     override func keyDown(with event: NSEvent) {
-        guard event.keyCode == 48, let model = notchController?.model else {
+        guard notchController?.handlePanelKeyEvent(event) == true else {
             super.keyDown(with: event)
             return
         }
-
-        model.cycleIslandSurface(backwards: event.modifierFlags.contains(.shift))
     }
 
     required init(rootView: Content) {
@@ -822,6 +831,25 @@ final class NotchHostingView<Content: View>: NSHostingView<Content> {
         for child in view.subviews {
             disableInternalScrollers(in: child)
         }
+    }
+}
+
+extension OverlayPanelController {
+    fileprivate func handlePanelKeyEvent(_ event: NSEvent) -> Bool {
+        guard event.type == .keyDown,
+              event.keyCode == 48,
+              let model,
+              let _ = model.islandSurface.switchableTab else {
+            return false
+        }
+
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        guard flags.isEmpty || flags == .shift else {
+            return false
+        }
+
+        model.cycleIslandSurface(backwards: flags.contains(.shift))
+        return true
     }
 }
 
