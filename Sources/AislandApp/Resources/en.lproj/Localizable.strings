@@ -49,6 +49,7 @@
 "settings.appearance.mode.custom" = "Custom";
 "settings.appearance.mode.defaultDesc" = "Use the built-in island appearance. Switch to Custom to personalize colors, glyph style, and layout.";
 "settings.appearance.preview" = "Preview";
+"settings.appearance.advanced" = "Advanced customization";
 "settings.appearance.preview.sessions" = "sessions";
 "settings.appearance.style" = "Style";
 "settings.appearance.closedStyle" = "Closed Style";

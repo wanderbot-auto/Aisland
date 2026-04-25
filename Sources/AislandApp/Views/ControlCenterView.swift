@@ -1,12 +1,29 @@
 import SwiftUI
 import AislandCore
 
+private enum ControlCenterSection: String, CaseIterable, Identifiable {
+    case preview
+    case hooks
+    case diagnostics
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .preview: "Preview"
+        case .hooks: "Hooks"
+        case .diagnostics: "Diagnostics"
+        }
+    }
+}
+
 struct ControlCenterView: View {
     var model: AppModel
 
     @State private var selectedScenario: IslandDebugScenario = .approvalCard
     @State private var previewModel = AppModel()
     @State private var previewSnapshot = IslandDebugScenario.approvalCard.snapshot()
+    @State private var selectedDebugSection: ControlCenterSection = .preview
 
     private var lang: LanguageManager { model.lang }
 
@@ -41,7 +58,15 @@ struct ControlCenterView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                VStack(alignment: .leading, spacing: 10) {
+                Picker("", selection: $selectedDebugSection) {
+                    ForEach(ControlCenterSection.allCases) { section in
+                        Text(section.title).tag(section)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                if selectedDebugSection == .preview {
+                    VStack(alignment: .leading, spacing: 10) {
                     Text(lang.t("debug.scenarios"))
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.58))
@@ -49,10 +74,15 @@ struct ControlCenterView: View {
                     ForEach(IslandDebugScenario.allCases) { scenario in
                         scenarioButton(for: scenario)
                     }
+                    }
+
+                    actionCard
+                    transcriptCard
                 }
 
-                usageDebugCard(
-                    title: "Claude Hooks",
+                if selectedDebugSection == .hooks {
+                    usageDebugCard(
+                        title: "Claude Hooks",
                     statusTitle: model.claudeHookStatusTitle,
                     statusSummary: model.claudeHookStatusSummary,
                     isActive: model.claudeHooksInstalled || model.claudeHookStatus?.hasClaudeIslandHooks == true,
@@ -177,10 +207,11 @@ struct ControlCenterView: View {
                         }
                     }
                 }
+                }
 
-                actionCard
-                transcriptCard
-                liveOverlayCard
+                if selectedDebugSection == .diagnostics {
+                    liveOverlayCard
+                }
 
                 Spacer(minLength: 0)
             }

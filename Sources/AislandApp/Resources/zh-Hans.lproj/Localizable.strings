@@ -49,6 +49,7 @@
 "settings.appearance.mode.custom" = "自定义";
 "settings.appearance.mode.defaultDesc" = "使用内置的岛屿外观。切换到自定义可个性化颜色、图形样式和布局。";
 "settings.appearance.preview" = "预览";
+"settings.appearance.advanced" = "高级自定义";
 "settings.appearance.preview.sessions" = "个会话";
 "settings.appearance.style" = "样式";
 "settings.appearance.closedStyle" = "收起样式";

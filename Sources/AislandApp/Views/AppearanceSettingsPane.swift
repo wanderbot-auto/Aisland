@@ -4,6 +4,7 @@ import AislandCore
 struct AppearanceSettingsPane: View {
     var model: AppModel
     @State private var previewPhase: SessionPhase = .running
+    @State private var showsAdvancedCustomization = false
 
     private var lang: LanguageManager { model.lang }
     private var isCustom: Bool { model.islandAppearanceMode == .custom }
@@ -27,64 +28,20 @@ struct AppearanceSettingsPane: View {
                 }
             }
 
-            Section(lang.t("settings.appearance.style")) {
-                if isCustom {
-                    Picker(lang.t("settings.appearance.closedStyle"), selection: Binding(
-                        get: { model.islandClosedDisplayStyle },
-                        set: { model.islandClosedDisplayStyle = $0 }
-                    )) {
-                        Text(lang.t("settings.appearance.style.minimal")).tag(IslandClosedDisplayStyle.minimal)
-                        Text(lang.t("settings.appearance.style.detailed")).tag(IslandClosedDisplayStyle.detailed)
-                    }
-                    .pickerStyle(.segmented)
-                }
-
-                Toggle(lang.t("settings.appearance.hideIdleToEdge"), isOn: Binding(
-                    get: { model.hideIdleIslandToEdge },
-                    set: { model.hideIdleIslandToEdge = $0 }
-                ))
-
-                Text(lang.t("settings.appearance.hideIdleToEdge.help"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            Section(lang.t("settings.appearance.preview")) {
+                notchPreviewCard
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    .listRowBackground(Color.clear)
             }
 
             if isCustom {
-                Section(lang.t("settings.appearance.preview")) {
-                    notchPreviewCard
-                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                        .listRowBackground(Color.clear)
-                }
-
-                Section(lang.t("settings.appearance.pixelShape")) {
-                    HStack(spacing: 12) {
-                        ForEach(IslandPixelShapeStyle.allCases) { style in
-                            pixelShapeCard(style)
-                        }
-                    }
-
-                    if model.islandPixelShapeStyle == .custom {
-                        HStack(spacing: 12) {
-                            Button(lang.t("settings.appearance.avatar.upload")) {
-                                model.importCustomAvatar()
-                            }
-                            if model.customAvatarImage != nil {
-                                Button(lang.t("settings.appearance.avatar.remove")) {
-                                    model.removeCustomAvatar()
-                                }
-                                .foregroundStyle(.red)
-                            }
-                        }
-
-                        Text(lang.t("settings.appearance.avatar.help"))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                Section(lang.t("settings.appearance.statusColors")) {
-                    ForEach(SessionPhase.allCases, id: \.self) { phase in
-                        statusColorRow(phase)
+                Section {
+                    DisclosureGroup(
+                        lang.t("settings.appearance.advanced"),
+                        isExpanded: $showsAdvancedCustomization
+                    ) {
+                        advancedCustomizationControls
+                            .padding(.top, 8)
                     }
                 }
             }
@@ -99,6 +56,69 @@ struct AppearanceSettingsPane: View {
         }
         .formStyle(.grouped)
         .navigationTitle(lang.t("settings.tab.appearance"))
+    }
+
+    @ViewBuilder
+    private var advancedCustomizationControls: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Picker(lang.t("settings.appearance.closedStyle"), selection: Binding(
+                get: { model.islandClosedDisplayStyle },
+                set: { model.islandClosedDisplayStyle = $0 }
+            )) {
+                Text(lang.t("settings.appearance.style.minimal")).tag(IslandClosedDisplayStyle.minimal)
+                Text(lang.t("settings.appearance.style.detailed")).tag(IslandClosedDisplayStyle.detailed)
+            }
+            .pickerStyle(.segmented)
+
+            Toggle(lang.t("settings.appearance.hideIdleToEdge"), isOn: Binding(
+                get: { model.hideIdleIslandToEdge },
+                set: { model.hideIdleIslandToEdge = $0 }
+            ))
+
+            Text(lang.t("settings.appearance.hideIdleToEdge.help"))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Divider()
+
+            Text(lang.t("settings.appearance.pixelShape"))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+
+            HStack(spacing: 12) {
+                ForEach(IslandPixelShapeStyle.allCases) { style in
+                    pixelShapeCard(style)
+                }
+            }
+
+            if model.islandPixelShapeStyle == .custom {
+                HStack(spacing: 12) {
+                    Button(lang.t("settings.appearance.avatar.upload")) {
+                        model.importCustomAvatar()
+                    }
+                    if model.customAvatarImage != nil {
+                        Button(lang.t("settings.appearance.avatar.remove")) {
+                            model.removeCustomAvatar()
+                        }
+                        .foregroundStyle(.red)
+                    }
+                }
+
+                Text(lang.t("settings.appearance.avatar.help"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Divider()
+
+            Text(lang.t("settings.appearance.statusColors"))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+
+            ForEach(SessionPhase.allCases, id: \.self) { phase in
+                statusColorRow(phase)
+            }
+        }
     }
 
     // MARK: - Preview card

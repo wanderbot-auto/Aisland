@@ -49,6 +49,7 @@
 "settings.appearance.mode.custom" = "自訂";
 "settings.appearance.mode.defaultDesc" = "使用內建的島嶼外觀。切換至自訂可個人化顏色、圖形樣式和版面配置。";
 "settings.appearance.preview" = "預覽";
+"settings.appearance.advanced" = "進階自訂";
 "settings.appearance.preview.sessions" = "個工作階段";
 "settings.appearance.style" = "樣式";
 "settings.appearance.closedStyle" = "收起樣式";

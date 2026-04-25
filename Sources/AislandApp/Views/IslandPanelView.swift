@@ -111,10 +111,10 @@ struct IslandPanelView: View {
         }
         let sessions = model.surfacedSessions
         if sessions.contains(where: { $0.phase == .running }) {
-            return Color(red: 0.43, green: 0.62, blue: 1.0) // #6E9FFF working blue
+            return IslandTheme.workingBlue
         }
         if !sessions.isEmpty {
-            return Color(red: 0.26, green: 0.91, blue: 0.42) // #42E86B idle green
+            return IslandTheme.idleGreen
         }
         return Color.white.opacity(0.4) // gray
     }
@@ -633,12 +633,7 @@ struct IslandPanelView: View {
         if model.isCustomAppearance {
             return model.statusColor(for: phase)
         }
-        return switch phase {
-        case .running: .mint
-        case .waitingForApproval: .orange
-        case .waitingForAnswer: .yellow
-        case .completed: .blue
-        }
+        return IslandTheme.statusTint(for: phase)
     }
 
     @ViewBuilder
@@ -646,12 +641,7 @@ struct IslandPanelView: View {
         let providers = openedUsageProviders
 
         if providers.isEmpty == false {
-            ViewThatFits(in: .horizontal) {
-                usageSummaryView(providers, layout: .full)
-                usageSummaryView(providers, layout: .compact)
-                usageSummaryView(providers, layout: .condensed)
-                usageSummaryView(providers, layout: .minimal)
-            }
+            usageSummaryView(providers)
         } else {
             HStack(spacing: 8) {
                 Text(model.lang.t("app.name"))
@@ -760,13 +750,8 @@ struct IslandPanelView: View {
             Color.clear
                 .frame(maxWidth: .infinity)
         } else {
-            ViewThatFits(in: .horizontal) {
-                usageSummaryView(providers, layout: .full)
-                usageSummaryView(providers, layout: .compact)
-                usageSummaryView(providers, layout: .condensed)
-                usageSummaryView(providers, layout: .minimal)
-            }
-            .frame(maxWidth: .infinity, alignment: alignment)
+            usageSummaryView(providers)
+                .frame(maxWidth: .infinity, alignment: alignment)
         }
     }
 
@@ -809,39 +794,36 @@ struct IslandPanelView: View {
     }
 
     private func usageSummaryView(
-        _ providers: [UsageProviderPresentation],
-        layout: UsageSummaryLayout
+        _ providers: [UsageProviderPresentation]
     ) -> some View {
-        HStack(spacing: layout.providerSpacing) {
+        HStack(spacing: 6) {
             ForEach(Array(providers.enumerated()), id: \.element.id) { index, provider in
                 if index > 0 {
-                    usageSeparator(layout.providerSeparator, opacity: layout.providerSeparatorOpacity)
+                    usageSeparator("·", opacity: 0.32)
                 }
 
-                usageProviderView(provider, layout: layout)
+                usageProviderChip(provider)
             }
         }
         .lineLimit(1)
         .fixedSize(horizontal: true, vertical: false)
     }
 
-    private func usageProviderView(
-        _ provider: UsageProviderPresentation,
-        layout: UsageSummaryLayout
-    ) -> some View {
-        HStack(spacing: 8) {
-            Text(layout.usesShortProviderTitle ? provider.shortTitle : provider.title)
+    private func usageProviderChip(_ provider: UsageProviderPresentation) -> some View {
+        let window = provider.primaryWindow
+        return HStack(spacing: 4) {
+            Text(provider.title)
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.9))
+                .foregroundStyle(.white.opacity(0.86))
 
-            ForEach(Array(provider.windows.enumerated()), id: \.element.id) { index, window in
-                if index > 0 {
-                    usageSeparator(layout.windowSeparator, opacity: layout.windowSeparatorOpacity)
-                }
-
-                usageWindowView(window: window, layout: layout)
-            }
+            Text("\(window.roundedUsedPercentage)%")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(usageColor(for: window.usedPercentage))
         }
+        .padding(.horizontal, 7)
+        .padding(.vertical, 3)
+        .background(.white.opacity(0.07), in: Capsule())
+        .help(provider.helpText)
     }
 
     private func screenID(for screen: NSScreen) -> String {
@@ -851,31 +833,6 @@ struct IslandPanelView: View {
         }
 
         return screen.localizedName
-    }
-
-    private func usageWindowView(
-        window: UsageWindowPresentation,
-        layout: UsageSummaryLayout
-    ) -> some View {
-        HStack(spacing: 4) {
-            if layout.showsWindowLabel {
-                Text(window.label)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.55))
-            }
-
-            Text("\(window.roundedUsedPercentage)%")
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(usageColor(for: window.usedPercentage))
-
-            if layout.showsResetTime,
-               let resetsAt = window.resetsAt,
-               let remaining = remainingDurationString(until: resetsAt) {
-                Text(remaining)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.35))
-            }
-        }
     }
 
     private func usageSeparator(_ title: String, opacity: Double) -> some View {
@@ -894,29 +851,6 @@ struct IslandPanelView: View {
             .green.opacity(0.95)
         }
     }
-
-    private func remainingDurationString(until date: Date) -> String? {
-        let interval = date.timeIntervalSinceNow
-        guard interval > 0 else {
-            return nil
-        }
-
-        let formatter = DateComponentsFormatter()
-        formatter.unitsStyle = .abbreviated
-
-        if interval >= 86_400 {
-            formatter.allowedUnits = [.day]
-            formatter.maximumUnitCount = 1
-        } else if interval >= 3_600 {
-            formatter.allowedUnits = [.hour, .minute]
-            formatter.maximumUnitCount = 2
-        } else {
-            formatter.allowedUnits = [.minute]
-            formatter.maximumUnitCount = 1
-        }
-
-        return formatter.string(from: interval)
-    }
 }
 
 private struct UsageProviderPresentation: Identifiable {
@@ -924,15 +858,18 @@ private struct UsageProviderPresentation: Identifiable {
     let title: String
     let windows: [UsageWindowPresentation]
 
-    var shortTitle: String {
-        switch id {
-        case "claude":
-            "Cl"
-        case "codex":
-            "Cx"
-        default:
-            String(title.prefix(2))
+    var primaryWindow: UsageWindowPresentation {
+        windows.max(by: { $0.usedPercentage < $1.usedPercentage }) ?? windows[0]
+    }
+
+    var helpText: String {
+        windows.map { window in
+            if let resetsAt = window.resetsAt {
+                return "\(title) \(window.label): \(window.roundedUsedPercentage)% · resets \(resetsAt.formatted(date: .omitted, time: .shortened))"
+            }
+            return "\(title) \(window.label): \(window.roundedUsedPercentage)%"
         }
+        .joined(separator: "\n")
     }
 }
 
@@ -944,75 +881,6 @@ private struct UsageWindowPresentation: Identifiable {
 
     var roundedUsedPercentage: Int {
         Int(usedPercentage.rounded())
-    }
-}
-
-private enum UsageSummaryLayout {
-    case full
-    case compact
-    case condensed
-    case minimal
-
-    var showsResetTime: Bool {
-        switch self {
-        case .full:
-            true
-        case .compact, .condensed, .minimal:
-            false
-        }
-    }
-
-    var showsWindowLabel: Bool {
-        switch self {
-        case .full, .compact:
-            true
-        case .condensed, .minimal:
-            false
-        }
-    }
-
-    var usesShortProviderTitle: Bool {
-        self == .minimal
-    }
-
-    var providerSpacing: CGFloat {
-        switch self {
-        case .full, .compact:
-            8
-        case .condensed, .minimal:
-            6
-        }
-    }
-
-    var providerSeparator: String {
-        "|"
-    }
-
-    var providerSeparatorOpacity: Double {
-        switch self {
-        case .full, .compact:
-            0.2
-        case .condensed, .minimal:
-            0.12
-        }
-    }
-
-    var windowSeparator: String {
-        switch self {
-        case .full, .compact:
-            "|"
-        case .condensed, .minimal:
-            "/"
-        }
-    }
-
-    var windowSeparatorOpacity: Double {
-        switch self {
-        case .full, .compact:
-            0.16
-        case .condensed, .minimal:
-            0.28
-        }
     }
 }
 
@@ -1064,7 +932,7 @@ private struct ClosedCountBadge: View {
             .foregroundStyle(tint)
             .padding(.horizontal, 8)
             .padding(.vertical, 2)
-            .background(Color(red: 0.14, green: 0.14, blue: 0.15), in: Capsule())
+            .background(IslandTheme.badgeFill, in: Capsule())
     }
 }
 
