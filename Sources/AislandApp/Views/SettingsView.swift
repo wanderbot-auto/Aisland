@@ -214,6 +214,10 @@ struct LLMSettingsPane: View {
     @State private var providerSearchText = ""
 
     private var lang: LanguageManager { model.lang }
+    private let providerGridColumns = [
+        GridItem(.adaptive(minimum: 176), spacing: 10, alignment: .top),
+    ]
+
     private var filteredProviders: [LLMProviderKind] {
         let query = providerSearchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !query.isEmpty else { return LLMProviderKind.allCases }
@@ -225,37 +229,51 @@ struct LLMSettingsPane: View {
     var body: some View {
         Form {
             Section(lang.t("settings.ai.provider")) {
-                TextField(lang.t("settings.ai.provider.search"), text: $providerSearchText)
-                    .textFieldStyle(.roundedBorder)
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.secondary)
 
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 148), spacing: 8)], spacing: 8) {
+                    TextField(lang.t("settings.ai.provider.search"), text: $providerSearchText)
+                        .textFieldStyle(.plain)
+
+                    if !providerSearchText.isEmpty {
+                        Button {
+                            providerSearchText = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Clear provider search")
+                    }
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color(nsColor: .controlBackgroundColor).opacity(0.82))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .strokeBorder(Color.secondary.opacity(0.14), lineWidth: 1)
+                )
+
+                LazyVGrid(columns: providerGridColumns, spacing: 10) {
                     ForEach(filteredProviders) { provider in
                         Button {
                             model.temporaryChatProvider = provider
                         } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: provider.systemImageName)
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .frame(width: 18)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(provider.displayName)
-                                        .font(.system(size: 12, weight: .semibold))
-                                    Text(provider.shortName)
-                                        .font(.system(size: 10, weight: .medium))
-                                        .foregroundStyle(.secondary)
-                                }
-                                Spacer(minLength: 0)
-                            }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(model.temporaryChatProvider == provider ? Color.accentColor.opacity(0.20) : Color.secondary.opacity(0.08))
+                            LLMProviderCard(
+                                provider: provider,
+                                isSelected: model.temporaryChatProvider == provider
                             )
                         }
                         .buttonStyle(.plain)
                     }
                 }
+                .animation(.easeInOut(duration: 0.16), value: model.temporaryChatProvider)
 
                 Text(lang.t("settings.ai.provider.help"))
                     .font(.caption)
@@ -314,6 +332,119 @@ struct LLMSettingsPane: View {
             }
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct LLMProviderCard: View {
+    let provider: LLMProviderKind
+    let isSelected: Bool
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(provider.settingsAccentColor.opacity(isSelected ? 0.22 : 0.14))
+
+                Image(systemName: provider.systemImageName)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(provider.settingsAccentColor)
+            }
+            .frame(width: 34, height: 34)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(provider.displayName)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+
+                Text(provider.defaultModel)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+
+                Spacer(minLength: 0)
+
+                Text(provider.shortName)
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .foregroundStyle(provider.settingsAccentColor)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(provider.settingsAccentColor.opacity(0.12))
+                    )
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, minHeight: 86, maxHeight: 86, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(cardBackground)
+        )
+        .overlay(alignment: .topTrailing) {
+            if isSelected {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .symbolRenderingMode(.palette)
+                    .foregroundStyle(Color.white, Color.accentColor)
+                    .padding(8)
+            }
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(
+                    isSelected ? Color.accentColor : Color.secondary.opacity(0.16),
+                    lineWidth: isSelected ? 1.8 : 1
+                )
+        )
+        .shadow(
+            color: isSelected ? Color.accentColor.opacity(0.16) : Color.black.opacity(0.04),
+            radius: isSelected ? 10 : 4,
+            x: 0,
+            y: isSelected ? 5 : 2
+        )
+        .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    private var cardBackground: Color {
+        if isSelected {
+            return provider.settingsAccentColor.opacity(0.10)
+        }
+
+        return Color(nsColor: .controlBackgroundColor).opacity(0.74)
+    }
+}
+
+private extension LLMProviderKind {
+    var settingsAccentColor: Color {
+        switch self {
+        case .openAI:
+            Color(red: 0.16, green: 0.70, blue: 0.54)
+        case .anthropic:
+            Color(red: 0.80, green: 0.46, blue: 0.28)
+        case .googleGemini:
+            Color(red: 0.25, green: 0.52, blue: 0.96)
+        case .openRouter:
+            Color(red: 0.60, green: 0.47, blue: 0.93)
+        case .groq:
+            Color(red: 0.93, green: 0.29, blue: 0.20)
+        case .mistral:
+            Color(red: 0.93, green: 0.65, blue: 0.13)
+        case .perplexity:
+            Color(red: 0.11, green: 0.67, blue: 0.76)
+        case .deepSeek:
+            Color(red: 0.18, green: 0.45, blue: 0.86)
+        case .xAI:
+            Color(red: 0.34, green: 0.36, blue: 0.42)
+        case .togetherAI:
+            Color(red: 0.14, green: 0.63, blue: 0.37)
+        case .customOpenAICompatible:
+            Color(red: 0.48, green: 0.51, blue: 0.57)
+        }
     }
 }
 
