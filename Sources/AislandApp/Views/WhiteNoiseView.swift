@@ -9,15 +9,19 @@ struct WhiteNoiseView: View {
     ]
 
     var body: some View {
-        ScrollView(.vertical) {
-            VStack(spacing: 12) {
-                categories
-                controlsBar
+        VStack(spacing: 12) {
+            ScrollView(.vertical) {
+                VStack(spacing: 14) {
+                    categories
+                }
+                .padding(.vertical, 2)
             }
-            .padding(.vertical, 2)
+            .scrollIndicators(.hidden)
+            .scrollBounceBehavior(.basedOnSize)
+
+            controlsBar
         }
-        .scrollIndicators(.hidden)
-        .scrollBounceBehavior(.basedOnSize)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .onAppear {
             WhiteNoiseBrandFonts.registerIfNeeded()
         }
