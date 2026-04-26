@@ -309,8 +309,12 @@ private struct TemporaryChatBubble: View {
     private var isUser: Bool { message.role == .user }
 
     var body: some View {
-        HStack {
+        HStack(alignment: .bottom, spacing: 6) {
             if isUser { Spacer(minLength: 44) }
+
+            if isUser {
+                copyButton
+            }
 
             bubbleContent
                 .fixedSize(horizontal: false, vertical: true)
@@ -325,8 +329,31 @@ private struct TemporaryChatBubble: View {
                         )
                 )
 
+            if !isUser {
+                copyButton
+            }
+
             if !isUser { Spacer(minLength: 44) }
         }
+    }
+
+    private var copyButton: some View {
+        Button {
+            copyMessageContent()
+        } label: {
+            Image(systemName: "doc.on.doc")
+                .font(.system(size: 10.5, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.58))
+                .frame(width: 22, height: 22)
+                .background(Color.white.opacity(0.08), in: Circle())
+                .overlay(
+                    Circle()
+                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
+        .disabled(message.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        .help(isUser ? lang.t("chat.copy.prompt") : lang.t("chat.copy.reply"))
     }
 
     private var bubbleContent: some View {
@@ -359,10 +386,14 @@ private struct TemporaryChatBubble: View {
         }
         .contextMenu {
             Button(isUser ? lang.t("chat.copy.prompt") : lang.t("chat.copy.reply")) {
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(message.content, forType: .string)
+                copyMessageContent()
             }
         }
+    }
+
+    private func copyMessageContent() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(message.content, forType: .string)
     }
 }
 

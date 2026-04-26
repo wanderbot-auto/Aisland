@@ -55,7 +55,8 @@ struct TemporaryChatClient: Sendable {
         let result = try streamText(
             model: model,
             messages: messages.map(\.modelMessage),
-            tools: tools(for: configuration, route: webSearchRoute)
+            tools: tools(for: configuration, route: webSearchRoute),
+            toolChoice: toolChoice(for: configuration, route: webSearchRoute)
         )
 
         return AsyncThrowingStream { continuation in
@@ -116,17 +117,51 @@ struct TemporaryChatClient: Sendable {
         route: TemporaryChatWebSearchRoute
     ) -> ToolSet? {
         guard configuration.enabledCapabilities.contains(.webSearch),
-              configuration.provider == .openAI,
               route == .nativeProvider else {
             return nil
         }
 
-        return [
-            "web_search": openaiTools.webSearch(OpenAIWebSearchArgs(
-                externalWebAccess: true,
-                searchContextSize: "medium"
-            )),
-        ]
+        switch configuration.provider {
+        case .openAI:
+            return [
+                "web_search": openaiTools.webSearch(OpenAIWebSearchArgs(
+                    externalWebAccess: true,
+                    searchContextSize: "medium"
+                )),
+            ]
+        case .anthropic:
+            return [
+                "web_search": anthropicTools.webSearch20250305(AnthropicWebSearchOptions(maxUses: 5)),
+            ]
+        case .googleGemini:
+            return [
+                "google_search": googleTools.googleSearch(),
+            ]
+        case .perplexity:
+            return nil
+        case .openRouter, .groq, .mistral, .deepSeek, .xAI, .togetherAI, .customOpenAICompatible:
+            return nil
+        }
+    }
+
+    private func toolChoice(
+        for configuration: LLMChatConfiguration,
+        route: TemporaryChatWebSearchRoute
+    ) -> ToolChoice? {
+        guard route == .nativeProvider else {
+            return nil
+        }
+
+        switch configuration.provider {
+        case .openAI, .anthropic:
+            return .tool(toolName: "web_search")
+        case .googleGemini:
+            return .tool(toolName: "google_search")
+        case .perplexity:
+            return nil
+        case .openRouter, .groq, .mistral, .deepSeek, .xAI, .togetherAI, .customOpenAICompatible:
+            return nil
+        }
     }
 
     private func languageModel(for configuration: LLMChatConfiguration) throws -> any LanguageModelV3 {
