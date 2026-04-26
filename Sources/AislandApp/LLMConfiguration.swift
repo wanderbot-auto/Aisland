@@ -199,11 +199,11 @@ enum TemporaryChatCapabilityRegistry {
             }
             return capabilities
         case .anthropic:
-            return [.imageInput, .fileInput]
+            return [.webSearch, .imageInput, .fileInput]
         case .googleGemini:
             return [.imageInput, .fileInput]
         case .openRouter:
-            var capabilities: Set<TemporaryChatCapability> = []
+            var capabilities: Set<TemporaryChatCapability> = [.webSearch]
             if isVisionModel {
                 capabilities.insert(.imageInput)
             }

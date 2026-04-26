@@ -242,7 +242,7 @@ struct IslandPanelView: View {
                         .frame(width: openedWidth - 24)
                         .frame(maxHeight: usesOpenedVisualState ? currentHeight - closedNotchHeight - 12 : 0, alignment: .top)
                         .opacity(usesOpenedVisualState ? 1 : 0)
-                        .clipped()
+                        .clipped(antialiased: false)
                 }
                 .frame(width: currentWidth, height: currentHeight, alignment: .top)
                 .padding(.horizontal, horizontalInset)

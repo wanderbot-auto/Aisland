@@ -265,6 +265,7 @@
 "chat.capability.web" = "為本則訊息啟用網路搜尋";
 "chat.capability.image" = "上傳圖片";
 "chat.capability.file" = "上傳檔案";
+"chat.capability.unsupported" = "目前模型不支援";
 
 /* Shortcut Settings */
 "settings.shortcuts.global" = "全域快捷鍵";

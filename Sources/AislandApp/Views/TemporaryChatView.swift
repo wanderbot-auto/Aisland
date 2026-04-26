@@ -17,6 +17,7 @@ struct TemporaryChatView: View {
             messages
             composer
         }
+        .frame(maxHeight: .infinity, alignment: .top)
         .onAppear {
             isInputFocused = true
         }
@@ -155,6 +156,7 @@ struct TemporaryChatView: View {
                 }
             }
         }
+        .frame(maxHeight: .infinity)
     }
 
     private var emptyState: some View {
@@ -203,6 +205,7 @@ struct TemporaryChatView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
+        .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color.white.opacity(0.08))
@@ -215,47 +218,51 @@ struct TemporaryChatView: View {
 
     private var capabilityButtons: some View {
         HStack(spacing: 5) {
-            if model.temporaryChatCanUseWebSearch {
-                Button {
-                    model.toggleTemporaryChatWebSearch()
-                } label: {
-                    Image(systemName: "globe")
-                        .foregroundStyle(model.temporaryChatWebSearchEnabled ? Color.black.opacity(0.86) : Color.white.opacity(0.58))
-                        .frame(width: 24, height: 24)
-                        .background(model.temporaryChatWebSearchEnabled ? Color.cyan : Color.white.opacity(0.10), in: Circle())
-                }
-                .buttonStyle(.plain)
-                .help(lang.t("chat.capability.web"))
-            }
-
-            if model.temporaryChatCanAttachImages {
-                Button {
-                    model.importTemporaryChatImageAttachments()
-                } label: {
-                    Image(systemName: "photo")
-                        .foregroundStyle(Color.white.opacity(0.58))
-                        .frame(width: 24, height: 24)
-                        .background(Color.white.opacity(0.10), in: Circle())
-                }
-                .buttonStyle(.plain)
-                .disabled(model.temporaryChatIsSending)
-                .help(lang.t("chat.capability.image"))
-            }
-
-            if model.temporaryChatCanAttachFiles {
-                Button {
-                    model.importTemporaryChatFileAttachments()
-                } label: {
-                    Image(systemName: "paperclip")
-                        .foregroundStyle(Color.white.opacity(0.58))
-                        .frame(width: 24, height: 24)
-                        .background(Color.white.opacity(0.10), in: Circle())
-                }
-                .buttonStyle(.plain)
-                .disabled(model.temporaryChatIsSending)
-                .help(lang.t("chat.capability.file"))
-            }
+            capabilityButton(
+                systemName: "globe",
+                isSupported: model.temporaryChatCanUseWebSearch,
+                isSelected: model.temporaryChatWebSearchEnabled,
+                help: model.temporaryChatCanUseWebSearch ? lang.t("chat.capability.web") : lang.t("chat.capability.unsupported"),
+                action: model.toggleTemporaryChatWebSearch
+            )
+            capabilityButton(
+                systemName: "photo",
+                isSupported: model.temporaryChatCanAttachImages,
+                isSelected: false,
+                help: model.temporaryChatCanAttachImages ? lang.t("chat.capability.image") : lang.t("chat.capability.unsupported"),
+                action: model.importTemporaryChatImageAttachments
+            )
+            capabilityButton(
+                systemName: "paperclip",
+                isSupported: model.temporaryChatCanAttachFiles,
+                isSelected: false,
+                help: model.temporaryChatCanAttachFiles ? lang.t("chat.capability.file") : lang.t("chat.capability.unsupported"),
+                action: model.importTemporaryChatFileAttachments
+            )
         }
+    }
+
+    private func capabilityButton(
+        systemName: String,
+        isSupported: Bool,
+        isSelected: Bool,
+        help: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(isSelected ? Color.black.opacity(0.86) : Color.white.opacity(isSupported ? 0.64 : 0.24))
+                .frame(width: 24, height: 24)
+                .background(isSelected ? Color.cyan : Color.white.opacity(isSupported ? 0.10 : 0.04), in: Circle())
+                .overlay(
+                    Circle()
+                        .stroke(Color.white.opacity(isSupported ? 0.05 : 0.10), lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
+        .disabled(!isSupported || model.temporaryChatIsSending)
+        .help(help)
     }
 
     private var pendingAttachmentTray: some View {

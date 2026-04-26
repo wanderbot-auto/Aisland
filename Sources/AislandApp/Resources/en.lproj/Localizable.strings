@@ -266,6 +266,7 @@
 "chat.capability.web" = "Enable web search for this message";
 "chat.capability.image" = "Attach an image";
 "chat.capability.file" = "Attach a file";
+"chat.capability.unsupported" = "Not supported by the selected model";
 
 /* Shortcut Settings */
 "settings.shortcuts.global" = "Global shortcuts";

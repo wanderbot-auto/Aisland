@@ -266,6 +266,7 @@
 "chat.capability.web" = "为本条消息启用联网搜索";
 "chat.capability.image" = "上传图片";
 "chat.capability.file" = "上传文件";
+"chat.capability.unsupported" = "当前模型不支持";
 
 /* Shortcut Settings */
 "settings.shortcuts.global" = "全局快捷键";
