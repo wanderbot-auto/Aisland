@@ -712,6 +712,10 @@ final class AppModel {
         return state.session(id: sessionID)
     }
 
+    var lastSwitchableIslandSurface: IslandSurface {
+        islandSurface.switchableTab?.selectionSurface ?? .sessionList()
+    }
+
     var hasAnySession: Bool {
         !sessions.isEmpty
     }

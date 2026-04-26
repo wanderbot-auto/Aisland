@@ -21,7 +21,7 @@ final class OverlayPanelController {
     // the measured height is not yet available (first notification render).
     private static let openedContentVerticalInsets: CGFloat = 52
     private static let openedEmptyStateHeight: CGFloat = 108
-    private static let openedTemporaryChatHeight: CGFloat = 438
+    private static let openedTemporaryChatHeight: CGFloat = 560
     private static let openedWhiteNoiseHeight: CGFloat = 560
     // Approval card: header row (~72) + actionableBody padding (16*2 + 14 bottom) + body content (~186)
     // Bumped to 310 to ensure the estimated panel height is never smaller than the actual rendered card.
@@ -182,10 +182,11 @@ final class OverlayPanelController {
     private func presentPanel(_ panel: NSPanel, activates: Bool) {
         if activates {
             panel.makeKeyAndOrderFront(nil)
-            panel.makeFirstResponder(panel.contentView)
         } else {
             panel.orderFrontRegardless()
+            panel.makeKey()
         }
+        panel.makeFirstResponder(panel.contentView)
     }
 
     private func computeNotchRect(screen: NSScreen?) {
@@ -268,7 +269,7 @@ final class OverlayPanelController {
 
         if model.notchStatus == .closed && inClosedSurfaceArea {
             cancelHoverOpenImmediately()
-            model.notchOpen(reason: .click)
+            model.notchOpen(reason: .click, surface: model.lastSwitchableIslandSurface)
         } else if model.notchStatus == .opened {
             if !isPointInExpandedArea(screenLocation) {
                 model.notchClose()
@@ -315,7 +316,7 @@ final class OverlayPanelController {
             )
         }
 
-        model.notchOpen(reason: .hover)
+        model.notchOpen(reason: .hover, surface: model.lastSwitchableIslandSurface)
     }
 
     private func cancelHoverOpen() {

@@ -91,7 +91,7 @@ final class OverlayUICoordinator {
 
     func toggleOverlay() {
         if notchStatus == .closed {
-            notchOpen(reason: .click)
+            notchOpen(reason: .click, surface: appModel?.lastSwitchableIslandSurface ?? .sessionList())
         } else {
             notchClose()
         }
@@ -117,10 +117,11 @@ final class OverlayUICoordinator {
     }
 
     func notchClose() {
+        let fallbackSurface = islandSurface.switchableTab?.selectionSurface ?? .sessionList()
         transitionOverlay(
             to: .closed,
             reason: nil,
-            surface: .sessionList(),
+            surface: fallbackSurface,
             interactive: false,
             beforeTransition: { [weak self] in
                 self?.notificationAutoCollapseTask?.cancel()
@@ -201,7 +202,7 @@ final class OverlayUICoordinator {
     }
 
     // Legacy compatibility
-    func showOverlay() { notchOpen(reason: .click, surface: .sessionList()) }
+    func showOverlay() { notchOpen(reason: .click, surface: appModel?.lastSwitchableIslandSurface ?? .sessionList()) }
     func hideOverlay() { notchClose() }
 
     /// Transition from notification mode (single session) to full session list.

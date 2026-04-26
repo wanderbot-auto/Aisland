@@ -297,7 +297,7 @@ struct IslandPanelView: View {
         }
         .onTapGesture {
             if !isOpened {
-                model.notchOpen(reason: .click)
+                model.notchOpen(reason: .click, surface: model.lastSwitchableIslandSurface)
             }
         }
     }
