@@ -174,6 +174,17 @@ struct IslandPanelView: View {
         (Self.headerControlButtonSize * 3) + (Self.headerControlSpacing * 2)
     }
 
+    private var openedSurfaceSwitcherWidth: CGFloat {
+        CGFloat(IslandSurface.switchableTabs.count * 34)
+            + CGFloat(max(0, IslandSurface.switchableTabs.count - 1) * 3)
+            + 4
+    }
+
+    private var openedHeaderControlsWidth: CGFloat {
+        openedHeaderButtonsWidth
+            + (isNotificationMode ? 0 : openedSurfaceSwitcherWidth + 10)
+    }
+
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .top) {
@@ -383,7 +394,7 @@ struct IslandPanelView: View {
 
                     HStack(spacing: Self.headerControlSpacing) {
                         usageLaneView(providerGroups.right, alignment: .trailing)
-                        openedHeaderButtons
+                        openedHeaderControls
                     }
                     .frame(width: metrics.rightLaneWidth, alignment: .trailing)
                 }
@@ -395,12 +406,24 @@ struct IslandPanelView: View {
                 openedUsageSummary
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                openedHeaderButtons
+                openedHeaderControls
             }
             .padding(.leading, Self.headerHorizontalPadding)
             .padding(.trailing, Self.headerHorizontalPadding)
             .padding(.top, Self.headerTopPadding)
         }
+    }
+
+    private var openedHeaderControls: some View {
+        HStack(spacing: 10) {
+            if !isNotificationMode {
+                surfaceSwitcher
+            }
+
+            openedHeaderButtons
+        }
+        .fixedSize(horizontal: true, vertical: false)
+        .layoutPriority(1)
     }
 
     private var openedHeaderButtons: some View {
@@ -449,10 +472,6 @@ struct IslandPanelView: View {
                 installHooksHint
             }
 
-            if !isNotificationMode {
-                surfaceSwitcher
-            }
-
             if model.islandSurface == .temporaryChat {
                 TemporaryChatView(model: model)
             } else if model.islandSurface == .whiteNoise {
@@ -471,16 +490,16 @@ struct IslandPanelView: View {
     }
 
     private var surfaceSwitcher: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 3) {
             ForEach(IslandSurface.switchableTabs) { tab in
                 surfaceButton(tab: tab) {
                     model.showIslandSurface(tab)
                 }
             }
         }
-        .padding(3)
+        .padding(2)
         .background(.white.opacity(0.07), in: Capsule())
-        .frame(maxWidth: CGFloat(IslandSurface.switchableTabs.count) * 43 + 8)
+        .frame(maxWidth: openedSurfaceSwitcherWidth)
     }
 
     private func surfaceButton(
@@ -488,11 +507,16 @@ struct IslandPanelView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            Image(systemName: tab.systemImageName)
-                .font(.system(size: 10.5, weight: .semibold))
-                .foregroundStyle(tab.matches(model.islandSurface) ? Color.black.opacity(0.86) : Color.white.opacity(0.58))
-                .frame(width: 39, height: 24)
-                .background(tab.matches(model.islandSurface) ? Color.cyan : Color.clear, in: Capsule())
+            let isSelected = tab.matches(model.islandSurface)
+            ZStack {
+                Capsule()
+                    .fill(isSelected ? Color.cyan : Color.white.opacity(0.001))
+                Image(systemName: tab.systemImageName)
+                    .font(.system(size: 10.5, weight: .semibold))
+                    .foregroundStyle(isSelected ? Color.black.opacity(0.86) : Color.white.opacity(0.58))
+            }
+            .frame(width: 34, height: 20)
+            .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(model.lang.t(tab.accessibilityLabelKey))
@@ -748,7 +772,7 @@ struct IslandPanelView: View {
         let contentWidth = max(0, totalWidth - (Self.headerHorizontalPadding * 2))
         guard usesNotchAwareOpenedHeader,
               let screen = targetOverlayScreen else {
-            let rightLaneWidth = min(contentWidth, openedHeaderButtonsWidth + (contentWidth / 2))
+            let rightLaneWidth = min(contentWidth, openedHeaderControlsWidth + (contentWidth / 2))
             let leftUsageWidth = max(0, contentWidth - rightLaneWidth)
             return OpenedHeaderMetrics(
                 leftUsageWidth: leftUsageWidth,

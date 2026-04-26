@@ -20,7 +20,6 @@ final class OverlayPanelController {
     // = 52.  The extra 14 pt avoids the card bottom being clipped by the .clipped() modifier when
     // the measured height is not yet available (first notification render).
     private static let openedContentVerticalInsets: CGFloat = 52
-    private static let openedSurfaceSwitcherHeight: CGFloat = 44
     private static let openedEmptyStateHeight: CGFloat = 108
     private static let openedTemporaryChatHeight: CGFloat = 438
     private static let openedWhiteNoiseHeight: CGFloat = 560
@@ -562,7 +561,7 @@ final class OverlayPanelController {
         }
 
         if visibleSessions.isEmpty {
-            return Self.openedEmptyStateHeight + Self.openedSurfaceSwitcherHeight
+            return Self.openedEmptyStateHeight
         }
 
         let actionableID = model.islandSurface.sessionID
@@ -599,7 +598,7 @@ final class OverlayPanelController {
         let listHeight = rowsHeight + spacingHeight
         // Cap long histories so the opened island remains glanceable.
         let cappedListHeight = min(listHeight, Self.maxSessionListHeight)
-        return cappedListHeight + Self.openedContentVerticalInsets + Self.openedSurfaceSwitcherHeight
+        return cappedListHeight + Self.openedContentVerticalInsets
     }
 
     /// Additional height for the actionable session's inline action area.
