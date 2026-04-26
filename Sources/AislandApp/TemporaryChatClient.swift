@@ -42,10 +42,19 @@ struct TemporaryChatClient: Sendable {
             throw TemporaryChatError.missingAPIKey
         }
 
+        let supportedCapabilities = TemporaryChatCapabilityRegistry.capabilities(for: configuration)
+        let requiredCapabilities = messages.reduce(configuration.enabledCapabilities) { partial, message in
+            partial.union(message.requiredCapabilities)
+        }
+        if let unsupportedCapability = requiredCapabilities.first(where: { !supportedCapabilities.contains($0) }) {
+            throw TemporaryChatError.unsupportedCapability(unsupportedCapability.displayName)
+        }
+
         let model = try languageModel(for: configuration)
         let result = try streamText(
             model: model,
-            messages: messages.map(\.modelMessage)
+            messages: messages.map(\.modelMessage),
+            tools: tools(for: configuration)
         )
 
         return AsyncThrowingStream { continuation in
@@ -61,6 +70,13 @@ struct TemporaryChatClient: Sendable {
                                 outputTokens: totalUsage.outputTokens,
                                 totalTokens: totalUsage.totalTokens
                             )))
+                        case let .source(source):
+                            continuation.yield(.source(source.temporaryChatCitation))
+                        case let .toolResult(result):
+                            continuation.yield(.toolResult(TemporaryChatToolResultPart(
+                                toolName: result.toolName,
+                                summary: result.output.temporaryChatSummary
+                            )))
                         default:
                             continue
                         }
@@ -74,6 +90,20 @@ struct TemporaryChatClient: Sendable {
                 task.cancel()
             }
         }
+    }
+
+    private func tools(for configuration: LLMChatConfiguration) -> ToolSet? {
+        guard configuration.enabledCapabilities.contains(.webSearch),
+              configuration.provider == .openAI else {
+            return nil
+        }
+
+        return [
+            "web_search": openaiTools.webSearch(OpenAIWebSearchArgs(
+                externalWebAccess: true,
+                searchContextSize: "medium"
+            )),
+        ]
     }
 
     private func languageModel(for configuration: LLMChatConfiguration) throws -> any LanguageModelV3 {
@@ -151,6 +181,8 @@ enum TemporaryChatError: LocalizedError, Equatable {
     case missingAPIKey
     case missingModel
     case emptyResponse
+    case unsupportedCapability(String)
+    case attachmentTooLarge(String)
 
     var errorDescription: String? {
         switch self {
@@ -160,6 +192,10 @@ enum TemporaryChatError: LocalizedError, Equatable {
             "Choose a model before sending."
         case .emptyResponse:
             "The provider returned an empty response."
+        case let .unsupportedCapability(capability):
+            "The selected model does not support \(capability)."
+        case let .attachmentTooLarge(filename):
+            "\(filename) is too large to attach."
         }
     }
 }
@@ -168,9 +204,84 @@ private extension TemporaryChatMessage {
     var modelMessage: ModelMessage {
         switch role {
         case .user:
-            .user(UserModelMessage(content: .text(content)))
+            .user(UserModelMessage(content: userContent))
         case .assistant:
             .assistant(AssistantModelMessage(content: .text(content)))
+        }
+    }
+
+    var userContent: UserContent {
+        let contentParts = parts.compactMap(\.userContentPart)
+        guard !contentParts.isEmpty else {
+            return .text(content)
+        }
+        if contentParts.count == 1,
+           case let .text(textPart) = contentParts[0] {
+            return .text(textPart.text)
+        }
+        return .parts(contentParts)
+    }
+}
+
+private extension TemporaryChatMessagePart {
+    var userContentPart: UserContentPart? {
+        switch self {
+        case let .text(part):
+            .text(TextPart(text: part.text))
+        case let .image(part):
+            .image(ImagePart(image: .data(part.data), mediaType: part.mediaType))
+        case let .file(part):
+            .file(FilePart(data: .data(part.data), mediaType: part.mediaType, filename: part.filename))
+        case let .webCitation(part):
+            .text(TextPart(text: "[Source] \(part.title)\(part.url.map { ": \($0)" } ?? "")"))
+        case let .toolResult(part):
+            .text(TextPart(text: "[Tool result: \(part.toolName)] \(part.summary)"))
+        }
+    }
+}
+
+private extension TemporaryChatCapability {
+    var displayName: String {
+        switch self {
+        case .webSearch:
+            "web search"
+        case .imageInput:
+            "image input"
+        case .fileInput:
+            "file input"
+        }
+    }
+}
+
+private extension LanguageModelV3Source {
+    var temporaryChatCitation: TemporaryChatWebCitationPart {
+        switch self {
+        case let .url(_, url, title, _):
+            TemporaryChatWebCitationPart(title: title ?? url, url: url)
+        case let .document(_, _, title, filename, _):
+            TemporaryChatWebCitationPart(title: filename ?? title)
+        }
+    }
+}
+
+private extension JSONValue {
+    var temporaryChatSummary: String {
+        switch self {
+        case .null:
+            "null"
+        case let .bool(value):
+            String(value)
+        case let .number(value):
+            String(value)
+        case let .string(value):
+            value
+        case let .array(values):
+            values.map(\.temporaryChatSummary).joined(separator: ", ")
+        case let .object(values):
+            values
+                .sorted { $0.key < $1.key }
+                .map { "\($0.key): \($0.value.temporaryChatSummary)" }
+                .joined(separator: ", ")
         }
     }
 }

@@ -5,21 +5,164 @@ enum TemporaryChatRole: String, Codable, Sendable {
     case assistant
 }
 
+enum TemporaryChatCapability: String, CaseIterable, Identifiable, Codable, Sendable {
+    case webSearch
+    case imageInput
+    case fileInput
+
+    var id: String { rawValue }
+}
+
+struct TemporaryChatTextPart: Identifiable, Codable, Equatable, Sendable {
+    var id: UUID
+    var text: String
+
+    init(id: UUID = UUID(), text: String) {
+        self.id = id
+        self.text = text
+    }
+}
+
+struct TemporaryChatAttachmentPart: Identifiable, Codable, Equatable, Sendable {
+    var id: UUID
+    var filename: String
+    var mediaType: String
+    var data: Data
+
+    var byteCount: Int { data.count }
+
+    init(id: UUID = UUID(), filename: String, mediaType: String, data: Data) {
+        self.id = id
+        self.filename = filename
+        self.mediaType = mediaType
+        self.data = data
+    }
+}
+
+struct TemporaryChatWebCitationPart: Identifiable, Codable, Equatable, Sendable {
+    var id: UUID
+    var title: String
+    var url: String?
+
+    init(id: UUID = UUID(), title: String, url: String? = nil) {
+        self.id = id
+        self.title = title
+        self.url = url
+    }
+}
+
+struct TemporaryChatToolResultPart: Identifiable, Codable, Equatable, Sendable {
+    var id: UUID
+    var toolName: String
+    var summary: String
+
+    init(id: UUID = UUID(), toolName: String, summary: String) {
+        self.id = id
+        self.toolName = toolName
+        self.summary = summary
+    }
+}
+
+enum TemporaryChatMessagePart: Identifiable, Codable, Equatable, Sendable {
+    case text(TemporaryChatTextPart)
+    case image(TemporaryChatAttachmentPart)
+    case file(TemporaryChatAttachmentPart)
+    case webCitation(TemporaryChatWebCitationPart)
+    case toolResult(TemporaryChatToolResultPart)
+
+    var id: UUID {
+        switch self {
+        case let .text(part):
+            part.id
+        case let .image(part):
+            part.id
+        case let .file(part):
+            part.id
+        case let .webCitation(part):
+            part.id
+        case let .toolResult(part):
+            part.id
+        }
+    }
+
+    var requiredCapability: TemporaryChatCapability? {
+        switch self {
+        case .image:
+            .imageInput
+        case .file:
+            .fileInput
+        case .text, .webCitation, .toolResult:
+            nil
+        }
+    }
+}
+
 struct TemporaryChatMessage: Identifiable, Codable, Equatable, Sendable {
     let id: UUID
     let role: TemporaryChatRole
-    let content: String
+    let parts: [TemporaryChatMessagePart]
     let createdAt: Date
 
     init(id: UUID = UUID(), role: TemporaryChatRole, content: String, createdAt: Date = Date()) {
         self.id = id
         self.role = role
-        self.content = content
+        self.parts = content.isEmpty ? [] : [.text(TemporaryChatTextPart(text: content))]
         self.createdAt = createdAt
     }
 
+    init(
+        id: UUID = UUID(),
+        role: TemporaryChatRole,
+        parts: [TemporaryChatMessagePart],
+        createdAt: Date = Date()
+    ) {
+        self.id = id
+        self.role = role
+        self.parts = parts
+        self.createdAt = createdAt
+    }
+
+    var content: String {
+        parts.compactMap { part in
+            if case let .text(textPart) = part {
+                return textPart.text
+            }
+            return nil
+        }
+        .joined(separator: "\n\n")
+    }
+
+    var isRenderable: Bool {
+        !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || parts.contains { part in
+                switch part {
+                case .image, .file, .webCitation, .toolResult:
+                    true
+                case .text:
+                    false
+                }
+            }
+    }
+
+    var requiredCapabilities: Set<TemporaryChatCapability> {
+        Set(parts.compactMap(\.requiredCapability))
+    }
+
     func replacingContent(_ newContent: String) -> TemporaryChatMessage {
-        TemporaryChatMessage(id: id, role: role, content: newContent, createdAt: createdAt)
+        let nonTextParts = parts.filter { part in
+            if case .text = part {
+                return false
+            }
+            return true
+        }
+        let textParts: [TemporaryChatMessagePart] = newContent.isEmpty
+            ? []
+            : [.text(TemporaryChatTextPart(text: newContent))]
+        return TemporaryChatMessage(id: id, role: role, parts: textParts + nonTextParts, createdAt: createdAt)
+    }
+
+    func appendingPart(_ part: TemporaryChatMessagePart) -> TemporaryChatMessage {
+        TemporaryChatMessage(id: id, role: role, parts: parts + [part], createdAt: createdAt)
     }
 }
 
@@ -78,6 +221,8 @@ struct TemporaryChatTokenStats: Equatable, Sendable {
 enum TemporaryChatStreamEvent: Sendable {
     case text(String)
     case usage(TemporaryChatUsage)
+    case source(TemporaryChatWebCitationPart)
+    case toolResult(TemporaryChatToolResultPart)
 }
 
 enum TemporaryChatTokenEstimator {
@@ -86,7 +231,24 @@ enum TemporaryChatTokenEstimator {
         let messageOverhead = messages.count * 4
         let replyPrimer = 3
         return messageOverhead + replyPrimer + messages.reduce(0) { total, message in
-            total + estimateTextTokens(message.content)
+            total + estimateMessageTokens(message)
+        }
+    }
+
+    private static func estimateMessageTokens(_ message: TemporaryChatMessage) -> Int {
+        message.parts.reduce(0) { total, part in
+            switch part {
+            case let .text(textPart):
+                total + estimateTextTokens(textPart.text)
+            case .image:
+                total + 256
+            case let .file(attachment):
+                total + max(32, attachment.byteCount / 4)
+            case let .webCitation(citation):
+                total + estimateTextTokens(citation.title) + (citation.url.map(estimateTextTokens) ?? 0)
+            case let .toolResult(result):
+                total + estimateTextTokens(result.toolName) + estimateTextTokens(result.summary)
+            }
         }
     }
 

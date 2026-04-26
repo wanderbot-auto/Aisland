@@ -14,10 +14,12 @@ The SDK was selected because its API is built around provider-agnostic `generate
 ## Current integration
 
 - `Package.swift` now depends on `swift-ai-sdk` `from: "0.17.6"`.
-- `TemporaryChatClient` builds the selected provider's SDK model, then calls `generateText(model:messages:)`.
+- `TemporaryChatClient` builds the selected provider's SDK model, then calls `streamText(model:messages:)`.
 - Settings exposes searchable provider cards plus suggested models for each provider.
 - API keys remain stored in macOS Keychain.
 - Custom and OpenRouter-style providers use `OpenAICompatibleProvider`.
+- `TemporaryChatMessage` uses multimodal parts for text, image/file attachments, web citations, and tool-result summaries.
+- `TemporaryChatCapabilityRegistry` gates web search, image input, and file input per provider/model so the island only shows supported chat controls.
 
 ## Provider scope
 
@@ -37,6 +39,6 @@ Initial provider list:
 
 ## Follow-up ideas
 
-- Add streaming token updates into the island chat transcript.
+- Add provider-specific validation for image/file media types and attachment size limits.
 - Add provider-specific validation for base URLs and API keys.
 - Add a remote model-list fetcher where providers expose a stable model listing API.

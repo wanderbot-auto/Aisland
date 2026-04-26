@@ -140,6 +140,21 @@ struct LLMChatConfiguration: Equatable, Sendable {
     var model: String
     var baseURL: String
     var apiKey: String
+    var enabledCapabilities: Set<TemporaryChatCapability>
+
+    init(
+        provider: LLMProviderKind,
+        model: String,
+        baseURL: String,
+        apiKey: String,
+        enabledCapabilities: Set<TemporaryChatCapability> = []
+    ) {
+        self.provider = provider
+        self.model = model
+        self.baseURL = baseURL
+        self.apiKey = apiKey
+        self.enabledCapabilities = enabledCapabilities
+    }
 
     var effectiveModel: String {
         let trimmed = model.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -154,6 +169,60 @@ struct LLMChatConfiguration: Equatable, Sendable {
 
     var effectiveBaseURL: URL? {
         URL(string: effectiveBaseURLString)
+    }
+}
+
+enum TemporaryChatCapabilityRegistry {
+    static func capabilities(for configuration: LLMChatConfiguration) -> Set<TemporaryChatCapability> {
+        capabilities(provider: configuration.provider, model: configuration.effectiveModel)
+    }
+
+    static func capabilities(provider: LLMProviderKind, model rawModel: String) -> Set<TemporaryChatCapability> {
+        let model = rawModel.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let isVisionModel = model.contains("vision")
+            || model.contains("gpt-4o")
+            || model.contains("gpt-4.1")
+            || model.hasPrefix("o3")
+            || model.hasPrefix("o4")
+            || model.contains("claude")
+            || model.contains("gemini")
+            || model.contains("grok")
+
+        switch provider {
+        case .openAI:
+            var capabilities: Set<TemporaryChatCapability> = [.webSearch]
+            if isVisionModel {
+                capabilities.insert(.imageInput)
+            }
+            if model.contains("gpt-4o") || model.contains("gpt-4.1") || model.hasPrefix("o3") || model.hasPrefix("o4") {
+                capabilities.insert(.fileInput)
+            }
+            return capabilities
+        case .anthropic:
+            return [.imageInput, .fileInput]
+        case .googleGemini:
+            return [.imageInput, .fileInput]
+        case .openRouter:
+            var capabilities: Set<TemporaryChatCapability> = []
+            if isVisionModel {
+                capabilities.insert(.imageInput)
+            }
+            if model.contains("perplexity") || model.contains("sonar") {
+                capabilities.insert(.webSearch)
+            }
+            if model.contains("claude") || model.contains("gemini") || model.contains("gpt-4") {
+                capabilities.insert(.fileInput)
+            }
+            return capabilities
+        case .perplexity:
+            return [.webSearch]
+        case .xAI:
+            return model.contains("vision") ? [.imageInput] : []
+        case .mistral:
+            return model.contains("pixtral") ? [.imageInput] : []
+        case .groq, .deepSeek, .togetherAI, .customOpenAICompatible:
+            return []
+        }
     }
 }
 

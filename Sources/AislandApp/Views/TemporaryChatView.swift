@@ -113,7 +113,7 @@ struct TemporaryChatView: View {
                         emptyState
                     } else {
                         ForEach(model.temporaryChatMessages) { message in
-                            if !message.content.isEmpty {
+                            if message.isRenderable {
                                 TemporaryChatBubble(message: message, lang: lang)
                                     .id(message.id)
                             }
@@ -174,24 +174,32 @@ struct TemporaryChatView: View {
     }
 
     private var composer: some View {
-        HStack(spacing: 8) {
-            TextField(lang.t("chat.placeholder"), text: $draft, axis: .vertical)
-                .textFieldStyle(.plain)
-                .lineLimit(1...4)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.white.opacity(0.88))
-                .focused($isInputFocused)
-                .onSubmit(send)
-
-            Button(action: send) {
-                Image(systemName: "arrow.up")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(.black.opacity(canSend ? 0.9 : 0.35))
-                    .frame(width: 26, height: 26)
-                    .background(canSend ? Color.cyan : Color.white.opacity(0.22), in: Circle())
+        VStack(alignment: .leading, spacing: 8) {
+            if !model.temporaryChatPendingParts.isEmpty {
+                pendingAttachmentTray
             }
-            .buttonStyle(.plain)
-            .disabled(!canSend)
+
+            HStack(spacing: 8) {
+                capabilityButtons
+
+                TextField(lang.t("chat.placeholder"), text: $draft, axis: .vertical)
+                    .textFieldStyle(.plain)
+                    .lineLimit(1...4)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.88))
+                    .focused($isInputFocused)
+                    .onSubmit(send)
+
+                Button(action: send) {
+                    Image(systemName: "arrow.up")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.black.opacity(canSend ? 0.9 : 0.35))
+                        .frame(width: 26, height: 26)
+                        .background(canSend ? Color.cyan : Color.white.opacity(0.22), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .disabled(!canSend)
+            }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
@@ -205,8 +213,67 @@ struct TemporaryChatView: View {
         )
     }
 
+    private var capabilityButtons: some View {
+        HStack(spacing: 5) {
+            if model.temporaryChatCanUseWebSearch {
+                Button {
+                    model.toggleTemporaryChatWebSearch()
+                } label: {
+                    Image(systemName: "globe")
+                        .foregroundStyle(model.temporaryChatWebSearchEnabled ? Color.black.opacity(0.86) : Color.white.opacity(0.58))
+                        .frame(width: 24, height: 24)
+                        .background(model.temporaryChatWebSearchEnabled ? Color.cyan : Color.white.opacity(0.10), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .help(lang.t("chat.capability.web"))
+            }
+
+            if model.temporaryChatCanAttachImages {
+                Button {
+                    model.importTemporaryChatImageAttachments()
+                } label: {
+                    Image(systemName: "photo")
+                        .foregroundStyle(Color.white.opacity(0.58))
+                        .frame(width: 24, height: 24)
+                        .background(Color.white.opacity(0.10), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .disabled(model.temporaryChatIsSending)
+                .help(lang.t("chat.capability.image"))
+            }
+
+            if model.temporaryChatCanAttachFiles {
+                Button {
+                    model.importTemporaryChatFileAttachments()
+                } label: {
+                    Image(systemName: "paperclip")
+                        .foregroundStyle(Color.white.opacity(0.58))
+                        .frame(width: 24, height: 24)
+                        .background(Color.white.opacity(0.10), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .disabled(model.temporaryChatIsSending)
+                .help(lang.t("chat.capability.file"))
+            }
+        }
+    }
+
+    private var pendingAttachmentTray: some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: 6) {
+                ForEach(model.temporaryChatPendingParts) { part in
+                    TemporaryChatPartChip(part: part, removable: true, lang: lang) {
+                        model.removeTemporaryChatPendingPart(id: part.id)
+                    }
+                }
+            }
+        }
+        .scrollIndicators(.hidden)
+    }
+
     private var canSend: Bool {
-        !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !model.temporaryChatIsSending
+        (!draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !model.temporaryChatPendingParts.isEmpty)
+            && !model.temporaryChatIsSending
     }
 
     private func send() {
@@ -245,16 +312,31 @@ private struct TemporaryChatBubble: View {
     }
 
     private var bubbleContent: some View {
-        Group {
+        VStack(alignment: .leading, spacing: 7) {
             if isUser {
-                Text(message.content)
-                    .font(.system(size: 12.5, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.92))
+                if !message.content.isEmpty {
+                    Text(message.content)
+                        .font(.system(size: 12.5, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.92))
+                }
             } else {
-                Markdown(message.content)
-                    .markdownTheme(.temporaryChat)
-                    .markdownImageProvider(.default)
-                    .frame(maxWidth: .infinity, alignment: .topLeading)
+                if !message.content.isEmpty {
+                    Markdown(message.content)
+                        .markdownTheme(.temporaryChat)
+                        .markdownImageProvider(.default)
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                }
+            }
+
+            ForEach(message.parts) { part in
+                switch part {
+                case .text:
+                    EmptyView()
+                case let .image(attachment):
+                    TemporaryChatImageAttachmentView(attachment: attachment, lang: lang)
+                case .file, .webCitation, .toolResult:
+                    TemporaryChatPartChip(part: part, removable: false, lang: lang)
+                }
             }
         }
         .contextMenu {
@@ -263,6 +345,90 @@ private struct TemporaryChatBubble: View {
                 NSPasteboard.general.setString(message.content, forType: .string)
             }
         }
+    }
+}
+
+private struct TemporaryChatImageAttachmentView: View {
+    let attachment: TemporaryChatAttachmentPart
+    let lang: LanguageManager
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            if let image = NSImage(data: attachment.data) {
+                Image(nsImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: 220, maxHeight: 150)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
+            TemporaryChatPartChip(part: .image(attachment), removable: false, lang: lang)
+        }
+    }
+}
+
+private struct TemporaryChatPartChip: View {
+    let part: TemporaryChatMessagePart
+    var removable: Bool
+    let lang: LanguageManager
+    var removeAction: (() -> Void)?
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Image(systemName: iconName)
+                .font(.system(size: 10, weight: .semibold))
+            Text(title)
+                .font(.system(size: 10.5, weight: .semibold))
+                .lineLimit(1)
+            if removable {
+                Button {
+                    removeAction?()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 9, weight: .bold))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .foregroundStyle(.white.opacity(0.76))
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .background(Color.white.opacity(0.10), in: Capsule())
+    }
+
+    private var iconName: String {
+        switch part {
+        case .text:
+            "text.alignleft"
+        case .image:
+            "photo"
+        case .file:
+            "doc"
+        case .webCitation:
+            "link"
+        case .toolResult:
+            "wrench.and.screwdriver"
+        }
+    }
+
+    private var title: String {
+        switch part {
+        case let .text(text):
+            text.text
+        case let .image(attachment):
+            "\(attachment.filename) · \(Self.formatBytes(attachment.byteCount))"
+        case let .file(attachment):
+            "\(attachment.filename) · \(Self.formatBytes(attachment.byteCount))"
+        case let .webCitation(citation):
+            citation.title
+        case let .toolResult(result):
+            "\(result.toolName): \(result.summary)"
+        }
+    }
+
+    private static func formatBytes(_ bytes: Int) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: Int64(bytes))
     }
 }
 

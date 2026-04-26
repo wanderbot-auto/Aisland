@@ -263,6 +263,9 @@
 "chat.empty.title" = "不离开 island 也能提问";
 "chat.empty.subtitle" = "适合快速咨询 LLM；已监控的 agent 任务仍在任务标签中。";
 "chat.placeholder" = "快速问一个问题…";
+"chat.capability.web" = "为本条消息启用联网搜索";
+"chat.capability.image" = "上传图片";
+"chat.capability.file" = "上传文件";
 
 /* Shortcut Settings */
 "settings.shortcuts.global" = "全局快捷键";

@@ -262,6 +262,9 @@
 "chat.empty.title" = "不離開 island 也能提問";
 "chat.empty.subtitle" = "適合快速詢問 LLM；已監控的 agent 任務仍在任務標籤中。";
 "chat.placeholder" = "快速問一個問題…";
+"chat.capability.web" = "為本則訊息啟用網路搜尋";
+"chat.capability.image" = "上傳圖片";
+"chat.capability.file" = "上傳檔案";
 
 /* Shortcut Settings */
 "settings.shortcuts.global" = "全域快捷鍵";

@@ -3,6 +3,7 @@ import Foundation
 import Observation
 import AislandCore
 import SwiftUI
+import UniformTypeIdentifiers
 
 extension Notification.Name {
     /// Posted by `AppModel.showOnboarding()` to ask `SettingsView` to
@@ -305,6 +306,8 @@ final class AppModel {
             refreshTemporaryChatTokenStats()
         }
     }
+    var temporaryChatPendingParts: [TemporaryChatMessagePart] = []
+    var temporaryChatWebSearchEnabled = false
     var temporaryChatTokenStats = TemporaryChatTokenStats.estimate(
         messages: [],
         provider: .openAI,
@@ -1008,8 +1011,28 @@ final class AppModel {
             provider: temporaryChatProvider,
             model: temporaryChatModel,
             baseURL: temporaryChatBaseURL,
-            apiKey: temporaryChatAPIKey
+            apiKey: temporaryChatAPIKey,
+            enabledCapabilities: temporaryChatWebSearchEnabled ? [.webSearch] : []
         )
+    }
+
+    var temporaryChatCapabilities: Set<TemporaryChatCapability> {
+        TemporaryChatCapabilityRegistry.capabilities(
+            provider: temporaryChatProvider,
+            model: temporaryChatModel
+        )
+    }
+
+    var temporaryChatCanUseWebSearch: Bool {
+        temporaryChatCapabilities.contains(.webSearch)
+    }
+
+    var temporaryChatCanAttachImages: Bool {
+        temporaryChatCapabilities.contains(.imageInput)
+    }
+
+    var temporaryChatCanAttachFiles: Bool {
+        temporaryChatCapabilities.contains(.fileInput)
     }
 
     func openTemporaryChatFromShortcut() {
@@ -1053,6 +1076,8 @@ final class AppModel {
         temporaryChatTask?.cancel()
         temporaryChatTask = nil
         temporaryChatMessages.removeAll()
+        temporaryChatPendingParts.removeAll()
+        temporaryChatWebSearchEnabled = false
         temporaryChatLastError = nil
         temporaryChatIsSending = false
     }
@@ -1068,21 +1093,108 @@ final class AppModel {
             return
         }
 
-        let prompt = temporaryChatMessages[lastUserIndex].content
+        let parts = temporaryChatMessages[lastUserIndex].parts
         temporaryChatMessages = Array(temporaryChatMessages.prefix(upTo: lastUserIndex))
-        sendTemporaryChatMessage(prompt)
+        sendTemporaryChatMessage(parts: parts)
+    }
+
+    func toggleTemporaryChatWebSearch() {
+        guard temporaryChatCanUseWebSearch, !temporaryChatIsSending else { return }
+        temporaryChatWebSearchEnabled.toggle()
+    }
+
+    func importTemporaryChatImageAttachments() {
+        importTemporaryChatAttachments(
+            allowedContentTypes: [.image],
+            as: .imageInput
+        )
+    }
+
+    func importTemporaryChatFileAttachments() {
+        importTemporaryChatAttachments(
+            allowedContentTypes: [.pdf, .plainText, .text, .json, .data],
+            as: .fileInput
+        )
+    }
+
+    func removeTemporaryChatPendingPart(id: UUID) {
+        temporaryChatPendingParts.removeAll { $0.id == id }
+    }
+
+    private func importTemporaryChatAttachments(
+        allowedContentTypes: [UTType],
+        as capability: TemporaryChatCapability
+    ) {
+        guard temporaryChatCapabilities.contains(capability), !temporaryChatIsSending else { return }
+
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = true
+        panel.canChooseDirectories = false
+        panel.allowedContentTypes = allowedContentTypes
+        guard panel.runModal() == .OK else { return }
+
+        do {
+            for url in panel.urls {
+                try appendTemporaryChatAttachment(from: url, as: capability)
+            }
+            lastActionMessage = "Attached \(panel.urls.count) item\(panel.urls.count == 1 ? "" : "s") to temporary chat."
+        } catch {
+            temporaryChatLastError = error.localizedDescription
+            lastActionMessage = "Temporary chat attachment failed: \(error.localizedDescription)"
+        }
+    }
+
+    private func appendTemporaryChatAttachment(from url: URL, as capability: TemporaryChatCapability) throws {
+        let data = try Data(contentsOf: url)
+        guard data.count <= 20 * 1024 * 1024 else {
+            throw TemporaryChatError.attachmentTooLarge(url.lastPathComponent)
+        }
+
+        let mediaType = UTType(filenameExtension: url.pathExtension)?.preferredMIMEType ?? "application/octet-stream"
+        let attachment = TemporaryChatAttachmentPart(
+            filename: url.lastPathComponent,
+            mediaType: mediaType,
+            data: data
+        )
+        switch capability {
+        case .imageInput:
+            temporaryChatPendingParts.append(.image(attachment))
+        case .fileInput:
+            temporaryChatPendingParts.append(.file(attachment))
+        case .webSearch:
+            break
+        }
     }
 
     func sendTemporaryChatMessage(_ text: String) {
         let prompt = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !prompt.isEmpty, !temporaryChatIsSending else {
+        guard (!prompt.isEmpty || !temporaryChatPendingParts.isEmpty), !temporaryChatIsSending else {
             return
         }
 
         temporaryChatLastError = nil
-        temporaryChatMessages.append(TemporaryChatMessage(role: .user, content: prompt))
-        let messages = temporaryChatMessages
+        let userParts = ([prompt.isEmpty ? nil : TemporaryChatMessagePart.text(TemporaryChatTextPart(text: prompt))]
+            + temporaryChatPendingParts.map(Optional.some))
+            .compactMap { $0 }
+        temporaryChatPendingParts.removeAll()
         let configuration = temporaryChatConfiguration
+        temporaryChatWebSearchEnabled = false
+
+        sendTemporaryChatMessage(parts: userParts, configuration: configuration)
+    }
+
+    private func sendTemporaryChatMessage(
+        parts userParts: [TemporaryChatMessagePart],
+        configuration: LLMChatConfiguration? = nil
+    ) {
+        guard !userParts.isEmpty, !temporaryChatIsSending else {
+            return
+        }
+
+        temporaryChatLastError = nil
+        let configuration = configuration ?? temporaryChatConfiguration
+        temporaryChatMessages.append(TemporaryChatMessage(role: .user, parts: userParts))
+        let messages = temporaryChatMessages
         let assistantMessage = TemporaryChatMessage(role: .assistant, content: "")
         temporaryChatMessages.append(assistantMessage)
         temporaryChatIsSending = true
@@ -1099,6 +1211,10 @@ final class AppModel {
                         await self?.replaceTemporaryChatMessage(id: assistantMessage.id, content: reply)
                     case let .usage(usage):
                         await self?.noteTemporaryChatUsage(usage, configuration: configuration)
+                    case let .source(source):
+                        await self?.appendTemporaryChatMessagePart(id: assistantMessage.id, part: .webCitation(source))
+                    case let .toolResult(result):
+                        await self?.appendTemporaryChatMessagePart(id: assistantMessage.id, part: .toolResult(result))
                     case .text:
                         continue
                     }
@@ -1125,6 +1241,14 @@ final class AppModel {
             return
         }
         temporaryChatMessages[index] = temporaryChatMessages[index].replacingContent(content)
+    }
+
+    private func appendTemporaryChatMessagePart(id: UUID, part: TemporaryChatMessagePart) {
+        guard let index = temporaryChatMessages.firstIndex(where: { $0.id == id }),
+              !temporaryChatMessages[index].parts.contains(where: { $0 == part }) else {
+            return
+        }
+        temporaryChatMessages[index] = temporaryChatMessages[index].appendingPart(part)
     }
 
     private func finishTemporaryChatMessage(id: UUID, content: String) {

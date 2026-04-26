@@ -33,6 +33,14 @@ struct TemporaryChatConfigurationTests {
     }
 
     @Test
+    func capabilityRegistryGatesProviderModelFeatures() {
+        #expect(TemporaryChatCapabilityRegistry.capabilities(provider: .openAI, model: "gpt-4o-mini").contains(.webSearch))
+        #expect(TemporaryChatCapabilityRegistry.capabilities(provider: .openAI, model: "gpt-4o-mini").contains(.imageInput))
+        #expect(TemporaryChatCapabilityRegistry.capabilities(provider: .perplexity, model: "sonar-pro") == [.webSearch])
+        #expect(TemporaryChatCapabilityRegistry.capabilities(provider: .deepSeek, model: "deepseek-chat").isEmpty)
+    }
+
+    @Test
     func temporaryChatConfigurationPersistsOutsideKeychain() throws {
         let databaseURL = temporaryDatabaseURL()
         let store = TemporaryChatConfigurationStore(databaseURL: databaseURL)
@@ -55,7 +63,10 @@ struct TemporaryChatConfigurationTests {
     func tokenEstimatorTracksInputAndContextRatio() {
         let messages = [
             TemporaryChatMessage(role: .user, content: "hello world"),
-            TemporaryChatMessage(role: .assistant, content: "你好"),
+            TemporaryChatMessage(role: .assistant, parts: [
+                .text(TemporaryChatTextPart(text: "你好")),
+                .webCitation(TemporaryChatWebCitationPart(title: "Example", url: "https://example.com")),
+            ]),
         ]
 
         let stats = TemporaryChatTokenStats.estimate(
@@ -68,6 +79,23 @@ struct TemporaryChatConfigurationTests {
         #expect(stats.contextWindow == 200_000)
         #expect(stats.contextRatio > 0)
         #expect(stats.source == .estimated)
+    }
+
+    @Test
+    func temporaryChatMessageKeepsTextCompatibilityOverParts() {
+        let attachment = TemporaryChatAttachmentPart(
+            filename: "error.png",
+            mediaType: "image/png",
+            data: Data([0, 1, 2])
+        )
+        let message = TemporaryChatMessage(role: .user, parts: [
+            .text(TemporaryChatTextPart(text: "Explain this")),
+            .image(attachment),
+        ])
+
+        #expect(message.content == "Explain this")
+        #expect(message.requiredCapabilities == [.imageInput])
+        #expect(message.isRenderable)
     }
 
     @MainActor
@@ -113,6 +141,66 @@ struct TemporaryChatConfigurationTests {
 
         #expect(model.temporaryChatTokenStats.inputTokens == 42)
         #expect(model.temporaryChatTokenStats.source == .provider)
+    }
+
+    @MainActor
+    @Test
+    func temporaryChatSendsPendingPartsAndWebCapability() async throws {
+        let image = TemporaryChatAttachmentPart(
+            filename: "screen.png",
+            mediaType: "image/png",
+            data: Data([0, 1, 2, 3])
+        )
+        let model = makeAppModel(temporaryChatStream: { messages, configuration in
+            #expect(configuration.enabledCapabilities == [.webSearch])
+            #expect(messages.first?.parts.count == 2)
+            #expect(messages.first?.requiredCapabilities == [.imageInput])
+
+            return AsyncThrowingStream { continuation in
+                continuation.yield(.text("Done"))
+                continuation.finish()
+            }
+        })
+        model.temporaryChatPendingParts = [.image(image)]
+        model.temporaryChatWebSearchEnabled = true
+
+        model.sendTemporaryChatMessage("Explain this")
+        try await waitUntil {
+            !model.temporaryChatIsSending
+        }
+
+        #expect(model.temporaryChatPendingParts.isEmpty)
+        #expect(!model.temporaryChatWebSearchEnabled)
+        #expect(model.temporaryChatLastError == nil)
+    }
+
+    @MainActor
+    @Test
+    func temporaryChatAppendsStreamedSourcesToAssistantMessage() async throws {
+        let model = makeAppModel(temporaryChatStream: { _, _ in
+            AsyncThrowingStream { continuation in
+                continuation.yield(.text("Found it"))
+                continuation.yield(.source(TemporaryChatWebCitationPart(title: "Docs", url: "https://example.com/docs")))
+                continuation.finish()
+            }
+        })
+
+        model.sendTemporaryChatMessage("Find docs")
+        try await waitUntil {
+            !model.temporaryChatIsSending
+        }
+
+        guard let assistant = model.temporaryChatMessages.last else {
+            Issue.record("Missing assistant message")
+            return
+        }
+        #expect(assistant.content == "Found it")
+        #expect(assistant.parts.contains { part in
+            if case let .webCitation(citation) = part {
+                return citation.title == "Docs" && citation.url == "https://example.com/docs"
+            }
+            return false
+        })
     }
 
     @MainActor

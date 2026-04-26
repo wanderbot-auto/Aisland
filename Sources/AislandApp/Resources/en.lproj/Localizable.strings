@@ -263,6 +263,9 @@
 "chat.empty.title" = "Ask without leaving the island";
 "chat.empty.subtitle" = "Use this scratchpad for quick LLM questions; monitored agent sessions remain available in the Sessions tab.";
 "chat.placeholder" = "Ask a quick question…";
+"chat.capability.web" = "Enable web search for this message";
+"chat.capability.image" = "Attach an image";
+"chat.capability.file" = "Attach a file";
 
 /* Shortcut Settings */
 "settings.shortcuts.global" = "Global shortcuts";
