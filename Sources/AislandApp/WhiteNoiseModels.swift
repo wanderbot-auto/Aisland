@@ -213,27 +213,6 @@ enum WhiteNoiseCatalog {
                 sound("brown-noise", "Brown Noise", "noise/brown-noise.wav", "waveform"),
             ]
         ),
-        WhiteNoiseCategory(
-            id: "binaural",
-            title: "Binaural Beats",
-            systemImageName: "waveform.path.ecg",
-            sounds: [
-                sound("binaural-delta", "Delta", "binaural/binaural-delta.wav", "waveform.path.ecg"),
-                sound("binaural-theta", "Theta", "binaural/binaural-theta.wav", "waveform.path.ecg"),
-                sound("binaural-alpha", "Alpha", "binaural/binaural-alpha.wav", "waveform.path.ecg"),
-                sound("binaural-beta", "Beta", "binaural/binaural-beta.wav", "waveform.path.ecg"),
-                sound("binaural-gamma", "Gamma", "binaural/binaural-gamma.wav", "waveform.path.ecg"),
-            ]
-        ),
-        WhiteNoiseCategory(
-            id: "utility",
-            title: "Utility",
-            systemImageName: "slider.horizontal.3",
-            sounds: [
-                sound("alarm", "Alarm", "alarm.mp3", "alarm.fill"),
-                sound("silence", "Silence", "silence.wav", "speaker.slash.fill"),
-            ]
-        ),
     ]
 
     static let allSounds: [WhiteNoiseSound] = categories.flatMap(\.sounds)

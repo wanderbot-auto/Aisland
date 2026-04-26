@@ -6,9 +6,9 @@ import Testing
 struct WhiteNoiseTests {
     @Test
     func catalogContainsAllImportedMoodistSounds() {
-        #expect(WhiteNoiseCatalog.allSounds.count == 91)
+        #expect(WhiteNoiseCatalog.allSounds.count == 84)
         #expect(Set(WhiteNoiseCatalog.categories.map(\.id)) == [
-            "nature", "rain", "animals", "urban", "places", "transport", "things", "noise", "binaural", "utility",
+            "nature", "rain", "animals", "urban", "places", "transport", "things", "noise",
         ])
         #expect(Set(WhiteNoiseCatalog.allSounds.map(\.id)).count == WhiteNoiseCatalog.allSounds.count)
 
