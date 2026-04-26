@@ -9,10 +9,16 @@
 "settings.tab.usage" = "統計";
 "settings.tab.sound" = "聲音";
 "settings.tab.shortcuts" = "快捷鍵";
+"settings.tab.skills" = "Skills";
+"settings.tab.whiteNoise" = "白噪音";
 
 /* Settings - Section Headers */
 "settings.section.system" = "系統";
 "settings.section.advanced" = "進階";
+"settings.section.agentTasks" = "Agent 任務";
+"settings.section.aiChat" = "AI 對話";
+"settings.section.whiteNoise" = "白噪音";
+"settings.section.appSettings" = "應用程式設定";
 
 /* Settings - General */
 "settings.general.launchAtLogin" = "登入時開啟";
@@ -286,6 +292,29 @@
 "settings.shortcuts.tabKey.help" = "當 island 取得焦點時，按 Tab 在精簡圖示標籤之間切換。";
 "settings.ai.provider.search" = "搜尋服務商或模型";
 "settings.ai.models" = "推薦模型";
+
+/* Skills Settings */
+"settings.skills.about.title" = "僅本機 Skills";
+"settings.skills.about.body" = "Skills 是唯讀 Markdown 工作流程指引，會在相關臨時對話中注入。Aisland 不會執行 Skill 中的腳本。";
+"settings.skills.import" = "安裝 Skill...";
+"settings.skills.installed" = "已安裝 Skills";
+"settings.skills.empty.title" = "尚無 Skills";
+"settings.skills.empty.body" = "可安裝本機 SKILL.md 檔案，或包含 SKILL.md 的資料夾。";
+"settings.skills.alwaysApply" = "始終";
+"settings.skills.managed" = "Aisland";
+"settings.skills.readOnly" = "唯讀";
+"settings.skills.overridden" = "被覆蓋";
+"settings.skills.overridden.help" = "已安裝，但目前被優先級更高的 %@ Skill 覆蓋。";
+"settings.skills.reveal" = "在 Finder 中顯示";
+"settings.skills.uninstall.title" = "解除安裝 Skill？";
+"settings.skills.uninstall.message" = "這只會移除 Application Support 中由 Aisland 管理的副本；不會刪除倉庫、專案或外部使用者 Skills。";
+"settings.skills.source.repository" = "倉庫";
+"settings.skills.source.project" = "專案";
+"settings.skills.source.user" = "使用者";
+
+/* White Noise Settings */
+"settings.whiteNoise.title" = "白噪音組合";
+"settings.whiteNoise.subtitle" = "選擇專注用的環境聲音層。通知音效仍可在「聲音」頁面設定。";
 
 /* White Noise */
 "island.surface.whiteNoise" = "白噪音";

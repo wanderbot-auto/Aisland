@@ -8,6 +8,8 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     case general
     case setup
     case ai
+    case skills
+    case whiteNoise
     case display
     case usage
     case sound
@@ -21,6 +23,8 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .general:    lang.t("settings.tab.general")
         case .setup:      lang.t("settings.tab.setup")
         case .ai:         lang.t("settings.tab.ai")
+        case .skills:     lang.t("settings.tab.skills")
+        case .whiteNoise: lang.t("settings.tab.whiteNoise")
         case .appearance: lang.t("settings.tab.appearance")
         case .display:    lang.t("settings.tab.display")
         case .usage:      lang.t("settings.tab.usage")
@@ -34,6 +38,8 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .general:    "gearshape.fill"
         case .setup:      "arrow.down.circle.fill"
         case .ai:         "sparkles"
+        case .skills:     "wand.and.stars"
+        case .whiteNoise: "waveform"
         case .appearance: "paintbrush.fill"
         case .display:    "textformat.size"
         case .usage:      "chart.bar.xaxis"
@@ -47,6 +53,8 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .general:    .gray
         case .setup:      .orange
         case .ai:         .cyan
+        case .skills:     .teal
+        case .whiteNoise: .mint
         case .appearance: .purple
         case .display:    .blue
         case .usage:      .mint
@@ -57,21 +65,30 @@ enum SettingsTab: String, CaseIterable, Identifiable {
 
     var section: SettingsSection {
         switch self {
-        case .general, .setup, .ai, .display, .sound, .appearance: .system
-        case .shortcuts:                                      .advanced
-        case .usage:                                          .system
+        case .setup, .usage, .display:
+            .agentTasks
+        case .ai, .skills:
+            .aiChat
+        case .whiteNoise, .sound:
+            .whiteNoise
+        case .general, .appearance, .shortcuts:
+            .appSettings
         }
     }
 }
 
 enum SettingsSection: String, CaseIterable {
-    case system
-    case advanced
+    case agentTasks
+    case aiChat
+    case whiteNoise
+    case appSettings
 
     func header(_ lang: LanguageManager) -> String {
         switch self {
-        case .system:   lang.t("settings.section.system")
-        case .advanced: lang.t("settings.section.advanced")
+        case .agentTasks:  lang.t("settings.section.agentTasks")
+        case .aiChat:      lang.t("settings.section.aiChat")
+        case .whiteNoise:  lang.t("settings.section.whiteNoise")
+        case .appSettings: lang.t("settings.section.appSettings")
         }
     }
 
@@ -138,6 +155,10 @@ struct SettingsView: View {
                 SetupSettingsPane(model: model)
             case .ai:
                 LLMSettingsPane(model: model)
+            case .skills:
+                SkillsSettingsPane(model: model)
+            case .whiteNoise:
+                WhiteNoiseSettingsPane(model: model)
             case .appearance:
                 AppearanceSettingsPane(model: model)
             case .display:
@@ -332,6 +353,206 @@ struct LLMSettingsPane: View {
             }
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Skills
+
+struct SkillsSettingsPane: View {
+    var model: AppModel
+    @State private var pendingUninstallSkill: TemporaryChatInstalledSkill?
+
+    private var lang: LanguageManager { model.lang }
+
+    var body: some View {
+        Form {
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    Label(lang.t("settings.skills.about.title"), systemImage: "doc.text.magnifyingglass")
+                        .font(.headline)
+                    Text(lang.t("settings.skills.about.body"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                HStack {
+                    Button {
+                        model.importTemporaryChatSkill()
+                    } label: {
+                        Label(lang.t("settings.skills.import"), systemImage: "plus.circle.fill")
+                    }
+                    .disabled(model.isTemporaryChatSkillImporting)
+
+                    if model.isTemporaryChatSkillImporting {
+                        ProgressView()
+                            .controlSize(.small)
+                    }
+
+                    Spacer()
+
+                    Button(lang.t("usage.refresh")) {
+                        model.refreshTemporaryChatSkills()
+                    }
+                }
+
+                if let error = model.temporaryChatSkillLastError {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+            }
+
+            Section(lang.t("settings.skills.installed")) {
+                if model.temporaryChatInstalledSkills.isEmpty {
+                    ContentUnavailableView(
+                        lang.t("settings.skills.empty.title"),
+                        systemImage: "wand.and.stars",
+                        description: Text(lang.t("settings.skills.empty.body"))
+                    )
+                    .frame(maxWidth: .infinity)
+                } else {
+                    ForEach(model.temporaryChatInstalledSkills) { skill in
+                        skillRow(skill)
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .navigationTitle(lang.t("settings.tab.skills"))
+        .onAppear {
+            model.refreshTemporaryChatSkills()
+        }
+        .alert(
+            lang.t("settings.skills.uninstall.title"),
+            isPresented: Binding(
+                get: { pendingUninstallSkill != nil },
+                set: { if !$0 { pendingUninstallSkill = nil } }
+            )
+        ) {
+            Button(lang.t("settings.general.uninstallConfirmAction"), role: .destructive) {
+                if let pendingUninstallSkill {
+                    model.uninstallTemporaryChatSkill(pendingUninstallSkill)
+                }
+                pendingUninstallSkill = nil
+            }
+            Button(lang.t("settings.general.cancel"), role: .cancel) {
+                pendingUninstallSkill = nil
+            }
+        } message: {
+            Text(lang.t("settings.skills.uninstall.message"))
+        }
+    }
+
+    private func skillRow(_ skill: TemporaryChatInstalledSkill) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(skill.definition.title)
+                    .font(.system(size: 13, weight: .semibold))
+                if skill.definition.alwaysApply {
+                    badge(lang.t("settings.skills.alwaysApply"), color: .blue)
+                }
+                if skill.isAislandManaged {
+                    badge(lang.t("settings.skills.managed"), color: .green)
+                } else {
+                    badge(lang.t("settings.skills.readOnly"), color: .secondary)
+                }
+                if skill.isOverridden {
+                    badge(lang.t("settings.skills.overridden"), color: .orange)
+                }
+                Spacer(minLength: 8)
+            }
+
+            Text(skill.definition.summary)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            HStack(spacing: 8) {
+                Text(sourceTitle(for: skill.definition.source))
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Text(skill.definition.fileURL.path)
+                    .font(.caption2.monospaced())
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+
+            if !skill.definition.tags.isEmpty {
+                Text(skill.definition.tags.map { "#\($0)" }.joined(separator: " "))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+
+            if skill.isOverridden, let active = skill.activeDefinition {
+                Text(lang.t("settings.skills.overridden.help", sourceTitle(for: active.source)))
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+            }
+
+            HStack {
+                Button(lang.t("settings.skills.reveal")) {
+                    model.revealTemporaryChatSkill(skill)
+                }
+
+                if skill.isAislandManaged {
+                    Button(lang.t("settings.general.uninstall"), role: .destructive) {
+                        pendingUninstallSkill = skill
+                    }
+                }
+
+                Spacer()
+            }
+            .font(.caption)
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func badge(_ text: String, color: Color) -> some View {
+        Text(text)
+            .font(.system(size: 10, weight: .bold, design: .rounded))
+            .foregroundStyle(color)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 3)
+            .background(color.opacity(0.12), in: Capsule())
+    }
+
+    private func sourceTitle(for source: TemporaryChatSkillSource) -> String {
+        switch source {
+        case .repository:
+            lang.t("settings.skills.source.repository")
+        case .project:
+            lang.t("settings.skills.source.project")
+        case .user:
+            lang.t("settings.skills.source.user")
+        }
+    }
+}
+
+// MARK: - White Noise
+
+struct WhiteNoiseSettingsPane: View {
+    var model: AppModel
+
+    private var lang: LanguageManager { model.lang }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(lang.t("settings.whiteNoise.title"))
+                    .font(.title2.weight(.semibold))
+                Text(lang.t("settings.whiteNoise.subtitle"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 22)
+            .padding(.top, 18)
+
+            WhiteNoiseView(model: model)
+                .padding(.horizontal, 22)
+                .padding(.bottom, 18)
+        }
+        .background(Color(nsColor: .windowBackgroundColor))
+        .navigationTitle(lang.t("settings.tab.whiteNoise"))
     }
 }
 

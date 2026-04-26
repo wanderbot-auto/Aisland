@@ -322,6 +322,10 @@ final class AppModel {
     )
     var temporaryChatIsSending = false
     var temporaryChatLastError: String?
+    var temporaryChatSkills: [TemporaryChatSkillDefinition] = []
+    var temporaryChatInstalledSkills: [TemporaryChatInstalledSkill] = []
+    var temporaryChatSkillLastError: String?
+    var isTemporaryChatSkillImporting = false
     var whiteNoiseState = WhiteNoiseSelectionState() {
         didSet {
             guard hasFinishedInit else { return }
@@ -477,6 +481,9 @@ final class AppModel {
 
     @ObservationIgnored
     private let whiteNoisePlayerService: WhiteNoisePlayerServicing
+
+    @ObservationIgnored
+    private let temporaryChatSkillInstallManager = TemporaryChatSkillInstallManager()
 
 
     @ObservationIgnored
@@ -647,6 +654,7 @@ final class AppModel {
         }
 
         refreshOverlayDisplayConfiguration()
+        refreshTemporaryChatSkills()
         hasFinishedInit = true
     }
 
@@ -1247,6 +1255,57 @@ final class AppModel {
 
     func removeTemporaryChatPendingPart(id: UUID) {
         temporaryChatPendingParts.removeAll { $0.id == id }
+    }
+
+    func refreshTemporaryChatSkills() {
+        let discovery = TemporaryChatSkillDiscovery(roots: TemporaryChatSkillDiscovery.defaultRoots())
+        temporaryChatSkills = discovery.discover()
+        temporaryChatInstalledSkills = discovery.installedSkills(
+            managedDirectoryURL: temporaryChatSkillInstallManager.installDirectoryURL
+        )
+    }
+
+    func importTemporaryChatSkill() {
+        guard !isTemporaryChatSkillImporting else { return }
+
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = false
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = true
+        panel.canCreateDirectories = false
+        panel.title = lang.t("settings.skills.import")
+        panel.prompt = lang.t("settings.general.install")
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        isTemporaryChatSkillImporting = true
+        temporaryChatSkillLastError = nil
+        defer { isTemporaryChatSkillImporting = false }
+
+        do {
+            let skill = try temporaryChatSkillInstallManager.importSkill(from: url)
+            refreshTemporaryChatSkills()
+            lastActionMessage = "Installed Skill \(skill.title)."
+        } catch {
+            temporaryChatSkillLastError = error.localizedDescription
+            lastActionMessage = "Skill import failed: \(error.localizedDescription)"
+        }
+    }
+
+    func uninstallTemporaryChatSkill(_ skill: TemporaryChatInstalledSkill) {
+        temporaryChatSkillLastError = nil
+        do {
+            try temporaryChatSkillInstallManager.uninstallSkill(skill)
+            refreshTemporaryChatSkills()
+            lastActionMessage = "Uninstalled Skill \(skill.definition.title)."
+        } catch {
+            temporaryChatSkillLastError = error.localizedDescription
+            lastActionMessage = "Skill uninstall failed: \(error.localizedDescription)"
+        }
+    }
+
+    func revealTemporaryChatSkill(_ skill: TemporaryChatInstalledSkill) {
+        NSWorkspace.shared.activateFileViewerSelecting([skill.definition.fileURL])
     }
 
     private func importTemporaryChatAttachments(

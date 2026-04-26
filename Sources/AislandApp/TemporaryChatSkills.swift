@@ -47,7 +47,7 @@ struct TemporaryChatSkillDefinition: Identifiable, Equatable, Sendable {
         alwaysApply: Bool = false,
         tags: [String] = []
     ) {
-        self.id = id.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        self.id = Self.canonicalID(from: id)
         self.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
         self.summary = summary.trimmingCharacters(in: .whitespacesAndNewlines)
         self.body = body.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -57,6 +57,33 @@ struct TemporaryChatSkillDefinition: Identifiable, Equatable, Sendable {
         self.tags = tags
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
             .filter { !$0.isEmpty }
+    }
+
+    static func canonicalID(from rawID: String) -> String {
+        let trimmed = rawID.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let tokens = trimmed
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+        return tokens.isEmpty ? "skill" : tokens.joined(separator: "-")
+    }
+}
+
+struct TemporaryChatInstalledSkill: Identifiable, Equatable, Sendable {
+    var definition: TemporaryChatSkillDefinition
+    var isAislandManaged: Bool
+    var isActive: Bool
+    var activeDefinition: TemporaryChatSkillDefinition?
+
+    var id: String {
+        definition.id + "::" + definition.fileURL.path
+    }
+
+    var isOverridden: Bool {
+        !isActive && activeDefinition != nil
+    }
+
+    var installDirectoryURL: URL {
+        definition.fileURL.deletingLastPathComponent()
     }
 }
 
@@ -100,7 +127,11 @@ struct TemporaryChatSkillDiscovery {
     }
 
     func discover() -> [TemporaryChatSkillDefinition] {
-        var definitionsByID: [String: TemporaryChatSkillDefinition] = [:]
+        activeDefinitions(from: discoverAll())
+    }
+
+    func discoverAll() -> [TemporaryChatSkillDefinition] {
+        var definitions: [TemporaryChatSkillDefinition] = []
         let orderedRoots = roots.sorted {
             if $0.source.rawValue == $1.source.rawValue {
                 return $0.url.path < $1.url.path
@@ -110,12 +141,52 @@ struct TemporaryChatSkillDiscovery {
 
         for root in orderedRoots {
             for skillFileURL in skillFileURLs(under: root.url) {
-                guard let definition = loadSkill(from: skillFileURL, source: root.source),
-                      definitionsByID[definition.id] == nil else {
+                guard let definition = loadSkill(from: skillFileURL, source: root.source) else {
                     continue
                 }
-                definitionsByID[definition.id] = definition
+                definitions.append(definition)
             }
+        }
+
+        return definitions.sorted {
+            if $0.source.rawValue == $1.source.rawValue {
+                if $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedSame {
+                    return $0.fileURL.path < $1.fileURL.path
+                }
+                return $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
+            }
+            return $0.source.rawValue < $1.source.rawValue
+        }
+    }
+
+    func installedSkills(
+        managedDirectoryURL: URL = TemporaryChatSkillInstallManager.defaultInstallDirectoryURL
+    ) -> [TemporaryChatInstalledSkill] {
+        let allDefinitions = discoverAll()
+        let activeByID = Dictionary(uniqueKeysWithValues: activeDefinitions(from: allDefinitions).map { ($0.id, $0) })
+        return allDefinitions.map { definition in
+            let activeDefinition = activeByID[definition.id]
+            return TemporaryChatInstalledSkill(
+                definition: definition,
+                isAislandManaged: Self.isSkill(definition, inside: managedDirectoryURL),
+                isActive: activeDefinition?.fileURL == definition.fileURL,
+                activeDefinition: activeDefinition
+            )
+        }
+    }
+
+    private func activeDefinitions(from definitions: [TemporaryChatSkillDefinition]) -> [TemporaryChatSkillDefinition] {
+        var definitionsByID: [String: TemporaryChatSkillDefinition] = [:]
+
+        let orderedDefinitions = definitions.sorted {
+            if $0.source.rawValue == $1.source.rawValue {
+                return $0.fileURL.path < $1.fileURL.path
+            }
+            return $0.source.rawValue < $1.source.rawValue
+        }
+
+        for definition in orderedDefinitions where definitionsByID[definition.id] == nil {
+            definitionsByID[definition.id] = definition
         }
 
         return definitionsByID.values.sorted {
@@ -124,6 +195,64 @@ struct TemporaryChatSkillDiscovery {
             }
             return $0.source.rawValue < $1.source.rawValue
         }
+    }
+
+    static func isSkill(_ skill: TemporaryChatSkillDefinition, inside directoryURL: URL) -> Bool {
+        isURL(skill.fileURL, inside: directoryURL)
+    }
+
+    static func isURL(_ url: URL, inside directoryURL: URL) -> Bool {
+        let childPath = url.standardizedFileURL.path
+        let parentPath = directoryURL.standardizedFileURL.path
+        return childPath == parentPath || childPath.hasPrefix(parentPath + "/")
+    }
+
+    static func skillFileURL(forImportURL url: URL, fileManager: FileManager = .default) -> URL? {
+        var isDirectory: ObjCBool = false
+        guard fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory) else {
+            return nil
+        }
+
+        if isDirectory.boolValue {
+            let skillURL = url.appendingPathComponent("SKILL.md")
+            return fileManager.fileExists(atPath: skillURL.path) ? skillURL : nil
+        }
+
+        return url.lastPathComponent == "SKILL.md" ? url : nil
+    }
+
+    static func loadSkillDefinition(
+        from fileURL: URL,
+        source: TemporaryChatSkillSource = .user,
+        maxSkillBytes: Int = 24 * 1024
+    ) -> TemporaryChatSkillDefinition? {
+        guard let data = try? Data(contentsOf: fileURL),
+              !data.isEmpty else {
+            return nil
+        }
+
+        let limitedData = data.prefix(maxSkillBytes)
+        let rawContent = String(decoding: limitedData, as: UTF8.self)
+        let parsed = parseMarkdownSkill(rawContent, fallbackID: fileURL.deletingLastPathComponent().lastPathComponent)
+
+        guard !parsed.body.isEmpty else {
+            return nil
+        }
+
+        return TemporaryChatSkillDefinition(
+            id: parsed.id,
+            title: parsed.title,
+            summary: parsed.summary,
+            body: parsed.body,
+            source: source,
+            fileURL: fileURL,
+            alwaysApply: parsed.alwaysApply,
+            tags: parsed.tags
+        )
+    }
+
+    private func loadSkill(from fileURL: URL, source: TemporaryChatSkillSource) -> TemporaryChatSkillDefinition? {
+        Self.loadSkillDefinition(from: fileURL, source: source, maxSkillBytes: maxSkillBytes)
     }
 
     private func skillFileURLs(under rootURL: URL) -> [URL] {
@@ -156,7 +285,7 @@ struct TemporaryChatSkillDiscovery {
     }
 
     private func candidateSkillContainers(for rootURL: URL) -> [URL] {
-        if rootURL.lastPathComponent == "skills" {
+        if rootURL.lastPathComponent.lowercased() == "skills" {
             return [rootURL]
         }
 
@@ -164,32 +293,6 @@ struct TemporaryChatSkillDiscovery {
             rootURL.appendingPathComponent(".codex/skills", isDirectory: true),
             rootURL.appendingPathComponent(".agents/skills", isDirectory: true),
         ]
-    }
-
-    private func loadSkill(from fileURL: URL, source: TemporaryChatSkillSource) -> TemporaryChatSkillDefinition? {
-        guard let data = try? Data(contentsOf: fileURL),
-              !data.isEmpty else {
-            return nil
-        }
-
-        let limitedData = data.prefix(maxSkillBytes)
-        let rawContent = String(decoding: limitedData, as: UTF8.self)
-        let parsed = Self.parseMarkdownSkill(rawContent, fallbackID: fileURL.deletingLastPathComponent().lastPathComponent)
-
-        guard !parsed.body.isEmpty else {
-            return nil
-        }
-
-        return TemporaryChatSkillDefinition(
-            id: parsed.id,
-            title: parsed.title,
-            summary: parsed.summary,
-            body: parsed.body,
-            source: source,
-            fileURL: fileURL,
-            alwaysApply: parsed.alwaysApply,
-            tags: parsed.tags
-        )
     }
 
     static func defaultRoots(
@@ -211,6 +314,7 @@ struct TemporaryChatSkillDiscovery {
             roots.append(TemporaryChatSkillRoot(source: .project, url: currentDirectoryURL))
         }
 
+        roots.append(TemporaryChatSkillRoot(source: .user, url: TemporaryChatSkillInstallManager.defaultInstallDirectoryURL))
         roots.append(TemporaryChatSkillRoot(source: .user, url: homeURL))
         return roots
     }
@@ -232,7 +336,7 @@ struct TemporaryChatSkillDiscovery {
         }
     }
 
-    private static func parseMarkdownSkill(
+    static func parseMarkdownSkill(
         _ rawContent: String,
         fallbackID: String
     ) -> (
@@ -308,6 +412,106 @@ struct TemporaryChatSkillDiscovery {
             .lazy
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .first { !$0.isEmpty && !$0.hasPrefix("#") }
+    }
+}
+
+enum TemporaryChatSkillInstallError: LocalizedError, Equatable {
+    case missingSkillMarkdown
+    case invalidSkillMarkdown
+    case skillAlreadyExists(String)
+    case unmanagedSkill(URL)
+
+    var errorDescription: String? {
+        switch self {
+        case .missingSkillMarkdown:
+            "Choose a SKILL.md file or a folder that contains SKILL.md."
+        case .invalidSkillMarkdown:
+            "The selected SKILL.md does not contain readable Skill instructions."
+        case let .skillAlreadyExists(id):
+            "A Skill named \"\(id)\" is already installed by Aisland."
+        case .unmanagedSkill:
+            "Aisland can only uninstall Skills from its managed Skills directory."
+        }
+    }
+}
+
+struct TemporaryChatSkillInstallManager {
+    static let defaultInstallDirectoryURL = FileManager.default
+        .urls(for: .applicationSupportDirectory, in: .userDomainMask)
+        .first!
+        .appendingPathComponent("Aisland", isDirectory: true)
+        .appendingPathComponent("Skills", isDirectory: true)
+
+    var installDirectoryURL: URL
+    var fileManager: FileManager
+
+    init(
+        installDirectoryURL: URL = Self.defaultInstallDirectoryURL,
+        fileManager: FileManager = .default
+    ) {
+        self.installDirectoryURL = installDirectoryURL.standardizedFileURL
+        self.fileManager = fileManager
+    }
+
+    @discardableResult
+    func importSkill(from sourceURL: URL) throws -> TemporaryChatSkillDefinition {
+        guard let skillFileURL = TemporaryChatSkillDiscovery.skillFileURL(
+            forImportURL: sourceURL,
+            fileManager: fileManager
+        ) else {
+            throw TemporaryChatSkillInstallError.missingSkillMarkdown
+        }
+
+        guard let definition = TemporaryChatSkillDiscovery.loadSkillDefinition(from: skillFileURL) else {
+            throw TemporaryChatSkillInstallError.invalidSkillMarkdown
+        }
+
+        let destinationDirectoryURL = installDirectoryURL.appendingPathComponent(definition.id, isDirectory: true)
+        guard !fileManager.fileExists(atPath: destinationDirectoryURL.path) else {
+            throw TemporaryChatSkillInstallError.skillAlreadyExists(definition.id)
+        }
+
+        try fileManager.createDirectory(at: installDirectoryURL, withIntermediateDirectories: true)
+
+        var isDirectory: ObjCBool = false
+        _ = fileManager.fileExists(atPath: sourceURL.path, isDirectory: &isDirectory)
+        if isDirectory.boolValue {
+            try fileManager.copyItem(at: sourceURL, to: destinationDirectoryURL)
+        } else {
+            try fileManager.createDirectory(at: destinationDirectoryURL, withIntermediateDirectories: true)
+            try fileManager.copyItem(
+                at: skillFileURL,
+                to: destinationDirectoryURL.appendingPathComponent("SKILL.md")
+            )
+        }
+
+        let installedSkillURL = destinationDirectoryURL.appendingPathComponent("SKILL.md")
+        return TemporaryChatSkillDiscovery.loadSkillDefinition(from: installedSkillURL) ?? TemporaryChatSkillDefinition(
+            id: definition.id,
+            title: definition.title,
+            summary: definition.summary,
+            body: definition.body,
+            source: .user,
+            fileURL: installedSkillURL,
+            alwaysApply: definition.alwaysApply,
+            tags: definition.tags
+        )
+    }
+
+    func uninstallSkill(_ skill: TemporaryChatInstalledSkill) throws {
+        try uninstallSkill(at: skill.installDirectoryURL)
+    }
+
+    func uninstallSkill(at skillDirectoryURL: URL) throws {
+        let standardizedURL = skillDirectoryURL.standardizedFileURL
+        guard TemporaryChatSkillDiscovery.isURL(standardizedURL, inside: installDirectoryURL),
+              standardizedURL.deletingLastPathComponent().standardizedFileURL == installDirectoryURL else {
+            throw TemporaryChatSkillInstallError.unmanagedSkill(standardizedURL)
+        }
+
+        if fileManager.fileExists(atPath: standardizedURL.path) {
+            try fileManager.removeItem(at: standardizedURL)
+        }
     }
 }
 

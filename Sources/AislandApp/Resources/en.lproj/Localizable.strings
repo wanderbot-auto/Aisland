@@ -9,10 +9,16 @@
 "settings.tab.usage" = "Statistics";
 "settings.tab.sound" = "Sound";
 "settings.tab.shortcuts" = "Shortcuts";
+"settings.tab.skills" = "Skills";
+"settings.tab.whiteNoise" = "White Noise";
 
 /* Settings - Section Headers */
 "settings.section.system" = "System";
 "settings.section.advanced" = "Advanced";
+"settings.section.agentTasks" = "Agent Tasks";
+"settings.section.aiChat" = "AI Chat";
+"settings.section.whiteNoise" = "White Noise";
+"settings.section.appSettings" = "App Settings";
 
 /* Settings - General */
 "settings.general.launchAtLogin" = "Launch at Login";
@@ -287,6 +293,29 @@
 "settings.shortcuts.tabKey.help" = "When the island is focused, press Tab to cycle between compact icon tabs.";
 "settings.ai.provider.search" = "Search providers or models";
 "settings.ai.models" = "Suggested models";
+
+/* Skills Settings */
+"settings.skills.about.title" = "Local Skills only";
+"settings.skills.about.body" = "Skills are read-only Markdown workflow guidance injected into temporary chat when relevant. Aisland does not execute scripts from Skills.";
+"settings.skills.import" = "Install Skill...";
+"settings.skills.installed" = "Installed Skills";
+"settings.skills.empty.title" = "No Skills found";
+"settings.skills.empty.body" = "Install a local SKILL.md file or a folder that contains SKILL.md.";
+"settings.skills.alwaysApply" = "Always";
+"settings.skills.managed" = "Aisland";
+"settings.skills.readOnly" = "Read-only";
+"settings.skills.overridden" = "Overridden";
+"settings.skills.overridden.help" = "Installed, but currently overridden by a higher-priority %@ Skill.";
+"settings.skills.reveal" = "Reveal in Finder";
+"settings.skills.uninstall.title" = "Uninstall Skill?";
+"settings.skills.uninstall.message" = "This removes only the Aisland-managed copy from Application Support. Repository, project, and external user Skills are never deleted.";
+"settings.skills.source.repository" = "Repository";
+"settings.skills.source.project" = "Project";
+"settings.skills.source.user" = "User";
+
+/* White Noise Settings */
+"settings.whiteNoise.title" = "White noise mix";
+"settings.whiteNoise.subtitle" = "Choose ambient layers for focus. Notification sounds stay available in the Sound page.";
 
 /* White Noise */
 "island.surface.whiteNoise" = "White Noise";
