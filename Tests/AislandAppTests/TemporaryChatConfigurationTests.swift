@@ -37,7 +37,62 @@ struct TemporaryChatConfigurationTests {
         #expect(TemporaryChatCapabilityRegistry.capabilities(provider: .openAI, model: "gpt-4o-mini").contains(.webSearch))
         #expect(TemporaryChatCapabilityRegistry.capabilities(provider: .openAI, model: "gpt-4o-mini").contains(.imageInput))
         #expect(TemporaryChatCapabilityRegistry.capabilities(provider: .perplexity, model: "sonar-pro") == [.webSearch])
-        #expect(TemporaryChatCapabilityRegistry.capabilities(provider: .deepSeek, model: "deepseek-chat").isEmpty)
+        #expect(TemporaryChatCapabilityRegistry.capabilities(provider: .deepSeek, model: "deepseek-chat") == [.webSearch])
+        #expect(TemporaryChatWebSearchCapabilityRegistry.capabilities(provider: .openAI, model: "gpt-4o-mini") == [.nativeWebSearch])
+        #expect(TemporaryChatWebSearchCapabilityRegistry.capabilities(provider: .perplexity, model: "sonar-pro") == [.nativeWebSearch])
+        #expect(TemporaryChatWebSearchCapabilityRegistry.capabilities(provider: .deepSeek, model: "deepseek-chat") == [.contextInjectedWebSearch])
+        #expect(TemporaryChatWebSearchCapabilityRegistry.capabilities(provider: .togetherAI, model: "meta-llama") == [.contextInjectedWebSearch])
+    }
+
+    @Test
+    func webSearchRouterRespectsModeAndSearchIntent() {
+        let router = TemporaryChatWebSearchRouter()
+
+        #expect(router.route(
+            userMessage: "What is a Swift actor?",
+            mode: .auto,
+            provider: .openAI,
+            model: "gpt-4o-mini"
+        ) == .none)
+        #expect(router.route(
+            userMessage: "What's the latest Swift release?",
+            mode: .auto,
+            provider: .openAI,
+            model: "gpt-4o-mini"
+        ) == .nativeProvider)
+        #expect(router.route(
+            userMessage: "Search the official docs for async sequences",
+            mode: .off,
+            provider: .openAI,
+            model: "gpt-4o-mini"
+        ) == .none)
+        #expect(router.route(
+            userMessage: "Explain Swift actors",
+            mode: .on,
+            provider: .deepSeek,
+            model: "deepseek-chat"
+        ) == .preSearchContext(TemporaryChatSearchRequest(
+            query: "Explain Swift actors",
+            freshness: .auto,
+            maxResults: 5
+        )))
+    }
+
+    @Test
+    func webSearchRouterKeepsSensitivePromptsLocalUnlessExplicit() {
+        #expect(!TemporaryChatWebSearchRouter.shouldSearchInAutoMode(
+            userMessage: "Summarize this private API key rotation plan"
+        ))
+        #expect(TemporaryChatWebSearchRouter.shouldSearchInAutoMode(
+            userMessage: "Search official docs for API key rotation best practices"
+        ))
+    }
+
+    @Test
+    func webSearchRouterMapsFreshnessHints() {
+        #expect(TemporaryChatWebSearchRouter.freshness(for: "today's OpenAI news") == .day)
+        #expect(TemporaryChatWebSearchRouter.freshness(for: "Swift releases this week") == .week)
+        #expect(TemporaryChatWebSearchRouter.freshness(for: "2026 macOS SDK changes") == .year)
     }
 
     @Test
@@ -170,7 +225,7 @@ struct TemporaryChatConfigurationTests {
         }
 
         #expect(model.temporaryChatPendingParts.isEmpty)
-        #expect(!model.temporaryChatWebSearchEnabled)
+        #expect(model.temporaryChatWebSearchMode == .auto)
         #expect(model.temporaryChatLastError == nil)
     }
 

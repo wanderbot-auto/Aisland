@@ -264,6 +264,9 @@
 "chat.empty.subtitle" = "适合快速咨询 LLM；已监控的 agent 任务仍在任务标签中。";
 "chat.placeholder" = "快速问一个问题…";
 "chat.capability.web" = "为本条消息启用联网搜索";
+"chat.capability.web.auto" = "智能联网：Aisland 自动判断本条消息是否需要来源。";
+"chat.capability.web.on" = "本条消息强制联网搜索。";
+"chat.capability.web.off" = "本条消息不联网。";
 "chat.capability.image" = "上传图片";
 "chat.capability.file" = "上传文件";
 "chat.capability.unsupported" = "当前模型不支持";

@@ -223,6 +223,10 @@ enum TemporaryChatStreamEvent: Sendable {
     case usage(TemporaryChatUsage)
     case source(TemporaryChatWebCitationPart)
     case toolResult(TemporaryChatToolResultPart)
+    case searchStarted(TemporaryChatSearchRequest)
+    case searchQuery(String)
+    case searchCompleted([TemporaryChatSearchResult])
+    case searchFailed(String)
 }
 
 enum TemporaryChatTokenEstimator {

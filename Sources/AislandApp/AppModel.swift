@@ -310,7 +310,11 @@ final class AppModel {
         }
     }
     var temporaryChatPendingParts: [TemporaryChatMessagePart] = []
-    var temporaryChatWebSearchEnabled = false
+    var temporaryChatWebSearchMode: TemporaryChatWebSearchMode = .auto
+    var temporaryChatWebSearchEnabled: Bool {
+        get { temporaryChatWebSearchMode != .off }
+        set { temporaryChatWebSearchMode = newValue ? .on : .off }
+    }
     var temporaryChatTokenStats = TemporaryChatTokenStats.estimate(
         messages: [],
         provider: .openAI,
@@ -1073,7 +1077,8 @@ final class AppModel {
             model: temporaryChatModel,
             baseURL: temporaryChatBaseURL,
             apiKey: temporaryChatAPIKey,
-            enabledCapabilities: temporaryChatWebSearchEnabled ? [.webSearch] : []
+            enabledCapabilities: temporaryChatWebSearchMode == .off ? [] : [.webSearch],
+            webSearchMode: temporaryChatWebSearchMode
         )
     }
 
@@ -1200,7 +1205,7 @@ final class AppModel {
         temporaryChatTask = nil
         temporaryChatMessages.removeAll()
         temporaryChatPendingParts.removeAll()
-        temporaryChatWebSearchEnabled = false
+        temporaryChatWebSearchMode = .auto
         temporaryChatLastError = nil
         temporaryChatIsSending = false
     }
@@ -1223,7 +1228,7 @@ final class AppModel {
 
     func toggleTemporaryChatWebSearch() {
         guard temporaryChatCanUseWebSearch, !temporaryChatIsSending else { return }
-        temporaryChatWebSearchEnabled.toggle()
+        temporaryChatWebSearchMode = temporaryChatWebSearchMode.next
     }
 
     func importTemporaryChatImageAttachments() {
@@ -1301,7 +1306,7 @@ final class AppModel {
             .compactMap { $0 }
         temporaryChatPendingParts.removeAll()
         let configuration = temporaryChatConfiguration
-        temporaryChatWebSearchEnabled = false
+        temporaryChatWebSearchMode = .auto
 
         sendTemporaryChatMessage(parts: userParts, configuration: configuration)
     }
@@ -1338,6 +1343,8 @@ final class AppModel {
                         await self?.appendTemporaryChatMessagePart(id: assistantMessage.id, part: .webCitation(source))
                     case let .toolResult(result):
                         await self?.appendTemporaryChatMessagePart(id: assistantMessage.id, part: .toolResult(result))
+                    case .searchStarted, .searchQuery, .searchCompleted, .searchFailed:
+                        continue
                     case .text:
                         continue
                     }

@@ -50,11 +50,12 @@ struct TemporaryChatClient: Sendable {
             throw TemporaryChatError.unsupportedCapability(unsupportedCapability.displayName)
         }
 
+        let webSearchRoute = webSearchRoute(messages: messages, configuration: configuration)
         let model = try languageModel(for: configuration)
         let result = try streamText(
             model: model,
             messages: messages.map(\.modelMessage),
-            tools: tools(for: configuration)
+            tools: tools(for: configuration, route: webSearchRoute)
         )
 
         return AsyncThrowingStream { continuation in
@@ -92,9 +93,31 @@ struct TemporaryChatClient: Sendable {
         }
     }
 
-    private func tools(for configuration: LLMChatConfiguration) -> ToolSet? {
+    private func webSearchRoute(
+        messages: [TemporaryChatMessage],
+        configuration: LLMChatConfiguration
+    ) -> TemporaryChatWebSearchRoute {
         guard configuration.enabledCapabilities.contains(.webSearch),
-              configuration.provider == .openAI else {
+              let userMessage = messages.last(where: { $0.role == .user })?.content else {
+            return .none
+        }
+
+        return TemporaryChatWebSearchRouter().route(
+            userMessage: userMessage,
+            mode: configuration.webSearchMode,
+            provider: configuration.provider,
+            model: configuration.effectiveModel,
+            history: messages
+        )
+    }
+
+    private func tools(
+        for configuration: LLMChatConfiguration,
+        route: TemporaryChatWebSearchRoute
+    ) -> ToolSet? {
+        guard configuration.enabledCapabilities.contains(.webSearch),
+              configuration.provider == .openAI,
+              route == .nativeProvider else {
             return nil
         }
 

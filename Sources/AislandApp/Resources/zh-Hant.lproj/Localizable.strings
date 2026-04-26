@@ -263,6 +263,9 @@
 "chat.empty.subtitle" = "適合快速詢問 LLM；已監控的 agent 任務仍在任務標籤中。";
 "chat.placeholder" = "快速問一個問題…";
 "chat.capability.web" = "為本則訊息啟用網路搜尋";
+"chat.capability.web.auto" = "智慧聯網：Aisland 自動判斷本則訊息是否需要來源。";
+"chat.capability.web.on" = "本則訊息強制網路搜尋。";
+"chat.capability.web.off" = "本則訊息不使用網路搜尋。";
 "chat.capability.image" = "上傳圖片";
 "chat.capability.file" = "上傳檔案";
 "chat.capability.unsupported" = "目前模型不支援";

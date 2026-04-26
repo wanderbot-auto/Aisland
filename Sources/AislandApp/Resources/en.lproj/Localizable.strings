@@ -264,6 +264,9 @@
 "chat.empty.subtitle" = "Use this scratchpad for quick LLM questions; monitored agent sessions remain available in the Sessions tab.";
 "chat.placeholder" = "Ask a quick question…";
 "chat.capability.web" = "Enable web search for this message";
+"chat.capability.web.auto" = "Smart web search: Aisland decides when this message needs sources.";
+"chat.capability.web.on" = "Web search is forced on for this message.";
+"chat.capability.web.off" = "Web search is off for this message.";
 "chat.capability.image" = "Attach an image";
 "chat.capability.file" = "Attach a file";
 "chat.capability.unsupported" = "Not supported by the selected model";

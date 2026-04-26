@@ -141,19 +141,22 @@ struct LLMChatConfiguration: Equatable, Sendable {
     var baseURL: String
     var apiKey: String
     var enabledCapabilities: Set<TemporaryChatCapability>
+    var webSearchMode: TemporaryChatWebSearchMode
 
     init(
         provider: LLMProviderKind,
         model: String,
         baseURL: String,
         apiKey: String,
-        enabledCapabilities: Set<TemporaryChatCapability> = []
+        enabledCapabilities: Set<TemporaryChatCapability> = [],
+        webSearchMode: TemporaryChatWebSearchMode = .auto
     ) {
         self.provider = provider
         self.model = model
         self.baseURL = baseURL
         self.apiKey = apiKey
         self.enabledCapabilities = enabledCapabilities
+        self.webSearchMode = webSearchMode
     }
 
     var effectiveModel: String {
@@ -190,7 +193,7 @@ enum TemporaryChatCapabilityRegistry {
 
         switch provider {
         case .openAI:
-            var capabilities: Set<TemporaryChatCapability> = [.webSearch]
+            var capabilities = baseCapabilities(provider: provider, model: model)
             if isVisionModel {
                 capabilities.insert(.imageInput)
             }
@@ -199,30 +202,41 @@ enum TemporaryChatCapabilityRegistry {
             }
             return capabilities
         case .anthropic:
-            return [.webSearch, .imageInput, .fileInput]
+            return baseCapabilities(provider: provider, model: model).union([.imageInput, .fileInput])
         case .googleGemini:
-            return [.imageInput, .fileInput]
+            return baseCapabilities(provider: provider, model: model).union([.imageInput, .fileInput])
         case .openRouter:
-            var capabilities: Set<TemporaryChatCapability> = [.webSearch]
+            var capabilities = baseCapabilities(provider: provider, model: model)
             if isVisionModel {
                 capabilities.insert(.imageInput)
-            }
-            if model.contains("perplexity") || model.contains("sonar") {
-                capabilities.insert(.webSearch)
             }
             if model.contains("claude") || model.contains("gemini") || model.contains("gpt-4") {
                 capabilities.insert(.fileInput)
             }
             return capabilities
         case .perplexity:
-            return [.webSearch]
+            return baseCapabilities(provider: provider, model: model)
         case .xAI:
-            return model.contains("vision") ? [.imageInput] : []
+            return model.contains("vision")
+                ? baseCapabilities(provider: provider, model: model).union([.imageInput])
+                : baseCapabilities(provider: provider, model: model)
         case .mistral:
-            return model.contains("pixtral") ? [.imageInput] : []
+            return model.contains("pixtral")
+                ? baseCapabilities(provider: provider, model: model).union([.imageInput])
+                : baseCapabilities(provider: provider, model: model)
         case .groq, .deepSeek, .togetherAI, .customOpenAICompatible:
-            return []
+            return baseCapabilities(provider: provider, model: model)
         }
+    }
+
+    private static func baseCapabilities(
+        provider: LLMProviderKind,
+        model: String
+    ) -> Set<TemporaryChatCapability> {
+        TemporaryChatWebSearchCapabilityRegistry.capabilities(
+            provider: provider,
+            model: model
+        ).isEmpty ? [] : [.webSearch]
     }
 }
 

@@ -221,8 +221,11 @@ struct TemporaryChatView: View {
             capabilityButton(
                 systemName: "globe",
                 isSupported: model.temporaryChatCanUseWebSearch,
-                isSelected: model.temporaryChatWebSearchEnabled,
-                help: model.temporaryChatCanUseWebSearch ? lang.t("chat.capability.web") : lang.t("chat.capability.unsupported"),
+                isSelected: model.temporaryChatWebSearchMode != .off,
+                badge: model.temporaryChatWebSearchMode.shortLabel,
+                help: model.temporaryChatCanUseWebSearch
+                    ? model.temporaryChatWebSearchMode.helpText(lang: lang)
+                    : lang.t("chat.capability.unsupported"),
                 action: model.toggleTemporaryChatWebSearch
             )
             capabilityButton(
@@ -246,17 +249,25 @@ struct TemporaryChatView: View {
         systemName: String,
         isSupported: Bool,
         isSelected: Bool,
+        badge: String? = nil,
         help: String,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            Image(systemName: systemName)
-                .font(.system(size: 11, weight: .semibold))
+            HStack(spacing: badge == nil ? 0 : 4) {
+                Image(systemName: systemName)
+                    .font(.system(size: 11, weight: .semibold))
+                if let badge {
+                    Text(badge)
+                        .font(.system(size: 8.5, weight: .bold))
+                        .textCase(.uppercase)
+                }
+            }
                 .foregroundStyle(isSelected ? Color.black.opacity(0.86) : Color.white.opacity(isSupported ? 0.64 : 0.24))
-                .frame(width: 24, height: 24)
-                .background(isSelected ? Color.cyan : Color.white.opacity(isSupported ? 0.10 : 0.04), in: Circle())
+                .frame(width: badge == nil ? 24 : 42, height: 24)
+                .background(isSelected ? Color.cyan : Color.white.opacity(isSupported ? 0.10 : 0.04), in: Capsule())
                 .overlay(
-                    Circle()
+                    Capsule()
                         .stroke(Color.white.opacity(isSupported ? 0.05 : 0.10), lineWidth: 1)
                 )
         }
@@ -436,6 +447,27 @@ private struct TemporaryChatPartChip: View {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .file
         return formatter.string(fromByteCount: Int64(bytes))
+    }
+}
+
+private extension TemporaryChatWebSearchMode {
+    var shortLabel: String {
+        switch self {
+        case .auto: "Auto"
+        case .on: "On"
+        case .off: "Off"
+        }
+    }
+
+    func helpText(lang: LanguageManager) -> String {
+        switch self {
+        case .auto:
+            lang.t("chat.capability.web.auto")
+        case .on:
+            lang.t("chat.capability.web.on")
+        case .off:
+            lang.t("chat.capability.web.off")
+        }
     }
 }
 
