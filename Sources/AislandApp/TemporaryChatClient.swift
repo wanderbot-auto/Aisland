@@ -14,6 +14,12 @@ import XAIProvider
 import TogetherAIProvider
 
 struct TemporaryChatClient: Sendable {
+    var skillContextProvider: TemporaryChatSkillContextProvider
+
+    init(skillContextProvider: TemporaryChatSkillContextProvider = .live()) {
+        self.skillContextProvider = skillContextProvider
+    }
+
     func complete(messages: [TemporaryChatMessage], configuration: LLMChatConfiguration) async throws -> String {
         let stream = try stream(messages: messages, configuration: configuration)
         var content = ""
@@ -51,10 +57,11 @@ struct TemporaryChatClient: Sendable {
         }
 
         let webSearchRoute = webSearchRoute(messages: messages, configuration: configuration)
+        let skillContext = skillContextProvider.context(messages)
         let model = try languageModel(for: configuration)
         let result = try streamText(
             model: model,
-            messages: messages.map(\.modelMessage),
+            messages: preparedModelMessages(messages: messages, skillContext: skillContext),
             tools: tools(for: configuration, route: webSearchRoute),
             toolChoice: toolChoice(for: configuration, route: webSearchRoute)
         )
@@ -62,6 +69,12 @@ struct TemporaryChatClient: Sendable {
         return AsyncThrowingStream { continuation in
             let task = Task {
                 do {
+                    if !skillContext.isEmpty {
+                        continuation.yield(.toolResult(TemporaryChatToolResultPart(
+                            toolName: "skills",
+                            summary: skillContext.displaySummary
+                        )))
+                    }
                     for try await part in result.fullStream {
                         switch part {
                         case let .textDelta(_, text, _):
@@ -92,6 +105,17 @@ struct TemporaryChatClient: Sendable {
                 task.cancel()
             }
         }
+    }
+
+    func preparedModelMessages(
+        messages: [TemporaryChatMessage],
+        skillContext: TemporaryChatSkillContext
+    ) -> [ModelMessage] {
+        var modelMessages = messages.map(\.modelMessage)
+        if !skillContext.isEmpty {
+            modelMessages.insert(.system(SystemModelMessage(content: skillContext.systemPrompt)), at: 0)
+        }
+        return modelMessages
     }
 
     private func webSearchRoute(

@@ -72,7 +72,11 @@ let package = Package(
         ),
         .testTarget(
             name: "AislandAppTests",
-            dependencies: ["AislandApp", "AislandCore"]
+            dependencies: [
+                "AislandApp",
+                "AislandCore",
+                .product(name: "AISDKProviderUtils", package: "swift-ai-sdk"),
+            ]
         ),
     ]
 )
