@@ -62,52 +62,40 @@ struct WhiteNoiseView: View {
         let selected = model.whiteNoiseState.contains(sound.id)
         let volume = model.whiteNoiseState.volume(for: sound.id)
 
-        return ZStack(alignment: .topLeading) {
-            Button {
-                model.toggleWhiteNoiseSound(sound)
-            } label: {
-                Color.clear
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-            .buttonStyle(.plain)
-            .contentShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
-
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
-                    Image(systemName: sound.systemImageName)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(selected ? .black.opacity(0.78) : .white.opacity(0.66))
-                        .frame(width: 24, height: 24)
-                        .background(selected ? Color.white.opacity(0.35) : Color.white.opacity(0.08), in: Circle())
-                    Text(sound.label)
-                        .font(.system(size: 11.5, weight: .semibold))
-                        .foregroundStyle(selected ? .black.opacity(0.82) : .white.opacity(0.72))
-                        .lineLimit(1)
-                    Spacer(minLength: 0)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                if selected {
-                    HStack(spacing: 7) {
-                        Slider(
-                            value: Binding(
-                                get: { volume },
-                                set: { model.setWhiteNoiseVolume($0, for: sound) }
-                            ),
-                            in: 0...1
-                        )
-                        .tint(.black.opacity(0.76))
-                        Text(percent(volume))
-                            .font(.system(size: 9, weight: .bold, design: .monospaced))
-                            .foregroundStyle(.black.opacity(0.58))
-                            .frame(width: 32, alignment: .trailing)
-                    }
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-                }
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: sound.systemImageName)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(selected ? .black.opacity(0.78) : .white.opacity(0.66))
+                    .frame(width: 24, height: 24)
+                    .background(selected ? Color.white.opacity(0.35) : Color.white.opacity(0.08), in: Circle())
+                Text(sound.label)
+                    .font(.system(size: 11.5, weight: .semibold))
+                    .foregroundStyle(selected ? .black.opacity(0.82) : .white.opacity(0.72))
+                    .lineLimit(1)
+                Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(10)
+
+            if selected {
+                HStack(spacing: 7) {
+                    Slider(
+                        value: Binding(
+                            get: { volume },
+                            set: { model.setWhiteNoiseVolume($0, for: sound) }
+                        ),
+                        in: 0...1
+                    )
+                    .tint(.black.opacity(0.76))
+                    Text(percent(volume))
+                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .foregroundStyle(.black.opacity(0.58))
+                        .frame(width: 32, alignment: .trailing)
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
         }
+        .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 15, style: .continuous)
@@ -117,6 +105,10 @@ struct WhiteNoiseView: View {
                         .stroke(selected ? Color.white.opacity(0.35) : Color.white.opacity(0.09), lineWidth: 0.8)
                 )
         )
+        .contentShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .onTapGesture {
+            model.toggleWhiteNoiseSound(sound)
+        }
         .animation(.spring(response: 0.24, dampingFraction: 0.82), value: selected)
     }
 
