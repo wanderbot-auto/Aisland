@@ -284,3 +284,24 @@
 "settings.shortcuts.tabKey.help" = "当 island 获得焦点时，按 Tab 在紧凑图标标签之间切换。";
 "settings.ai.provider.search" = "搜索服务商或模型";
 "settings.ai.models" = "推荐模型";
+
+/* White Noise */
+"island.surface.whiteNoise" = "白噪音";
+"whiteNoise.title" = "白噪音";
+"whiteNoise.subtitle" = "叠加 Moodist 声音，生成本地专注氛围。";
+"whiteNoise.mix" = "混音";
+"whiteNoise.globalVolume" = "总音量";
+"whiteNoise.pause" = "全部暂停";
+"whiteNoise.resume" = "全部恢复";
+"whiteNoise.clear" = "清空混音";
+"whiteNoise.empty" = "选择一个或多个声音，开始叠加环境声。";
+"whiteNoise.category.nature" = "自然";
+"whiteNoise.category.rain" = "雨声";
+"whiteNoise.category.animals" = "动物";
+"whiteNoise.category.urban" = "城市";
+"whiteNoise.category.places" = "场所";
+"whiteNoise.category.transport" = "交通";
+"whiteNoise.category.things" = "物件";
+"whiteNoise.category.noise" = "噪声";
+"whiteNoise.category.binaural" = "双耳节拍";
+"whiteNoise.category.utility" = "工具";

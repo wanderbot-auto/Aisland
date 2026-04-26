@@ -455,6 +455,8 @@ struct IslandPanelView: View {
 
             if model.islandSurface == .temporaryChat {
                 TemporaryChatView(model: model)
+            } else if model.islandSurface == .whiteNoise {
+                WhiteNoiseView(model: model)
             } else if model.shouldShowSessionBootstrapPlaceholder {
                 sessionBootstrapPlaceholder
             } else if model.islandListSessions.isEmpty {

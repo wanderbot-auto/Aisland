@@ -284,3 +284,24 @@
 "settings.shortcuts.tabKey.help" = "When the island is focused, press Tab to cycle between compact icon tabs.";
 "settings.ai.provider.search" = "Search providers or models";
 "settings.ai.models" = "Suggested models";
+
+/* White Noise */
+"island.surface.whiteNoise" = "White Noise";
+"whiteNoise.title" = "White Noise";
+"whiteNoise.subtitle" = "Layer Moodist sounds for a local focus mix.";
+"whiteNoise.mix" = "mix";
+"whiteNoise.globalVolume" = "Global volume";
+"whiteNoise.pause" = "Pause all";
+"whiteNoise.resume" = "Resume all";
+"whiteNoise.clear" = "Clear mix";
+"whiteNoise.empty" = "Pick one or more sounds to start a layered ambient mix.";
+"whiteNoise.category.nature" = "Nature";
+"whiteNoise.category.rain" = "Rain";
+"whiteNoise.category.animals" = "Animals";
+"whiteNoise.category.urban" = "Urban";
+"whiteNoise.category.places" = "Places";
+"whiteNoise.category.transport" = "Transport";
+"whiteNoise.category.things" = "Things";
+"whiteNoise.category.noise" = "Noise";
+"whiteNoise.category.binaural" = "Binaural";
+"whiteNoise.category.utility" = "Utility";

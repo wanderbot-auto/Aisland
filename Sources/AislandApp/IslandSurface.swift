@@ -4,6 +4,7 @@ import AislandCore
 enum IslandSurfaceTab: String, CaseIterable, Identifiable {
     case sessions
     case chat
+    case whiteNoise
 
     var id: String { rawValue }
 
@@ -13,6 +14,8 @@ enum IslandSurfaceTab: String, CaseIterable, Identifiable {
             "terminal.fill"
         case .chat:
             "bubble.left.and.sparkles.fill"
+        case .whiteNoise:
+            "speaker.wave.3.fill"
         }
     }
 
@@ -22,6 +25,8 @@ enum IslandSurfaceTab: String, CaseIterable, Identifiable {
             "island.surface.sessions"
         case .chat:
             "island.surface.chat"
+        case .whiteNoise:
+            "island.surface.whiteNoise"
         }
     }
 
@@ -31,6 +36,8 @@ enum IslandSurfaceTab: String, CaseIterable, Identifiable {
             .sessionList()
         case .chat:
             .temporaryChat
+        case .whiteNoise:
+            .whiteNoise
         }
     }
 
@@ -39,6 +46,8 @@ enum IslandSurfaceTab: String, CaseIterable, Identifiable {
         case (.sessions, .sessionList):
             true
         case (.chat, .temporaryChat):
+            true
+        case (.whiteNoise, .whiteNoise):
             true
         default:
             false
@@ -49,6 +58,7 @@ enum IslandSurfaceTab: String, CaseIterable, Identifiable {
 enum IslandSurface: Equatable {
     case sessionList(actionableSessionID: String? = nil)
     case temporaryChat
+    case whiteNoise
 
     static var switchableTabs: [IslandSurfaceTab] {
         IslandSurfaceTab.allCases
@@ -58,7 +68,7 @@ enum IslandSurface: Equatable {
         switch self {
         case let .sessionList(actionableSessionID):
             actionableSessionID
-        case .temporaryChat:
+        case .temporaryChat, .whiteNoise:
             nil
         }
     }
@@ -77,6 +87,8 @@ enum IslandSurface: Equatable {
             return IslandSurfaceTab.sessions
         case .temporaryChat:
             return IslandSurfaceTab.chat
+        case .whiteNoise:
+            return IslandSurfaceTab.whiteNoise
         }
     }
 

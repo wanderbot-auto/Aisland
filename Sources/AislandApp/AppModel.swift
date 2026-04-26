@@ -37,6 +37,9 @@ final class AppModel {
     private static let legacyLLMModelDefaultsKey = "llm.chat.model"
     private static let legacyLLMBaseURLDefaultsKey = "llm.chat.baseURL"
     private static let islandShortcutsDefaultsKey = "island.shortcuts"
+    private static let whiteNoiseSelectedSoundIDsDefaultsKey = "whiteNoise.selectedSoundIDs"
+    private static let whiteNoiseItemVolumesDefaultsKey = "whiteNoise.itemVolumes"
+    private static let whiteNoiseGlobalVolumeDefaultsKey = "whiteNoise.globalVolume"
 
     static let defaultStatusColors: [SessionPhase: String] = [
         .running: "#6E9FFF",
@@ -315,6 +318,13 @@ final class AppModel {
     )
     var temporaryChatIsSending = false
     var temporaryChatLastError: String?
+    var whiteNoiseState = WhiteNoiseSelectionState() {
+        didSet {
+            guard hasFinishedInit else { return }
+            persistWhiteNoiseState()
+            whiteNoisePlayerService.apply(state: whiteNoiseState, soundsByID: WhiteNoiseCatalog.soundsByID)
+        }
+    }
     var shortcuts: [IslandShortcutAction: IslandKeyboardShortcut] = IslandKeyboardShortcut.defaultShortcuts {
         didSet {
             guard hasFinishedInit else { return }
@@ -458,6 +468,12 @@ final class AppModel {
     @ObservationIgnored
     private let temporaryChatAPIKeySaver: @Sendable (String, LLMProviderKind) -> Void
 
+    @ObservationIgnored
+    private let whiteNoiseDefaults: UserDefaults
+
+    @ObservationIgnored
+    private let whiteNoisePlayerService: WhiteNoisePlayerServicing
+
 
     @ObservationIgnored
     var harnessRuntimeMonitor: HarnessRuntimeMonitor?
@@ -487,7 +503,9 @@ final class AppModel {
         },
         temporaryChatConfigurationStore: TemporaryChatConfigurationStore = TemporaryChatConfigurationStore(),
         temporaryChatAPIKeyLoader: @escaping @Sendable (LLMProviderKind) -> String = { TemporaryChatKeychain.loadAPIKey(for: $0) },
-        temporaryChatAPIKeySaver: @escaping @Sendable (String, LLMProviderKind) -> Void = { TemporaryChatKeychain.saveAPIKey($0, for: $1) }
+        temporaryChatAPIKeySaver: @escaping @Sendable (String, LLMProviderKind) -> Void = { TemporaryChatKeychain.saveAPIKey($0, for: $1) },
+        whiteNoiseDefaults: UserDefaults = .standard,
+        whiteNoisePlayerService: WhiteNoisePlayerServicing = WhiteNoisePlayerService()
     ) {
         self.terminalJumpAction = terminalJumpAction
         self.isNotificationSessionAlreadyFrontmost = isNotificationSessionAlreadyFrontmost
@@ -495,6 +513,8 @@ final class AppModel {
         self.temporaryChatConfigurationStore = temporaryChatConfigurationStore
         self.temporaryChatAPIKeyLoader = temporaryChatAPIKeyLoader
         self.temporaryChatAPIKeySaver = temporaryChatAPIKeySaver
+        self.whiteNoiseDefaults = whiteNoiseDefaults
+        self.whiteNoisePlayerService = whiteNoisePlayerService
         UserDefaults.standard.register(defaults: [
             Self.showDockIconDefaultsKey: true,
             Self.hapticFeedbackEnabledDefaultsKey: false,
@@ -529,6 +549,7 @@ final class AppModel {
         temporaryChatBaseURL = storedChatConfiguration.baseURL
         temporaryChatAPIKey = temporaryChatAPIKeyLoader(temporaryChatProvider)
         refreshTemporaryChatTokenStats()
+        whiteNoiseState = Self.loadWhiteNoiseState(defaults: whiteNoiseDefaults)
         shortcuts = Self.loadShortcuts()
         islandAppearanceMode = IslandAppearanceMode(
             rawValue: UserDefaults.standard.string(forKey: Self.islandAppearanceModeDefaultsKey) ?? ""
@@ -949,6 +970,42 @@ final class AppModel {
     var autoCollapseOnMouseLeaveRequiresPriorSurfaceEntry: Bool { overlay.autoCollapseOnMouseLeaveRequiresPriorSurfaceEntry }
     var showsNotificationCard: Bool { overlay.showsNotificationCard }
 
+    private static func loadWhiteNoiseState(defaults: UserDefaults) -> WhiteNoiseSelectionState {
+        let availableSoundIDs = Set(WhiteNoiseCatalog.soundsByID.keys)
+        let selectedIDs = (defaults.array(forKey: whiteNoiseSelectedSoundIDsDefaultsKey) as? [String] ?? [])
+            .reduce(into: [String]()) { result, soundID in
+                guard availableSoundIDs.contains(soundID), !result.contains(soundID) else { return }
+                result.append(soundID)
+            }
+        let volumes = (defaults.dictionary(forKey: whiteNoiseItemVolumesDefaultsKey) ?? [:])
+            .reduce(into: [String: Double]()) { result, entry in
+                guard availableSoundIDs.contains(entry.key) else { return }
+                if let value = entry.value as? Double {
+                    result[entry.key] = clampedVolume(value)
+                } else if let value = entry.value as? NSNumber {
+                    result[entry.key] = clampedVolume(value.doubleValue)
+                }
+            }
+        let savedGlobalVolume = defaults.object(forKey: whiteNoiseGlobalVolumeDefaultsKey) as? Double
+
+        return WhiteNoiseSelectionState(
+            selectedSoundIDs: selectedIDs,
+            itemVolumes: volumes,
+            globalVolume: clampedVolume(savedGlobalVolume ?? WhiteNoiseSelectionState.defaultGlobalVolume),
+            isPaused: true
+        )
+    }
+
+    private func persistWhiteNoiseState() {
+        whiteNoiseDefaults.set(whiteNoiseState.selectedSoundIDs, forKey: Self.whiteNoiseSelectedSoundIDsDefaultsKey)
+        whiteNoiseDefaults.set(whiteNoiseState.itemVolumes, forKey: Self.whiteNoiseItemVolumesDefaultsKey)
+        whiteNoiseDefaults.set(whiteNoiseState.globalVolume, forKey: Self.whiteNoiseGlobalVolumeDefaultsKey)
+    }
+
+    private static func clampedVolume(_ volume: Double) -> Double {
+        min(1, max(0, volume))
+    }
+
     // MARK: - Temporary chat
 
     private static func loadTemporaryChatConfiguration(
@@ -1042,7 +1099,7 @@ final class AppModel {
     func performShortcutAction(_ action: IslandShortcutAction) {
         switch action {
         case .openIsland:
-            notchOpen(reason: .shortcut, surface: islandSurface == .temporaryChat ? .temporaryChat : .sessionList())
+            notchOpen(reason: .shortcut, surface: islandSurface.switchableTab?.selectionSurface ?? .sessionList())
         case .openSessions:
             notchOpen(reason: .shortcut, surface: .sessionList())
         case .openChat:
@@ -1070,6 +1127,68 @@ final class AppModel {
 
     func showTemporaryChatSurface() {
         showIslandSurface(.chat)
+    }
+
+    // MARK: - White noise
+
+    var whiteNoiseCategories: [WhiteNoiseCategory] {
+        WhiteNoiseCatalog.categories
+    }
+
+    var selectedWhiteNoiseSounds: [WhiteNoiseSound] {
+        whiteNoiseState.selectedSoundIDs.compactMap { WhiteNoiseCatalog.sound(id: $0) }
+    }
+
+    var isWhiteNoisePlaying: Bool {
+        whiteNoiseState.isPlaying
+    }
+
+    func showWhiteNoiseSurface() {
+        showIslandSurface(.whiteNoise)
+    }
+
+    func toggleWhiteNoiseSound(_ sound: WhiteNoiseSound) {
+        if let index = whiteNoiseState.selectedSoundIDs.firstIndex(of: sound.id) {
+            whiteNoiseState.selectedSoundIDs.remove(at: index)
+            if whiteNoiseState.selectedSoundIDs.isEmpty {
+                whiteNoiseState.isPaused = true
+            }
+            lastActionMessage = "Removed \(sound.label) from white noise mix."
+        } else {
+            whiteNoiseState.selectedSoundIDs.append(sound.id)
+            whiteNoiseState.itemVolumes[sound.id] = whiteNoiseState.volume(for: sound.id)
+            whiteNoiseState.isPaused = false
+            lastActionMessage = "Added \(sound.label) to white noise mix."
+        }
+    }
+
+    func setWhiteNoiseVolume(_ volume: Double, for sound: WhiteNoiseSound) {
+        whiteNoiseState.itemVolumes[sound.id] = Self.clampedVolume(volume)
+    }
+
+    func setWhiteNoiseGlobalVolume(_ volume: Double) {
+        whiteNoiseState.globalVolume = Self.clampedVolume(volume)
+    }
+
+    func toggleWhiteNoisePaused() {
+        guard whiteNoiseState.hasSelection else {
+            return
+        }
+        whiteNoiseState.isPaused.toggle()
+        lastActionMessage = whiteNoiseState.isPaused
+            ? "White noise mix paused."
+            : "White noise mix resumed."
+    }
+
+    func clearWhiteNoiseMix() {
+        whiteNoiseState = WhiteNoiseSelectionState(
+            selectedSoundIDs: [],
+            itemVolumes: [:],
+            globalVolume: whiteNoiseState.globalVolume,
+            isPaused: true
+        )
+        whiteNoisePlayerService.stopAll()
+        lastActionMessage = "White noise mix cleared."
     }
 
     func clearTemporaryChat() {
@@ -1864,6 +1983,12 @@ final class AppModel {
 
     func quitApplication() {
         NSApplication.shared.terminate(nil)
+    }
+
+    deinit {
+        MainActor.assumeIsolated {
+            whiteNoisePlayerService.stopAll()
+        }
     }
 
 }
