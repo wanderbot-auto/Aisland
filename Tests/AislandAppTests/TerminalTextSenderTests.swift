@@ -3,7 +3,7 @@ import XCTest
 import AislandCore
 
 final class TerminalTextSenderTests: XCTestCase {
-    func testGhosttySendScriptFocusesTargetThenUsesSystemEvents() {
+    func testGhosttySendScriptActivatesGhosttyThenUsesSystemEvents() {
         let script = TerminalTextSender.ghosttySendScript(
             text: "1",
             target: JumpTarget(
@@ -15,14 +15,11 @@ final class TerminalTextSenderTests: XCTestCase {
             )
         )
 
-        XCTAssertTrue(script.contains("set targetSessionID to \"session-123\""))
-        XCTAssertTrue(script.contains("set targetWorkingDirectory to \"/Users/wander/Documents/code/apps/Aisland\""))
-        XCTAssertTrue(script.contains("set targetPaneTitle to \"codex Aisland\""))
         XCTAssertTrue(script.contains("set replyText to \"1\""))
-        XCTAssertTrue(script.contains("activate window targetWindow"))
-        XCTAssertTrue(script.contains("select tab targetTab"))
-        XCTAssertTrue(script.contains("focus targetTerminal"))
+        XCTAssertTrue(script.contains("tell application \"Ghostty\" to activate"))
         XCTAssertTrue(script.contains("tell application \"System Events\""))
+        XCTAssertTrue(script.contains("tell process \"Ghostty\""))
+        XCTAssertTrue(script.contains("set frontmost to true"))
         XCTAssertTrue(script.contains("keystroke replyText"))
         XCTAssertTrue(script.contains("key code 36"))
     }
@@ -40,6 +37,9 @@ final class TerminalTextSenderTests: XCTestCase {
 
         XCTAssertFalse(script.contains("input text"))
         XCTAssertFalse(script.contains("send key \"enter\""))
+        XCTAssertFalse(script.contains("working directory of"))
+        XCTAssertFalse(script.contains("focused terminal"))
+        XCTAssertFalse(script.contains("focus targetTerminal"))
     }
 
     func testGhosttySendScriptEscapesReplyTextAsAppleScriptExpression() {

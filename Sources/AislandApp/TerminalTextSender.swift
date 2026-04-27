@@ -72,105 +72,29 @@ struct TerminalTextSender {
 
     private static func sendViaGhostty(_ text: String, target: JumpTarget) -> Bool {
         // Build an AppleScript that:
-        //   1. Finds the correct terminal (by session id, working directory, or name)
-        //   2. Focuses it
-        //   3. Sends the reply text + newline via System Events
+        //   1. Activates Ghostty
+        //   2. Sends the reply text + newline via System Events
+        //
+        // Do not use Ghostty-specific scripting terms here: Ghostty 1.2.x
+        // advertises partial terminology that fails to compile for commands
+        // such as `working directory of terminal`.
         let script = ghosttySendScript(text: text, target: target)
         return runAppleScript(script)
     }
 
-    static func ghosttySendScript(text: String, target: JumpTarget) -> String {
-        let terminalSessionID = appleScriptStringExpression(target.terminalSessionID)
-        let workingDirectory = appleScriptStringExpression(target.workingDirectory)
-        let paneTitle = appleScriptStringExpression(target.paneTitle)
+    static func ghosttySendScript(text: String, target _: JumpTarget) -> String {
         let replyText = appleScriptStringExpression(text)
 
         return """
-        set targetSessionID to \(terminalSessionID)
-        set targetWorkingDirectory to \(workingDirectory)
-        set targetPaneTitle to \(paneTitle)
         set replyText to \(replyText)
 
-        tell application "Ghostty"
-            if not (it is running) then return "error"
-            activate
-
-            set targetWindow to missing value
-            set targetTab to missing value
-            set targetTerminal to missing value
-
-            -- Match by terminal session ID (most precise)
-            if targetSessionID is not "" then
-                repeat with aWindow in windows
-                    repeat with aTab in tabs of aWindow
-                        repeat with aTerminal in terminals of aTab
-                            if (id of aTerminal as text) is targetSessionID then
-                                set targetWindow to aWindow
-                                set targetTab to aTab
-                                set targetTerminal to aTerminal
-                                exit repeat
-                            end if
-                        end repeat
-                        if targetTerminal is not missing value then exit repeat
-                    end repeat
-                    if targetTerminal is not missing value then exit repeat
-                end repeat
-            end if
-
-            -- Fallback: match by working directory
-            if targetTerminal is missing value and targetWorkingDirectory is not "" then
-                repeat with aWindow in windows
-                    repeat with aTab in tabs of aWindow
-                        repeat with aTerminal in terminals of aTab
-                            if (working directory of aTerminal as text) is targetWorkingDirectory then
-                                set targetWindow to aWindow
-                                set targetTab to aTab
-                                set targetTerminal to aTerminal
-                                exit repeat
-                            end if
-                        end repeat
-                        if targetTerminal is not missing value then exit repeat
-                    end repeat
-                    if targetTerminal is not missing value then exit repeat
-                end repeat
-            end if
-
-            -- Fallback: match by pane title
-            if targetTerminal is missing value and targetPaneTitle is not "" then
-                repeat with aWindow in windows
-                    repeat with aTab in tabs of aWindow
-                        repeat with aTerminal in terminals of aTab
-                            if (name of aTerminal as text) contains targetPaneTitle then
-                                set targetWindow to aWindow
-                                set targetTab to aTab
-                                set targetTerminal to aTerminal
-                                exit repeat
-                            end if
-                        end repeat
-                        if targetTerminal is not missing value then exit repeat
-                    end repeat
-                    if targetTerminal is not missing value then exit repeat
-                end repeat
-            end if
-
-            if targetTerminal is missing value then return "error"
-
-            if targetWindow is not missing value then
-                activate window targetWindow
-                delay 0.04
-            end if
-
-            if targetTab is not missing value then
-                select tab targetTab
-                delay 0.04
-            end if
-
-            focus targetTerminal
-        end tell
-
+        tell application "Ghostty" to activate
         delay 0.08
 
         tell application "System Events"
+            tell process "Ghostty"
+                set frontmost to true
+            end tell
             keystroke replyText
             key code 36
         end tell
