@@ -74,9 +74,22 @@ public enum CodexAppServerNotification: Sendable {
     case threadStatusChanged(threadId: String, status: CodexThreadStatus)
     case threadClosed(threadId: String)
     case threadNameUpdated(threadId: String, name: String?)
+    case userInputRequested(request: CodexUserInputRequest)
     case turnStarted(threadId: String, turn: CodexTurn)
     case turnCompleted(threadId: String, turn: CodexTurn)
     case unknown(method: String)
+}
+
+public struct CodexUserInputRequest: Equatable, Sendable {
+    public let requestID: Int
+    public let threadID: String
+    public let prompt: QuestionPrompt
+
+    public init(requestID: Int, threadID: String, prompt: QuestionPrompt) {
+        self.requestID = requestID
+        self.threadID = threadID
+        self.prompt = prompt
+    }
 }
 
 // MARK: - JSON-RPC transport
@@ -185,6 +198,27 @@ public final class CodexAppServerClient: @unchecked Sendable {
         return result.threads
     }
 
+    public func submitUserInput(
+        requestID: Int,
+        response: QuestionPromptResponse,
+        prompt: QuestionPrompt
+    ) throws {
+        guard let stdin else {
+            throw CodexAppServerError.notConnected
+        }
+
+        let answers = codexAnswers(from: response, prompt: prompt)
+        let result: [String: Any] = ["answers": answers]
+        let envelope: [String: Any] = [
+            "jsonrpc": "2.0",
+            "id": requestID,
+            "result": result,
+        ]
+        var line = try JSONSerialization.data(withJSONObject: envelope)
+        line.append(contentsOf: [UInt8(ascii: "\n")])
+        stdin.write(line)
+    }
+
     // MARK: - JSON-RPC transport
 
     /// Returns raw JSON `result` bytes from the response.
@@ -240,11 +274,28 @@ public final class CodexAppServerClient: @unchecked Sendable {
                   let json = try? JSONSerialization.jsonObject(with: lineData) as? [String: Any]
             else { continue }
 
-            if let id = json["id"] as? Int {
+            if let method = json["method"] as? String, let id = json["id"] as? Int {
+                handleServerRequest(id: id, method: method, json: json)
+            } else if let id = json["id"] as? Int {
                 handleResponse(id: id, json: json)
             } else if let method = json["method"] as? String {
                 handleNotification(method: method, json: json)
             }
+        }
+    }
+
+    private func handleServerRequest(id: Int, method: String, json: [String: Any]) {
+        switch method {
+        case "item/tool/requestUserInput":
+            guard let params = json["params"] as? [String: Any],
+                  let request = makeUserInputRequest(requestID: id, params: params) else {
+                sendErrorResponse(id: id, message: "Invalid request_user_input payload.")
+                return
+            }
+            onNotification?(.userInputRequested(request: request))
+        default:
+            sendErrorResponse(id: id, message: "Unsupported server request: \(method)")
+            onNotification?(.unknown(method: method))
         }
     }
 
@@ -293,6 +344,113 @@ public final class CodexAppServerClient: @unchecked Sendable {
         }
 
         onNotification?(notification)
+    }
+
+    private func sendErrorResponse(id: Int, message: String) {
+        guard let stdin else { return }
+        let envelope: [String: Any] = [
+            "jsonrpc": "2.0",
+            "id": id,
+            "error": [
+                "code": -32602,
+                "message": message,
+            ],
+        ]
+        guard var line = try? JSONSerialization.data(withJSONObject: envelope) else {
+            return
+        }
+        line.append(contentsOf: [UInt8(ascii: "\n")])
+        stdin.write(line)
+    }
+
+    private func makeUserInputRequest(requestID: Int, params: [String: Any]) -> CodexUserInputRequest? {
+        guard let threadID = firstString(
+            in: params,
+            keys: ["threadId", "threadID", "thread_id"]
+        ) ?? firstNestedString(in: params, keys: ["threadId", "threadID", "thread_id"]) else {
+            return nil
+        }
+
+        guard let prompt = CodexRequestUserInputParser.prompt(fromArgumentsObject: params)
+            ?? firstQuestionObject(in: params).flatMap(CodexRequestUserInputParser.prompt(fromArgumentsObject:)) else {
+            return nil
+        }
+
+        return CodexUserInputRequest(
+            requestID: requestID,
+            threadID: threadID,
+            prompt: prompt
+        )
+    }
+
+    private func firstQuestionObject(in value: Any) -> [String: Any]? {
+        guard let object = value as? [String: Any] else {
+            if let array = value as? [Any] {
+                for item in array {
+                    if let found = firstQuestionObject(in: item) {
+                        return found
+                    }
+                }
+            }
+            return nil
+        }
+
+        if object["questions"] is [[String: Any]] {
+            return object
+        }
+
+        for nested in object.values {
+            if let found = firstQuestionObject(in: nested) {
+                return found
+            }
+        }
+        return nil
+    }
+
+    private func firstString(in object: [String: Any], keys: [String]) -> String? {
+        for key in keys {
+            if let value = object[key] as? String,
+               !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                return value
+            }
+        }
+        return nil
+    }
+
+    private func firstNestedString(in value: Any, keys: [String]) -> String? {
+        if let object = value as? [String: Any] {
+            if let string = firstString(in: object, keys: keys) {
+                return string
+            }
+            for nested in object.values {
+                if let string = firstNestedString(in: nested, keys: keys) {
+                    return string
+                }
+            }
+        } else if let array = value as? [Any] {
+            for item in array {
+                if let string = firstNestedString(in: item, keys: keys) {
+                    return string
+                }
+            }
+        }
+        return nil
+    }
+
+    private func codexAnswers(
+        from response: QuestionPromptResponse,
+        prompt: QuestionPrompt
+    ) -> [String: String] {
+        if !response.answers.isEmpty {
+            return response.answers
+        }
+
+        guard let rawAnswer = response.rawAnswer, !rawAnswer.isEmpty else {
+            return [:]
+        }
+
+        let key = prompt.questions.first?.id ?? prompt.questions.first?.question ?? "answer"
+        return [key: rawAnswer]
     }
 }
 

@@ -176,17 +176,21 @@ public struct QuestionOption: Equatable, Identifiable, Codable, Sendable {
 }
 
 public struct QuestionPromptItem: Equatable, Codable, Sendable {
+    /// Stable machine-readable question key when the upstream agent provides one.
+    public var id: String?
     public var question: String
     public var header: String
     public var options: [QuestionOption]
     public var multiSelect: Bool
 
     public init(
+        id: String? = nil,
         question: String,
         header: String,
         options: [QuestionOption],
         multiSelect: Bool = false
     ) {
+        self.id = id
         self.question = question
         self.header = header
         self.options = options

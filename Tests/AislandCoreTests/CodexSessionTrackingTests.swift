@@ -201,6 +201,111 @@ struct CodexSessionTrackingTests {
     }
 
     @Test
+    func codexRolloutReducerTurnsRequestUserInputIntoQuestionPrompt() {
+        let arguments: [String: Any] = [
+            "questions": [
+                [
+                    "id": "environment",
+                    "header": "Env",
+                    "question": "Which environment should Codex use?",
+                    "options": [
+                        ["label": "Production", "description": "Use live settings."],
+                        ["label": "Staging", "description": "Use test settings."],
+                    ],
+                ],
+            ],
+        ]
+        let argumentsData = try! JSONSerialization.data(withJSONObject: arguments, options: [.sortedKeys])
+        let snapshot = CodexRolloutReducer.snapshot(for: [
+            rolloutLine(
+                timestamp: "2026-04-02T04:03:44.500Z",
+                type: "response_item",
+                payload: [
+                    "type": "function_call",
+                    "name": "request_user_input",
+                    "call_id": "call-user-input",
+                    "arguments": String(decoding: argumentsData, as: UTF8.self),
+                ]
+            ),
+        ])
+        let events = CodexRolloutReducer.events(
+            from: nil,
+            to: snapshot,
+            sessionID: "codex-session-1",
+            transcriptPath: "/tmp/rollout.jsonl"
+        )
+
+        #expect(snapshot.phase == .waitingForAnswer)
+        #expect(snapshot.summary == "Which environment should Codex use?")
+        #expect(snapshot.questionPrompt?.questions.first?.id == "environment")
+        #expect(snapshot.questionPrompt?.questions.first?.header == "Env")
+        #expect(snapshot.questionPrompt?.questions.first?.options.map(\.label) == ["Production", "Staging", "Other"])
+        #expect(snapshot.questionPrompt?.questions.first?.options.last?.allowsFreeform == true)
+        #expect(events.contains(where: { $0.questionPrompt?.questions.first?.id == "environment" }))
+    }
+
+    @Test
+    func codexRolloutReducerClearsQuestionPromptAfterRequestUserInputOutput() {
+        let arguments: [String: Any] = [
+            "questions": [
+                [
+                    "id": "environment",
+                    "header": "Env",
+                    "question": "Which environment?",
+                    "options": [
+                        ["label": "Production"],
+                        ["label": "Staging"],
+                    ],
+                ],
+            ],
+        ]
+        let argumentsData = try! JSONSerialization.data(withJSONObject: arguments, options: [.sortedKeys])
+        let initialSnapshot = CodexRolloutReducer.snapshot(for: [
+            rolloutLine(
+                timestamp: "2026-04-02T04:03:44.500Z",
+                type: "response_item",
+                payload: [
+                    "type": "function_call",
+                    "name": "request_user_input",
+                    "call_id": "call-user-input",
+                    "arguments": String(decoding: argumentsData, as: UTF8.self),
+                ]
+            ),
+        ])
+        let answeredSnapshot = CodexRolloutReducer.snapshot(for: [
+            rolloutLine(
+                timestamp: "2026-04-02T04:03:44.500Z",
+                type: "response_item",
+                payload: [
+                    "type": "function_call",
+                    "name": "request_user_input",
+                    "call_id": "call-user-input",
+                    "arguments": String(decoding: argumentsData, as: UTF8.self),
+                ]
+            ),
+            rolloutLine(
+                timestamp: "2026-04-02T04:03:45.500Z",
+                type: "response_item",
+                payload: [
+                    "type": "function_call_output",
+                    "call_id": "call-user-input",
+                    "output": "{\"answers\":{\"environment\":\"Staging\"}}",
+                ]
+            ),
+        ])
+        let events = CodexRolloutReducer.events(
+            from: initialSnapshot,
+            to: answeredSnapshot,
+            sessionID: "codex-session-1",
+            transcriptPath: "/tmp/rollout.jsonl"
+        )
+
+        #expect(answeredSnapshot.phase == .running)
+        #expect(answeredSnapshot.questionPrompt == nil)
+        #expect(events.contains(where: { $0.resolvedActionableState?.summary == "Answered Codex input request." }))
+    }
+
+    @Test
     func codexRolloutReducerMarksTurnAbortedAsInterruptedCompletion() {
         let initialSnapshot = CodexRolloutReducer.snapshot(for: [
             rolloutLine(
@@ -747,6 +852,14 @@ private func sessionMetaLine(
 }
 
 private extension AgentEvent {
+    var questionPrompt: QuestionPrompt? {
+        if case let .questionAsked(payload) = self {
+            payload.prompt
+        } else {
+            nil
+        }
+    }
+
     var trackedActivityUpdate: SessionActivityUpdated? {
         if case let .activityUpdated(payload) = self {
             payload
@@ -765,6 +878,14 @@ private extension AgentEvent {
 
     var trackedMetadataUpdate: SessionMetadataUpdated? {
         if case let .sessionMetadataUpdated(payload) = self {
+            payload
+        } else {
+            nil
+        }
+    }
+
+    var resolvedActionableState: ActionableStateResolved? {
+        if case let .actionableStateResolved(payload) = self {
             payload
         } else {
             nil

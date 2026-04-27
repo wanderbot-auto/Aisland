@@ -17,6 +17,9 @@ final class CodexAppServerCoordinator {
     @ObservationIgnored
     private var connectTask: Task<Void, Never>?
 
+    @ObservationIgnored
+    private var pendingUserInputRequests: [String: CodexUserInputRequest] = [:]
+
     /// Callback to emit AgentEvents into AppModel.
     @ObservationIgnored
     var onEvent: ((AgentEvent) -> Void)?
@@ -87,7 +90,34 @@ final class CodexAppServerCoordinator {
         connectTask = nil
         client?.stop()
         client = nil
+        pendingUserInputRequests.removeAll()
         isConnected = false
+    }
+
+    @discardableResult
+    func submitUserInput(
+        for sessionID: String,
+        response: QuestionPromptResponse,
+        prompt: QuestionPrompt
+    ) -> Bool {
+        guard let client,
+              let request = pendingUserInputRequests.removeValue(forKey: sessionID) else {
+            return false
+        }
+
+        do {
+            try client.submitUserInput(
+                requestID: request.requestID,
+                response: response,
+                prompt: prompt
+            )
+            onStatusMessage?("Submitted Codex input for \(sessionID).")
+            return true
+        } catch {
+            pendingUserInputRequests[sessionID] = request
+            onStatusMessage?("Failed to submit Codex input: \(error.localizedDescription)")
+            return false
+        }
     }
 
     // MARK: - Thread sync
@@ -138,6 +168,9 @@ final class CodexAppServerCoordinator {
                         )
                     ))
                 } else if status.isWaitingOnUserInput {
+                    if pendingUserInputRequests[threadId] != nil {
+                        return
+                    }
                     onEvent?(.questionAsked(
                         QuestionAsked(
                             sessionID: threadId,
@@ -174,6 +207,7 @@ final class CodexAppServerCoordinator {
             }
 
         case .threadClosed(let threadId):
+            pendingUserInputRequests.removeValue(forKey: threadId)
             onEvent?(.sessionCompleted(
                 SessionCompleted(
                     sessionID: threadId,
@@ -190,7 +224,18 @@ final class CodexAppServerCoordinator {
             // populated at sessionStarted time which is usually enough.
             break
 
+        case .userInputRequested(let request):
+            pendingUserInputRequests[request.threadID] = request
+            onEvent?(.questionAsked(
+                QuestionAsked(
+                    sessionID: request.threadID,
+                    prompt: request.prompt,
+                    timestamp: .now
+                )
+            ))
+
         case .turnStarted(let threadId, _):
+            pendingUserInputRequests.removeValue(forKey: threadId)
             onEvent?(.activityUpdated(
                 SessionActivityUpdated(
                     sessionID: threadId,
@@ -201,6 +246,7 @@ final class CodexAppServerCoordinator {
             ))
 
         case .turnCompleted(let threadId, let turn):
+            pendingUserInputRequests.removeValue(forKey: threadId)
             // A turn completing doesn't end the thread — the user can send
             // another message.  Use activityUpdated(phase: .completed) so the
             // session stays visible as "Completed" rather than being torn

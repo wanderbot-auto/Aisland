@@ -170,7 +170,7 @@ struct IslandQuestionCardView: View {
             guard !values.isEmpty else {
                 return nil
             }
-            return (question.question, values.joined(separator: ", "))
+            return (answerKey(for: question), values.joined(separator: ", "))
         })
     }
 
@@ -192,6 +192,14 @@ struct IslandQuestionCardView: View {
 
     private func selectedLabels(for question: QuestionPromptItem) -> Set<String> {
         selections[question.question] ?? []
+    }
+
+    private func answerKey(for question: QuestionPromptItem) -> String {
+        guard let id = question.id?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !id.isEmpty else {
+            return question.question
+        }
+        return id
     }
 
     private func resolvedAnswers(for question: QuestionPromptItem) -> [String] {
@@ -240,4 +248,3 @@ struct IslandQuestionCardView: View {
         selections[question.question] = selected
     }
 }
-

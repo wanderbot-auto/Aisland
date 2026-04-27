@@ -395,6 +395,8 @@ public struct CodexRolloutSnapshot: Equatable, Sendable {
     public var lastAssistantMessage: String?
     public var currentTool: String?
     public var currentCommandPreview: String?
+    public var questionPrompt: QuestionPrompt?
+    public var currentQuestionCallID: String?
     public var isCompleted: Bool
     public var isInterrupted: Bool
 
@@ -407,6 +409,8 @@ public struct CodexRolloutSnapshot: Equatable, Sendable {
         lastAssistantMessage: String? = nil,
         currentTool: String? = nil,
         currentCommandPreview: String? = nil,
+        questionPrompt: QuestionPrompt? = nil,
+        currentQuestionCallID: String? = nil,
         isCompleted: Bool = false,
         isInterrupted: Bool = false
     ) {
@@ -418,6 +422,8 @@ public struct CodexRolloutSnapshot: Equatable, Sendable {
         self.lastAssistantMessage = lastAssistantMessage
         self.currentTool = currentTool
         self.currentCommandPreview = currentCommandPreview
+        self.questionPrompt = questionPrompt
+        self.currentQuestionCallID = currentQuestionCallID
         self.isCompleted = isCompleted
         self.isInterrupted = isInterrupted
     }
@@ -430,6 +436,113 @@ public struct CodexRolloutSnapshot: Equatable, Sendable {
             currentTool: currentTool,
             currentCommandPreview: currentCommandPreview
         )
+    }
+}
+
+public enum CodexRequestUserInputParser {
+    public static func prompt(fromArgumentsValue arguments: Any?) -> QuestionPrompt? {
+        if let object = arguments as? [String: Any] {
+            return prompt(fromArgumentsObject: object)
+        }
+
+        return prompt(fromArgumentsString: arguments as? String)
+    }
+
+    public static func prompt(fromArgumentsString arguments: String?) -> QuestionPrompt? {
+        guard let arguments,
+              let data = arguments.data(using: .utf8),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+
+        return prompt(fromArgumentsObject: object)
+    }
+
+    public static func prompt(fromArgumentsObject object: [String: Any]) -> QuestionPrompt? {
+        guard let rawQuestions = object["questions"] as? [[String: Any]] else {
+            return nil
+        }
+
+        let questions = rawQuestions.compactMap { rawQuestion -> QuestionPromptItem? in
+            guard let questionText = nonEmptyString(rawQuestion["question"]),
+                  let rawOptions = rawQuestion["options"] as? [[String: Any]] else {
+                return nil
+            }
+
+            let options = rawOptions.compactMap { rawOption -> QuestionOption? in
+                guard let label = nonEmptyString(rawOption["label"]) else {
+                    return nil
+                }
+
+                return QuestionOption(
+                    label: label,
+                    description: stringValue(rawOption["description"]) ?? "",
+                    allowsFreeform: boolValue(rawOption["isOther"]) ?? false
+                )
+            }
+
+            guard !options.isEmpty else {
+                return nil
+            }
+
+            var resolvedOptions = options
+            if !resolvedOptions.contains(where: \.allowsFreeform) {
+                resolvedOptions.append(
+                    QuestionOption(label: "Other", description: "", allowsFreeform: true)
+                )
+            }
+
+            let questionID = nonEmptyString(rawQuestion["id"])
+            let header = nonEmptyString(rawQuestion["header"]) ?? questionText
+
+            return QuestionPromptItem(
+                id: questionID,
+                question: questionText,
+                header: header,
+                options: resolvedOptions,
+                multiSelect: boolValue(rawQuestion["multiSelect"]) ?? false
+            )
+        }
+
+        guard !questions.isEmpty else {
+            return nil
+        }
+
+        let title: String
+        if questions.count == 1, let firstQuestion = questions.first?.question {
+            title = firstQuestion
+        } else {
+            title = "Codex has \(questions.count) questions for you."
+        }
+
+        return QuestionPrompt(title: title, questions: questions)
+    }
+
+    private static func nonEmptyString(_ value: Any?) -> String? {
+        guard let string = stringValue(value)?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+              !string.isEmpty else {
+            return nil
+        }
+        return string
+    }
+
+    private static func stringValue(_ value: Any?) -> String? {
+        switch value {
+        case let string as String:
+            return string
+        default:
+            return nil
+        }
+    }
+
+    private static func boolValue(_ value: Any?) -> Bool? {
+        switch value {
+        case let bool as Bool:
+            return bool
+        default:
+            return nil
+        }
     }
 }
 
@@ -499,9 +612,34 @@ public enum CodexRolloutReducer {
 
         let oldSummary = oldSnapshot?.summary
         let oldPhase = oldSnapshot?.phase
+        let oldQuestionPrompt = oldSnapshot?.questionPrompt
         let oldCompleted = oldSnapshot?.isCompleted ?? false
         let oldInterrupted = oldSnapshot?.isInterrupted ?? false
         let newSummary = newSnapshot.summary ?? oldSummary ?? "Codex updated the current turn."
+
+        if oldQuestionPrompt != newSnapshot.questionPrompt {
+            if let prompt = newSnapshot.questionPrompt {
+                events.append(
+                    .questionAsked(
+                        QuestionAsked(
+                            sessionID: sessionID,
+                            prompt: prompt,
+                            timestamp: timestamp
+                        )
+                    )
+                )
+            } else if oldQuestionPrompt != nil {
+                events.append(
+                    .actionableStateResolved(
+                        ActionableStateResolved(
+                            sessionID: sessionID,
+                            summary: newSummary,
+                            timestamp: timestamp
+                        )
+                    )
+                )
+            }
+        }
 
         if newSnapshot.isCompleted {
             if !oldCompleted || oldSummary != newSummary || oldInterrupted != newSnapshot.isInterrupted {
@@ -560,6 +698,8 @@ public enum CodexRolloutReducer {
         case "task_complete":
             snapshot.currentTool = nil
             snapshot.currentCommandPreview = nil
+            snapshot.questionPrompt = nil
+            snapshot.currentQuestionCallID = nil
             snapshot.phase = .completed
             snapshot.isCompleted = true
             snapshot.isInterrupted = false
@@ -573,6 +713,8 @@ public enum CodexRolloutReducer {
         case "turn_aborted":
             snapshot.currentTool = nil
             snapshot.currentCommandPreview = nil
+            snapshot.questionPrompt = nil
+            snapshot.currentQuestionCallID = nil
             snapshot.phase = .completed
             snapshot.isCompleted = true
             snapshot.isInterrupted = true
@@ -606,6 +748,11 @@ public enum CodexRolloutReducer {
         to snapshot: inout CodexRolloutSnapshot
     ) {
         let itemType = payload["type"] as? String
+        if itemType == "function_call_output" || itemType == "custom_tool_call_output" {
+            clearQuestionIfNeeded(for: payload, timestamp: timestamp, in: &snapshot)
+            return
+        }
+
         if itemType == "message" {
             guard let role = payload["role"] as? String else {
                 return
@@ -648,8 +795,27 @@ public enum CodexRolloutReducer {
             return
         }
 
+        if toolName == "request_user_input",
+           let prompt = CodexRequestUserInputParser.prompt(fromArgumentsValue: payload["arguments"]) {
+            snapshot.currentTool = nil
+            snapshot.currentCommandPreview = nil
+            snapshot.questionPrompt = prompt
+            snapshot.currentQuestionCallID = payload["call_id"] as? String
+            snapshot.phase = .waitingForAnswer
+            snapshot.isCompleted = false
+            snapshot.isInterrupted = false
+            snapshot.summary = prompt.title
+
+            if let timestamp {
+                snapshot.updatedAt = timestamp
+            }
+            return
+        }
+
         snapshot.currentTool = toolName
         snapshot.currentCommandPreview = commandPreview(for: toolName, payload: payload)
+        snapshot.questionPrompt = nil
+        snapshot.currentQuestionCallID = nil
         snapshot.phase = .running
         snapshot.isCompleted = false
         snapshot.isInterrupted = false
@@ -669,6 +835,8 @@ public enum CodexRolloutReducer {
         snapshot.lastUserPrompt = message
         snapshot.currentTool = nil
         snapshot.currentCommandPreview = nil
+        snapshot.questionPrompt = nil
+        snapshot.currentQuestionCallID = nil
         snapshot.phase = .running
         snapshot.isCompleted = false
         snapshot.isInterrupted = false
@@ -694,6 +862,8 @@ public enum CodexRolloutReducer {
         if !snapshot.isCompleted {
             snapshot.currentTool = nil
             snapshot.currentCommandPreview = nil
+            snapshot.questionPrompt = nil
+            snapshot.currentQuestionCallID = nil
             snapshot.phase = .running
             snapshot.isInterrupted = false
         }
@@ -730,6 +900,35 @@ public enum CodexRolloutReducer {
             return clipped(object["chars"] as? String)
         default:
             return nil
+        }
+    }
+
+    private static func clearQuestionIfNeeded(
+        for payload: [String: Any],
+        timestamp: Date?,
+        in snapshot: inout CodexRolloutSnapshot
+    ) {
+        guard snapshot.questionPrompt != nil else {
+            if let timestamp {
+                snapshot.updatedAt = timestamp
+            }
+            return
+        }
+
+        let callID = payload["call_id"] as? String
+        guard snapshot.currentQuestionCallID == nil || callID == snapshot.currentQuestionCallID else {
+            if let timestamp {
+                snapshot.updatedAt = timestamp
+            }
+            return
+        }
+
+        snapshot.questionPrompt = nil
+        snapshot.currentQuestionCallID = nil
+        snapshot.phase = .running
+        snapshot.summary = "Answered Codex input request."
+        if let timestamp {
+            snapshot.updatedAt = timestamp
         }
     }
 

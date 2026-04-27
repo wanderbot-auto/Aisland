@@ -1605,6 +1605,11 @@ final class AppModel {
             return
         }
 
+        if session.tool == .codex {
+            answerQuestion(for: session.id, answer: QuestionPromptResponse(answer: answer))
+            return
+        }
+
         send(
             .answerQuestion(sessionID: session.id, response: QuestionPromptResponse(answer: answer)),
             userMessage: "Sending answer \"\(answer)\" for \(session.title)."
@@ -1722,16 +1727,68 @@ final class AppModel {
         guard let session = state.session(id: sessionID) else {
             return
         }
+        let prompt = session.questionPrompt
 
         dismissNotificationSurfaceIfPresent(for: sessionID)
         state.answerQuestion(sessionID: session.id, response: answer)
         synchronizeSelection()
         refreshOverlayPlacementIfVisible()
 
+        if session.tool == .codex {
+            submitCodexQuestionAnswer(session: session, prompt: prompt, answer: answer)
+            return
+        }
+
         send(
             .answerQuestion(sessionID: session.id, response: answer),
             userMessage: "Sending answer for \(session.title)."
         )
+    }
+
+    private func submitCodexQuestionAnswer(
+        session: AgentSession,
+        prompt: QuestionPrompt?,
+        answer: QuestionPromptResponse
+    ) {
+        if let prompt,
+           codexAppServer.submitUserInput(for: session.id, response: answer, prompt: prompt) {
+            lastActionMessage = "Sent answer to Codex app-server for \(session.title)."
+            return
+        }
+
+        let answerText = terminalAnswerText(for: answer)
+        guard !answerText.isEmpty else {
+            lastActionMessage = "No answer text to send to Codex."
+            return
+        }
+
+        lastActionMessage = "Sending answer to Codex terminal for \(session.title)…"
+        Task { [weak self] in
+            let success = await Task.detached(priority: .userInitiated) {
+                TerminalTextSender.send(answerText, to: session)
+            }.value
+
+            self?.lastActionMessage = success
+                ? "Sent answer to Codex terminal for \(session.title)."
+                : "Could not inject answer into Codex terminal for \(session.title)."
+        }
+    }
+
+    private func terminalAnswerText(for answer: QuestionPromptResponse) -> String {
+        if let rawAnswer = answer.rawAnswer?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !rawAnswer.isEmpty {
+            return rawAnswer
+        }
+
+        let values = answer.answers.values
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        if values.count == 1 {
+            return values[0]
+        }
+
+        return answer.displaySummary
     }
 
     func replyToSession(_ session: AgentSession, text: String) {
