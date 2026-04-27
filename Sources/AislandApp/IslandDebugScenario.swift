@@ -405,26 +405,26 @@ private enum DebugSessionBuilder {
             tool: .codex,
             isDemoSession: true,
             phase: .completed,
-            summary: "README 提交已经完成，长回复现在应该在卡片内部滚动。",
+            summary: "AGENTS.md 和脚本清理已经完成，长回复现在应该在卡片内部滚动。",
             updatedAt: now.addingTimeInterval(-45),
             jumpTarget: JumpTarget(
                 terminalApp: "Ghostty",
                 workspaceName: "aisland",
-                paneTitle: "codex ~/Personal/aisland",
-                workingDirectory: "/Users/wangruobing/Personal/aisland",
+                paneTitle: "codex ~/Documents/code/apps/Aisland",
+                workingDirectory: "/Users/wander/Documents/code/apps/Aisland",
                 terminalSessionID: "ghostty-completion-long"
             ),
             codexMetadata: CodexSessionMetadata(
-                initialUserPrompt: "帮我把这个 README 也提交了，然后把结果贴给我。",
-                lastUserPrompt: "顺便确认一下当前工作树和验证情况。",
+                initialUserPrompt: "帮我把 AGENTS.md 和文档检查脚本一起整理掉，然后把结果贴给我。",
+                lastUserPrompt: "顺便确认一下 appcast 和 release workflow 里还有没有旧引用。",
                 lastAssistantMessage: """
-[README.md](/Users/wangruobing/Personal/aisland/README.md) 的现有改动已经单独提交了，commit 是 `f196316`，message 是 `docs: update readme tagline`。
+[AGENTS.md](/Users/wander/Documents/code/apps/Aisland/AGENTS.md) 和 `scripts/check-docs.sh` 的现有改动已经单独提交了，commit 是 `2bafc55`，message 是 `docs: align doc checks with current repo`。
 
-这轮没有跑测试，因为只是文案改动。当前工作树是干净的，`main` 相对 `origin/main` 现在是 `ahead 6`。
+这轮跑了 `zsh scripts/check-docs.sh` 和 `zsh scripts/lint-strings.sh`，都通过了。当前工作树是干净的，`main` 相对 `origin/main` 现在是 `ahead 4`。
 
-如果你要我继续做下一轮，我建议把工作切到独立 worktree 里，这样不会和共享 `main` 上的并行改动互相打架。
+如果你要我继续做下一轮，我建议直接清理 `appcast.xml` 和 release workflow 里残留的旧仓库名与旧压缩包命名，这样发布链路和调试文案会和当前仓库保持一致。
 
-下一步我会先检查当前仓库状态，然后从 `origin/main` 新建一个 worktree 和分支，在新工作区里继续处理这个样式问题并做完验证。
+下一步我会先检查当前仓库状态，然后继续更新历史 appcast 条目、release workflow 和调试场景里的旧仓库路径，再补一次验证。
 """
             )
         )

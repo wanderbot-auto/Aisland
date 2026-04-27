@@ -6,7 +6,7 @@ struct IslandDebugScenarioTests {
     func allDebugScenarioSessionsAreDemoSessions() {
         for scenario in IslandDebugScenario.allCases {
             let snapshot = scenario.snapshot()
-            #expect(snapshot.sessions.allSatisfy(\.isDemoSession))
+            #expect(snapshot.sessions.allSatisfy { $0.isDemoSession })
         }
     }
 }

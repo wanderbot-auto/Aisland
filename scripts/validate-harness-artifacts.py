@@ -270,7 +270,7 @@ def main() -> None:
         )
         if "Done" not in text_values:
             fail("longCompletionCard is missing 'Done' text")
-        assert_contains_any(text_values, ["README.md", "worktree"], "longCompletionCard text values")
+        assert_contains_any(text_values, ["AGENTS.md", "appcast.xml"], "longCompletionCard text values")
 
     else:
         fail(f"unsupported scenario {scenario!r}")
