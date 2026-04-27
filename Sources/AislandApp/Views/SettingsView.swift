@@ -876,23 +876,16 @@ struct SetupSettingsPane: View {
         return claude || codex || openCode
     }
 
-    private var hasNotices: Bool {
-        let claude = model.claudeHealthReport?.notices.isEmpty == false
-        let codex = model.codexHealthReport?.notices.isEmpty == false
-        let openCode = model.openCodeHealthReport?.notices.isEmpty == false
-        return claude || codex || openCode
-    }
-
     @ViewBuilder
     private var hookDiagnosticsSection: some View {
         Section {
-            if let claudeReport = model.claudeHealthReport, !claudeReport.issues.isEmpty {
+            if let claudeReport = model.claudeHealthReport, !claudeReport.errors.isEmpty {
                 issueList(report: claudeReport)
             }
-            if let codexReport = model.codexHealthReport, !codexReport.issues.isEmpty {
+            if let codexReport = model.codexHealthReport, !codexReport.errors.isEmpty {
                 issueList(report: codexReport)
             }
-            if let openCodeReport = model.openCodeHealthReport, !openCodeReport.issues.isEmpty {
+            if let openCodeReport = model.openCodeHealthReport, !openCodeReport.errors.isEmpty {
                 issueList(report: openCodeReport)
             }
 
@@ -950,7 +943,7 @@ struct SetupSettingsPane: View {
                 .fontWeight(.semibold)
                 .foregroundStyle(.secondary)
 
-            ForEach(Array(report.issues.enumerated()), id: \.offset) { _, issue in
+            ForEach(Array(report.errors.enumerated()), id: \.offset) { _, issue in
                 HStack(alignment: .top, spacing: 6) {
                     Image(systemName: issueIcon(for: issue))
                         .font(.caption2)
