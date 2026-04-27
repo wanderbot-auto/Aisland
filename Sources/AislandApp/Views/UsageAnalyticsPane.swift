@@ -1,129 +1,48 @@
-import AppKit
 import SwiftUI
 import AislandCore
 
 struct UsageAnalyticsPane: View {
     var model: AppModel
 
-    @State private var selectedPeriod: UsageAggregationPeriod = .day
     @Environment(\.islandTheme) private var theme
+    @State private var selectedContributionDate: String?
 
     private var lang: LanguageManager { model.lang }
-    private var snapshot: UsageAnalyticsSnapshot? { model.usageAnalyticsSnapshot(for: selectedPeriod) }
+    private var dailyUsage: [UsageAnalyticsDailyModelBucket] { model.usageAnalyticsDailyModelUsage }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                header
-
-                Picker(lang.t("usage.period"), selection: $selectedPeriod) {
-                    ForEach(UsageAggregationPeriod.allCases) { period in
-                        Text(period.displayName(lang)).tag(period)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(maxWidth: 360)
-
-                todayProviderSection
-
-                if let snapshot {
-                    summaryGrid(for: snapshot)
-                    bucketSection(for: snapshot)
-                } else {
-                    emptyState
-                }
+            VStack(alignment: .leading, spacing: 18) {
+                usageToolbar
+                tokensPerDaySection
+                contributionGraphSection
             }
             .padding(20)
         }
         .islandSettingsPaneBackground()
         .navigationTitle(lang.t("settings.tab.usage"))
         .onAppear {
-            if snapshot == nil {
+            if dailyUsage.isEmpty {
                 model.refreshUsageAnalytics()
             }
         }
-    }
-
-    private var todayProviderSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center, spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(lang.t("usage.today.title"))
-                        .font(.system(size: 15, weight: .semibold))
-                    Text(lang.t("usage.today.subtitle"))
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer(minLength: 12)
-
-                Picker(lang.t("usage.today.islandDisplay"), selection: Binding(
-                    get: { model.islandTokenUsageDisplayMode },
-                    set: { model.islandTokenUsageDisplayMode = $0 }
-                )) {
-                    ForEach(IslandTokenUsageDisplayMode.allCases) { mode in
-                        Text(mode.displayName(lang)).tag(mode)
-                    }
-                }
-                .labelsHidden()
-                .pickerStyle(.segmented)
-                .frame(width: 220)
-            }
-
-            LazyVGrid(columns: [
-                GridItem(.adaptive(minimum: 220), spacing: 8)
-            ], alignment: .leading, spacing: 8) {
-                ForEach(UsageLogProvider.allCases, id: \.self) { provider in
-                    todayProviderCard(provider)
-                }
+        .onChange(of: dailyUsage) { _, newValue in
+            if selectedContributionDate == nil {
+                selectedContributionDate = newValue.last?.dateKey
             }
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(theme.card.opacity(0.82))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(theme.outline.opacity(0.12))
-        )
     }
 
-    private var header: some View {
-        HStack(alignment: .center, spacing: 16) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(lang.t("usage.title"))
-                    .font(.system(size: 20, weight: .semibold))
-
-                Text(lang.t("usage.subtitle"))
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if model.usageAnalyticsIsRefreshing {
-                    Label(lang.t("usage.refreshing"), systemImage: "arrow.triangle.2.circlepath")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                } else if let refreshedAt = model.usageAnalyticsLastRefreshedAt {
-                    Label(
-                        refreshedAt.formatted(date: .abbreviated, time: .shortened),
-                        systemImage: "clock"
-                    )
+    private var usageToolbar: some View {
+        HStack(alignment: .center, spacing: 10) {
+            if model.usageAnalyticsIsRefreshing {
+                Label(lang.t("usage.refreshing"), systemImage: "arrow.triangle.2.circlepath")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.secondary)
-                }
-                #if DEBUG
-                if let report = model.usageAnalyticsLastRefreshReport {
-                    HStack(spacing: 6) {
-                        Label(
-                            "\(report.ingestedFileCount) files · \(report.ingestedEntryCount) entries",
-                            systemImage: "tray.and.arrow.down"
-                        )
-                    }
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.tertiary)
-                }
-                #endif
+            } else if let refreshedAt = model.usageAnalyticsLastRefreshedAt {
+                Text(refreshedAt.formatted(date: .abbreviated, time: .shortened))
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.secondary)
             }
 
             Spacer(minLength: 12)
@@ -136,61 +55,56 @@ struct UsageAnalyticsPane: View {
         }
     }
 
-    private func summaryGrid(for snapshot: UsageAnalyticsSnapshot) -> some View {
-        LazyVGrid(columns: [
-            GridItem(.adaptive(minimum: 132), spacing: 8)
-        ], alignment: .leading, spacing: 8) {
-            metricCard(
-                title: lang.t("usage.totalTokens"),
-                value: snapshot.totals.totalTokens.formatted()
-            )
-            metricCard(
-                title: lang.t("usage.inputTokens"),
-                value: snapshot.totals.inputTokens.formatted()
-            )
-            metricCard(
-                title: lang.t("usage.outputTokens"),
-                value: snapshot.totals.outputTokens.formatted()
-            )
-            metricCard(
-                title: lang.t("usage.entries"),
-                value: snapshot.totals.entryCount.formatted()
-            )
+    private var tokensPerDaySection: some View {
+        usagePanel {
+            VStack(alignment: .leading, spacing: 14) {
+                sectionHeading(
+                    title: lang.t("usage.chart.tokensPerDay"),
+                    subtitle: lang.t("usage.chart.tokensPerDay.subtitle")
+                )
+
+                if dailyUsage.isEmpty {
+                    emptyState
+                } else {
+                    DailyStackedTokenChart(rows: dailyUsage, theme: theme)
+                        .frame(minHeight: 280)
+                    ModelLegend(rows: dailyUsage)
+                }
+            }
         }
     }
 
-    private func bucketSection(for snapshot: UsageAnalyticsSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(selectedPeriod.listTitle(lang))
-                    .font(.system(size: 15, weight: .semibold))
-                Spacer()
-                if let error = model.usageAnalyticsLastRefreshError {
-                    Text(error)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.red.opacity(0.8))
-                }
-            }
+    private var contributionGraphSection: some View {
+        usagePanel {
+            VStack(alignment: .leading, spacing: 14) {
+                sectionHeading(
+                    title: lang.t("usage.chart.contributionGraph"),
+                    subtitle: lang.t("usage.chart.contributionGraph.subtitle")
+                )
 
-            if snapshot.buckets.isEmpty {
-                emptyState
-            } else {
-                VStack(spacing: 6) {
-                    ForEach(snapshot.buckets) { bucket in
-                        bucketRow(bucket)
+                if dailyUsage.isEmpty {
+                    emptyState
+                } else {
+                    ContributionGraph(
+                        rows: dailyUsage,
+                        selectedDate: $selectedContributionDate,
+                        theme: theme
+                    )
+
+                    if let day = selectedContributionDay {
+                        ContributionDetail(day: day)
                     }
                 }
             }
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(theme.card.opacity(0.82))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(theme.outline.opacity(0.12))
-        )
+    }
+
+    private var selectedContributionDay: UsageDaySummary? {
+        let days = UsageDaySummary.makeDays(from: dailyUsage)
+        guard let selectedContributionDate else {
+            return days.last
+        }
+        return days.first { $0.dateKey == selectedContributionDate } ?? days.last
     }
 
     private var emptyState: some View {
@@ -200,165 +114,352 @@ struct UsageAnalyticsPane: View {
             Text(lang.t("usage.empty.subtitle"))
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
             if model.usageAnalyticsIsRefreshing {
                 ProgressView()
                     .controlSize(.small)
-            } else {
-                Button(lang.t("usage.refresh")) {
-                    model.refreshUsageAnalytics()
-                }
-                .buttonStyle(.borderedProminent)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(theme.card.opacity(0.82))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(theme.outline.opacity(0.12))
-        )
+        .frame(maxWidth: .infinity, minHeight: 120, alignment: .leading)
     }
 
-    private func bucketRow(_ bucket: UsageAnalyticsBucket) -> some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(bucket.label)
-                    .font(.system(size: 13, weight: .semibold))
-
-                if let detail = bucket.detail {
-                    Text(detail)
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-
-            Spacer(minLength: 8)
-
-            VStack(alignment: .trailing, spacing: 4) {
-                Text(bucket.totalTokens.formatted())
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                Text("\(bucket.inputTokens.formatted()) in · \(bucket.outputTokens.formatted()) out")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(theme.surfaceContainer.opacity(0.46))
-        )
+    private func usagePanel<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+            .padding(18)
+            .background(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(theme.card.opacity(0.86))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .strokeBorder(theme.outline.opacity(0.12))
+            )
     }
 
-    private func metricCard(title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
+    private func sectionHeading(title: String, subtitle: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .textCase(.uppercase)
-
-            Text(value)
                 .font(.system(size: 20, weight: .semibold, design: .rounded))
-                .foregroundStyle(.primary)
+            Text(subtitle)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.secondary)
         }
-        .frame(maxWidth: .infinity, minHeight: 66, alignment: .leading)
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(theme.card.opacity(0.82))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(Color.secondary.opacity(0.10))
-        )
+    }
+}
+
+private struct DailyStackedTokenChart: View {
+    var rows: [UsageAnalyticsDailyModelBucket]
+    var theme: IslandThemePalette
+
+    private var days: [UsageDaySummary] { UsageDaySummary.makeDays(from: rows).suffixArray(30) }
+    private var maxTokens: Int { max(days.map(\.totalTokens).max() ?? 1, 1) }
+
+    var body: some View {
+        GeometryReader { proxy in
+            let chartHeight = max(160, proxy.size.height - 72)
+            HStack(alignment: .bottom, spacing: 8) {
+                ForEach(days) { day in
+                    VStack(spacing: 7) {
+                        Text(day.costUSD.currencyString)
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.65)
+
+                        VStack(spacing: 0) {
+                            Spacer(minLength: 0)
+                            ForEach(day.modelRows.reversed()) { row in
+                                Rectangle()
+                                    .fill(UsageModelColor.color(for: row.modelIdentifier))
+                                    .frame(height: segmentHeight(row.totalTokens, chartHeight: chartHeight))
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: chartHeight)
+                        .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                        .background(
+                            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                .fill(theme.surfaceContainer.opacity(0.34))
+                        )
+                        .help(day.helpText)
+
+                        Text(day.shortLabel)
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+        }
     }
 
-    private func todayProviderCard(_ provider: UsageLogProvider) -> some View {
-        let totals = model.todayUsageProviderTotals.first { $0.provider == provider }
-        let isShownOnIsland = model.shouldDisplayTodayTokenUsage(for: provider)
+    private func segmentHeight(_ tokens: Int, chartHeight: CGFloat) -> CGFloat {
+        guard tokens > 0 else { return 0 }
+        return max(2, chartHeight * CGFloat(tokens) / CGFloat(maxTokens))
+    }
+}
 
-        return HStack(alignment: .center, spacing: 10) {
-            HStack(spacing: 8) {
-                Text(provider.displayName)
-                    .font(.system(size: 12, weight: .semibold))
-                if isShownOnIsland {
-                    Text(lang.t("usage.today.onIsland"))
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.secondary.opacity(0.10), in: Capsule())
+private struct ContributionGraph: View {
+    var rows: [UsageAnalyticsDailyModelBucket]
+    @Binding var selectedDate: String?
+    var theme: IslandThemePalette
+
+    private var days: [UsageDaySummary] { UsageDaySummary.makeCompleteDays(from: rows, trailingDayCount: 112) }
+    private var weeks: [[UsageDaySummary]] { days.chunked(into: 7) }
+    private var maxCost: Double { max(days.map(\.costUSD).max() ?? 0, 0.01) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 5) {
+                ForEach(Array(weeks.enumerated()), id: \.offset) { _, week in
+                    VStack(spacing: 5) {
+                        ForEach(week) { day in
+                            RoundedRectangle(cornerRadius: 3.5, style: .continuous)
+                                .fill(fillColor(for: day))
+                                .frame(width: 13, height: 13)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 3.5, style: .continuous)
+                                        .strokeBorder(selectedDate == day.dateKey ? Color.primary.opacity(0.72) : Color.clear, lineWidth: 1.5)
+                                )
+                                .help(day.helpText)
+                                .onTapGesture { selectedDate = day.dateKey }
+                        }
+                    }
                 }
             }
 
-            Spacer(minLength: 8)
+            HStack(spacing: 6) {
+                Text("Less")
+                ForEach(0..<5, id: \.self) { index in
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        .fill(intensityColor(Double(index) / 4))
+                        .frame(width: 12, height: 12)
+                }
+                Text("More")
+            }
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundStyle(.secondary)
+        }
+    }
 
-            VStack(alignment: .trailing, spacing: 3) {
-                Text((totals?.totalTokens ?? 0).formatted())
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.primary)
+    private func fillColor(for day: UsageDaySummary) -> Color {
+        guard day.totalTokens > 0 || day.costUSD > 0 else {
+            return theme.surfaceContainer.opacity(0.42)
+        }
+        return intensityColor(min(1, day.costUSD / maxCost))
+    }
 
-                Text(lang.t(
-                    "usage.today.tokenBreakdown",
-                    (totals?.inputTokens ?? 0).formatted(),
-                    (totals?.outputTokens ?? 0).formatted()
-                ))
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.secondary)
+    private func intensityColor(_ value: Double) -> Color {
+        let clamped = min(max(value, 0), 1)
+        return Color(
+            red: 0.18 + (0.02 * clamped),
+            green: 0.36 + (0.42 * clamped),
+            blue: 0.35 + (0.08 * clamped)
+        )
+    }
+}
+
+private struct ContributionDetail: View {
+    var day: UsageDaySummary
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(day.longLabel)
+                    .font(.system(size: 14, weight: .semibold))
+                Spacer()
+                Text("\(day.totalTokens.abbreviatedTokenString) · \(day.costUSD.currencyString)")
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+            }
+
+            VStack(spacing: 7) {
+                ForEach(day.modelRows) { row in
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(UsageModelColor.color(for: row.modelIdentifier))
+                            .frame(width: 8, height: 8)
+                        Text(row.modelDisplayName)
+                            .font(.system(size: 12, weight: .semibold))
+                            .lineLimit(1)
+                        Spacer(minLength: 10)
+                        Text(row.totalTokens.abbreviatedTokenString)
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                        Text(row.costUSD.currencyString)
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 54, alignment: .leading)
-        .padding(.vertical, 9)
-        .padding(.horizontal, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(theme.surfaceContainer.opacity(isShownOnIsland ? 0.58 : 0.40))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(isShownOnIsland ? theme.primary.opacity(0.22) : theme.outline.opacity(0.08))
-        )
+        .padding(13)
+        .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 
-private extension UsageAggregationPeriod {
-    func displayName(_ lang: LanguageManager) -> String {
-        switch self {
-        case .day:
-            lang.t("usage.period.day")
-        case .month:
-            lang.t("usage.period.month")
-        case .session:
-            lang.t("usage.period.session")
-        }
+private struct ModelLegend: View {
+    var rows: [UsageAnalyticsDailyModelBucket]
+
+    private var models: [UsageModelSummary] {
+        Dictionary(grouping: rows, by: \.modelIdentifier)
+            .map { modelIdentifier, rows in
+                UsageModelSummary(
+                    modelIdentifier: modelIdentifier,
+                    modelDisplayName: rows.first?.modelDisplayName ?? modelIdentifier,
+                    totalTokens: rows.reduce(0) { $0 + $1.totalTokens },
+                    costUSD: rows.reduce(0) { $0 + $1.costUSD }
+                )
+            }
+            .sorted { lhs, rhs in
+                if lhs.totalTokens == rhs.totalTokens { return lhs.modelDisplayName < rhs.modelDisplayName }
+                return lhs.totalTokens > rhs.totalTokens
+            }
     }
 
-    func listTitle(_ lang: LanguageManager) -> String {
-        switch self {
-        case .day:
-            lang.t("usage.list.day")
-        case .month:
-            lang.t("usage.list.month")
-        case .session:
-            lang.t("usage.list.session")
+    var body: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: 8)], alignment: .leading, spacing: 8) {
+            ForEach(models) { model in
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(UsageModelColor.color(for: model.modelIdentifier))
+                        .frame(width: 9, height: 9)
+                    Text(model.modelDisplayName)
+                        .font(.system(size: 11, weight: .semibold))
+                        .lineLimit(1)
+                    Spacer(minLength: 6)
+                    Text(model.costUSD.currencyString)
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 9)
+                .padding(.vertical, 7)
+                .background(Color.secondary.opacity(0.08), in: Capsule())
+            }
         }
     }
 }
 
-private extension IslandTokenUsageDisplayMode {
-    func displayName(_ lang: LanguageManager) -> String {
-        switch self {
-        case .claude:
-            lang.t("settings.display.tokenUsageDisplay.claude")
-        case .codex:
-            lang.t("settings.display.tokenUsageDisplay.codex")
-        case .both:
-            lang.t("settings.display.tokenUsageDisplay.both")
+private struct UsageDaySummary: Identifiable, Equatable {
+    var dateKey: String
+    var modelRows: [UsageAnalyticsDailyModelBucket]
+
+    var id: String { dateKey }
+    var totalTokens: Int { modelRows.reduce(0) { $0 + $1.totalTokens } }
+    var costUSD: Double { modelRows.reduce(0) { $0 + $1.costUSD } }
+
+    var shortLabel: String {
+        guard let date else { return dateKey }
+        let formatter = DateFormatter()
+        formatter.locale = .current
+        formatter.setLocalizedDateFormatFromTemplate("Md")
+        return formatter.string(from: date)
+    }
+
+    var longLabel: String {
+        guard let date else { return dateKey }
+        return date.formatted(date: .abbreviated, time: .omitted)
+    }
+
+    var helpText: String {
+        let modelText = modelRows.prefix(4)
+            .map { "\($0.modelDisplayName): \($0.totalTokens.abbreviatedTokenString), \($0.costUSD.currencyString)" }
+            .joined(separator: "\n")
+        return "\(longLabel)\n\(totalTokens.abbreviatedTokenString) · \(costUSD.currencyString)\n\(modelText)"
+    }
+
+    private var date: Date? {
+        Self.dateFormatter.date(from: dateKey)
+    }
+
+    static func makeDays(from rows: [UsageAnalyticsDailyModelBucket]) -> [UsageDaySummary] {
+        Dictionary(grouping: rows, by: \.dateKey)
+            .map { dateKey, rows in
+                UsageDaySummary(
+                    dateKey: dateKey,
+                    modelRows: rows.sorted { lhs, rhs in
+                        if lhs.totalTokens == rhs.totalTokens { return lhs.modelDisplayName < rhs.modelDisplayName }
+                        return lhs.totalTokens > rhs.totalTokens
+                    }
+                )
+            }
+            .sorted { $0.dateKey < $1.dateKey }
+    }
+
+    static func makeCompleteDays(from rows: [UsageAnalyticsDailyModelBucket], trailingDayCount: Int) -> [UsageDaySummary] {
+        let grouped = Dictionary(grouping: rows, by: \.dateKey)
+        let calendar = Calendar.current
+        let end = calendar.startOfDay(for: .now)
+        let count = max(7, trailingDayCount)
+        return (0..<count).compactMap { offset in
+            guard let date = calendar.date(byAdding: .day, value: offset - count + 1, to: end) else {
+                return nil
+            }
+            let key = dateFormatter.string(from: date)
+            return UsageDaySummary(dateKey: key, modelRows: grouped[key] ?? [])
         }
+    }
+
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = .current
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+}
+
+private struct UsageModelSummary: Identifiable {
+    var modelIdentifier: String
+    var modelDisplayName: String
+    var totalTokens: Int
+    var costUSD: Double
+
+    var id: String { modelIdentifier }
+}
+
+private enum UsageModelColor {
+    private static let palette: [Color] = [
+        Color(red: 0.12, green: 0.56, blue: 0.92),
+        Color(red: 0.93, green: 0.40, blue: 0.22),
+        Color(red: 0.18, green: 0.67, blue: 0.43),
+        Color(red: 0.91, green: 0.73, blue: 0.24),
+        Color(red: 0.74, green: 0.40, blue: 0.92),
+        Color(red: 0.10, green: 0.70, blue: 0.76),
+        Color(red: 0.90, green: 0.30, blue: 0.48),
+        Color(red: 0.48, green: 0.62, blue: 0.18),
+    ]
+
+    static func color(for modelIdentifier: String) -> Color {
+        let hash = abs(modelIdentifier.unicodeScalars.reduce(0) { ($0 &* 31) &+ Int($1.value) })
+        return palette[hash % palette.count]
+    }
+}
+
+private extension Array {
+    func suffixArray(_ maxLength: Int) -> [Element] {
+        Array(suffix(maxLength))
+    }
+
+    func chunked(into size: Int) -> [[Element]] {
+        stride(from: 0, to: count, by: size).map { index in
+            Array(self[index..<Swift.min(index + size, count)])
+        }
+    }
+}
+
+private extension Int {
+    var abbreviatedTokenString: String {
+        let value = Double(self)
+        if self >= 1_000_000_000 { return String(format: "%.1fB", value / 1_000_000_000) }
+        if self >= 1_000_000 { return String(format: "%.1fM", value / 1_000_000) }
+        if self >= 1_000 { return String(format: "%.1fK", value / 1_000) }
+        return formatted()
+    }
+}
+
+private extension Double {
+    var currencyString: String {
+        if self >= 100 { return String(format: "$%.0f", self) }
+        if self >= 10 { return String(format: "$%.1f", self) }
+        return String(format: "$%.2f", self)
     }
 }

@@ -101,7 +101,7 @@
 "settings.display.tokenUsageDisplay.help" = "选择在岛屿标题栏显示哪些来源的今日 token 总量。";
 
 "usage.title" = "令牌用量";
-"usage.subtitle" = "自动从本地 Claude Code 和 Codex 的 JSONL 日志导入。";
+"usage.subtitle" = "自动从本地 Claude Code、Codex 和 OpenCode 日志导入。";
 "usage.sources" = "来源";
 "usage.refreshing" = "刷新中";
 "usage.refresh" = "刷新";
@@ -119,12 +119,16 @@
 "usage.files" = "文件数";
 "usage.groups" = "分组数";
 "usage.empty.title" = "暂无用量数据";
-"usage.empty.subtitle" = "打开 Claude Code 或 Codex，Aisland 会在后台导入 JSONL 日志。";
+"usage.empty.subtitle" = "打开 Claude Code、Codex 或 OpenCode，Aisland 会在后台导入本地用量日志。";
 "usage.today.title" = "今日按来源统计";
 "usage.today.subtitle" = "这些总量可显示在岛屿中。";
 "usage.today.islandDisplay" = "岛屿显示";
 "usage.today.onIsland" = "显示中";
 "usage.today.tokenBreakdown" = "%@ 输入 · %@ 输出";
+"usage.chart.contributionGraph.subtitle" = "选择日期查看不同模型的 token 用量和 Cost。";
+"usage.chart.contributionGraph" = "Contribution Graph";
+"usage.chart.tokensPerDay.subtitle" = "按模型堆叠显示每日 token，并在每日上方标识预估或记录的 Cost。";
+"usage.chart.tokensPerDay" = "Tokens Per Day";
 
 /* Settings - Sound */
 "settings.sound.notifications" = "通知音效";

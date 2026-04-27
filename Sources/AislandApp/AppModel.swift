@@ -157,6 +157,9 @@ final class AppModel {
     func usageAnalyticsSnapshot(for period: UsageAggregationPeriod) -> UsageAnalyticsSnapshot? {
         usageAnalytics.snapshot(for: period)
     }
+    var usageAnalyticsDailyModelUsage: [UsageAnalyticsDailyModelBucket] {
+        usageAnalytics.dailyModelUsage
+    }
     func shouldDisplayTodayTokenUsage(for provider: UsageLogProvider) -> Bool {
         switch islandTokenUsageDisplayMode {
         case .claude:
