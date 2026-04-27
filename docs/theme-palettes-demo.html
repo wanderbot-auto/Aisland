@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aisland macOS Theme Palette Demo</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --page-bg: #070707;
+      --page-fg: #f4f6f8;
+      --page-muted: #98a3ad;
+      --radius: 22px;
+      --font: ui-rounded, "SF Pro Rounded", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font);
+      color: var(--page-fg);
+      background:
+        radial-gradient(circle at 14% 10%, rgba(0, 209, 255, 0.16), transparent 32rem),
+        radial-gradient(circle at 84% 6%, rgba(255, 181, 71, 0.11), transparent 30rem),
+        linear-gradient(135deg, #030303, #0d0f12 48%, #050607);
+    }
+
+    header {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 56px 28px 28px;
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: #00d1ff;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 760px;
+      margin: 0;
+      font-size: clamp(34px, 6vw, 72px);
+      line-height: 0.94;
+      letter-spacing: -0.07em;
+    }
+
+    .intro {
+      max-width: 720px;
+      margin: 20px 0 0;
+      color: var(--page-muted);
+      font-size: 15px;
+      line-height: 1.75;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 26px;
+    }
+
+    .chip {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: rgba(255,255,255,0.72);
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(18px);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 28px 64px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 22px;
+    }
+
+    .theme-card {
+      --bg: #000;
+      --surface: #131313;
+      --card: #1a1a1a;
+      --card-hi: #272727;
+      --line: rgba(255,255,255,0.12);
+      --text: #f6f6f6;
+      --muted: #a8b3bb;
+      --dim: #69737b;
+      --primary: #00d1ff;
+      --on-primary: #001f28;
+      --success: #42e86b;
+      --warning: #ffb547;
+      --danger: #ff8a80;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid color-mix(in srgb, var(--line), transparent 8%);
+      border-radius: 30px;
+      padding: 18px;
+      background:
+        radial-gradient(circle at 90% 0%, color-mix(in srgb, var(--primary), transparent 78%), transparent 16rem),
+        linear-gradient(145deg, color-mix(in srgb, var(--surface), white 2%), var(--bg));
+      box-shadow: 0 24px 80px rgba(0,0,0,0.42);
+    }
+
+    .theme-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(110deg, rgba(255,255,255,0.10), transparent 18%, transparent 75%, rgba(255,255,255,0.04));
+      opacity: 0.55;
+    }
+
+    .theme-meta {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+
+    .theme-title h2 {
+      margin: 0;
+      color: var(--text);
+      font-size: 22px;
+      letter-spacing: -0.04em;
+    }
+
+    .theme-title p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .rating {
+      min-width: 88px;
+      color: var(--primary);
+      text-align: right;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+    }
+
+    .app-window {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: color-mix(in srgb, var(--card), transparent 8%);
+      box-shadow: inset 0 1px rgba(255,255,255,0.07);
+      backdrop-filter: blur(26px);
+    }
+
+    .traffic {
+      display: flex;
+      gap: 7px;
+      padding: 14px 16px 0;
+    }
+
+    .dot { width: 10px; height: 10px; border-radius: 50%; opacity: 0.95; }
+    .red { background: #ff5f57; }
+    .yellow { background: #ffbd2e; }
+    .green { background: #28c840; }
+
+    .island {
+      width: min(280px, 70%);
+      margin: 12px auto 14px;
+      border: 1px solid color-mix(in srgb, var(--primary), transparent 66%);
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: var(--text);
+      background: color-mix(in srgb, var(--bg), transparent 20%);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      box-shadow: 0 12px 44px color-mix(in srgb, var(--primary), transparent 88%);
+    }
+
+    .spark {
+      width: 18px;
+      height: 18px;
+      border-radius: 7px;
+      background:
+        linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary), white 44%));
+      box-shadow: 0 0 22px color-mix(in srgb, var(--primary), transparent 40%);
+    }
+
+    .island span:nth-child(2) {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .island small {
+      margin-left: auto;
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 118px 1fr;
+      min-height: 265px;
+      border-top: 1px solid var(--line);
+    }
+
+    .sidebar {
+      padding: 16px 12px;
+      border-right: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface), transparent 16%);
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 7px;
+      border-radius: 12px;
+      padding: 8px 9px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 750;
+    }
+
+    .nav-item.active {
+      color: var(--text);
+      background: color-mix(in srgb, var(--primary), transparent 86%);
+    }
+
+    .nav-icon {
+      width: 9px;
+      height: 9px;
+      border-radius: 3px;
+      background: currentColor;
+    }
+
+    .content {
+      padding: 16px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 11px;
+      background: color-mix(in srgb, var(--card-hi), transparent 14%);
+    }
+
+    .stat label {
+      display: block;
+      color: var(--dim);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 6px;
+      color: var(--text);
+      font-size: 20px;
+      letter-spacing: -0.04em;
+    }
+
+    .conversation {
+      display: grid;
+      gap: 9px;
+    }
+
+    .bubble {
+      max-width: 88%;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      padding: 10px 12px;
+      color: var(--text);
+      background: color-mix(in srgb, var(--card), transparent 10%);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .bubble.user {
+      justify-self: end;
+      color: var(--on-primary);
+      border-color: color-mix(in srgb, var(--primary), white 20%);
+      background: var(--primary);
+      font-weight: 750;
+    }
+
+    .composer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 8px 8px 13px;
+      color: var(--muted);
+      background: color-mix(in srgb, var(--bg), transparent 34%);
+      font-size: 12px;
+    }
+
+    .send {
+      margin-left: auto;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: var(--on-primary);
+      display: grid;
+      place-items: center;
+      font-weight: 950;
+    }
+
+    .swatches {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .swatch {
+      min-height: 42px;
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 13px;
+      background: var(--c);
+    }
+
+    .codes {
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    code {
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 999px;
+      padding: 6px 8px;
+      color: color-mix(in srgb, var(--text), transparent 14%);
+      background: rgba(255,255,255,0.055);
+      font-size: 10px;
+    }
+
+    .cyber {
+      --bg: #000000; --surface: #131313; --card: #1a1a1a; --card-hi: #2a2a2a;
+      --line: rgba(255,255,255,0.12); --text: #e2e2e2; --muted: #bbc9cf; --dim: #859399;
+      --primary: #00d1ff; --on-primary: #001f28; --success: #42e86b; --warning: #ffb547; --danger: #ffb4ab;
+    }
+
+    .graphite {
+      --bg: #0b0d10; --surface: #151a20; --card: #1b2028; --card-hi: #2a323d;
+      --line: rgba(148,163,184,0.18); --text: #f2f6fa; --muted: #b8c2cc; --dim: #7e8b98;
+      --primary: #7bb7ff; --on-primary: #07111e; --success: #7ee787; --warning: #ffcb6b; --danger: #ff8a80;
+    }
+
+    .aurora {
+      --bg: #061111; --surface: #0b1c1b; --card: #102624; --card-hi: #173734;
+      --line: rgba(134,239,172,0.16); --text: #effdf9; --muted: #a8cfc6; --dim: #6b948c;
+      --primary: #4ade80; --on-primary: #04130a; --success: #8bffa8; --warning: #f8d66d; --danger: #ff9aa2;
+    }
+
+    .ember {
+      --bg: #120806; --surface: #1e100c; --card: #2a1711; --card-hi: #3a2118;
+      --line: rgba(255,177,105,0.17); --text: #fff4ec; --muted: #e0b9a0; --dim: #a97960;
+      --primary: #ff8a3d; --on-primary: #1b0800; --success: #b6e388; --warning: #ffd166; --danger: #ff6b6b;
+    }
+
+    .sage {
+      --bg: #f3f1ea; --surface: #e8e4da; --card: #fffdf6; --card-hi: #ebe6d9;
+      --line: rgba(63,78,61,0.16); --text: #1e2a22; --muted: #60705e; --dim: #89927f;
+      --primary: #2f6f4e; --on-primary: #f8fff9; --success: #3e8f63; --warning: #a66f1f; --danger: #b84a45;
+      color-scheme: light;
+    }
+
+    .pacific {
+      --bg: #061222; --surface: #0b2038; --card: #102b49; --card-hi: #173a5e;
+      --line: rgba(125,211,252,0.17); --text: #eef9ff; --muted: #aacce1; --dim: #7197ad;
+      --primary: #38bdf8; --on-primary: #031320; --success: #5eead4; --warning: #facc15; --danger: #fb7185;
+    }
+
+    .sandstone {
+      --bg: #f7efe2; --surface: #eadcc8; --card: #fff8ed; --card-hi: #f0dfc8;
+      --line: rgba(99,67,38,0.16); --text: #302115; --muted: #7a6049; --dim: #9a8066;
+      --primary: #b45309; --on-primary: #fff7ed; --success: #4d7c0f; --warning: #ca8a04; --danger: #be123c;
+      color-scheme: light;
+    }
+
+    .orchid {
+      --bg: #130d18; --surface: #201529; --card: #2a1c35; --card-hi: #3a2848;
+      --line: rgba(244,114,182,0.16); --text: #fff5fb; --muted: #d7b5c9; --dim: #9f7890;
+      --primary: #f472b6; --on-primary: #230412; --success: #86efac; --warning: #fde68a; --danger: #fb7185;
+    }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .workspace { grid-template-columns: 96px 1fr; }
+      header { padding-top: 38px; }
+    }
+
+    @media (max-width: 560px) {
+      header, main { padding-left: 16px; padding-right: 16px; }
+      .theme-card { border-radius: 24px; padding: 13px; }
+      .workspace { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="eyebrow">Aisland Theme Tokens</p>
+    <h1>macOS App 主题色方案 demo</h1>
+    <p class="intro">这些方案都按 Aisland 的 token 结构组织：background / surface / card / outline / primary / on-primary / success / warning / danger。可以直接映射到 SwiftUI 的 `IslandThemePalette`，实现低成本全局换肤。</p>
+    <div class="toolbar">
+      <span class="chip">推荐主线：Cyber-Minimalist</span>
+      <span class="chip">备选商务：Graphite</span>
+      <span class="chip">浅色模式：Sage / Sandstone</span>
+      <span class="chip">更有品牌感：Aurora / Ember / Pacific</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="grid">
+      <article class="theme-card cyber">
+        <div class="theme-meta">
+          <div class="theme-title"><h2>01 Cyber-Minimalist</h2><p>高对比黑底 + 霓虹青，最贴合 DESIGN.md，适合 AI 工作台和菜单栏岛屿。</p></div>
+          <div class="rating">Primary</div>
+        </div>
+        <div class="app-window"><div class="traffic"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div><div class="island"><span class="spark"></span><span>Codex running</span><small>2</small></div><div class="workspace"><aside class="sidebar"><div class="nav-item active"><i class="nav-icon"></i>General</div><div class="nav-item"><i class="nav-icon"></i>AI Chat</div><div class="nav-item"><i class="nav-icon"></i>Usage</div><div class="nav-item"><i class="nav-icon"></i>Theme</div></aside><section class="content"><div class="stats"><div class="stat"><label>Tokens</label><strong>42.8K</strong></div><div class="stat"><label>Focus</label><strong>96%</strong></div></div><div class="conversation"><div class="bubble user">Refactor settings UI</div><div class="bubble">Using glass panels, thin borders, and a single precise accent.</div></div><div class="composer">Ask Aisland...<span class="send">↑</span></div></section></div></div>
+        <div class="swatches"><span class="swatch" style="--c:var(--bg)"></span><span class="swatch" style="--c:var(--surface)"></span><span class="swatch" style="--c:var(--card)"></span><span class="swatch" style="--c:var(--primary)"></span><span class="swatch" style="--c:var(--success)"></span><span class="swatch" style="--c:var(--warning)"></span><span class="swatch" style="--c:var(--danger)"></span></div>
+        <div class="codes"><code>#000000</code><code>#131313</code><code>#1A1A1A</code><code>#00D1FF</code><code>#42E86B</code><code>#FFB547</code></div>
+      </article>
+
+      <article class="theme-card graphite">
+        <div class="theme-meta"><div class="theme-title"><h2>02 Graphite Classic</h2><p>更稳重的 macOS Pro 工具感，适合默认备选主题，降低霓虹感。</p></div><div class="rating">Safe</div></div>
+        <div class="app-window"><div class="traffic"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div><div class="island"><span class="spark"></span><span>Claude waiting</span><small>1</small></div><div class="workspace"><aside class="sidebar"><div class="nav-item active"><i class="nav-icon"></i>Setup</div><div class="nav-item"><i class="nav-icon"></i>Hooks</div><div class="nav-item"><i class="nav-icon"></i>Sound</div><div class="nav-item"><i class="nav-icon"></i>Shortcuts</div></aside><section class="content"><div class="stats"><div class="stat"><label>Hooks</label><strong>3/3</strong></div><div class="stat"><label>Bridge</label><strong>Live</strong></div></div><div class="conversation"><div class="bubble user">Check terminal</div><div class="bubble">Graphite keeps hierarchy quiet and enterprise-friendly.</div></div><div class="composer">Run diagnostics...<span class="send">↑</span></div></section></div></div>
+        <div class="swatches"><span class="swatch" style="--c:var(--bg)"></span><span class="swatch" style="--c:var(--surface)"></span><span class="swatch" style="--c:var(--card)"></span><span class="swatch" style="--c:var(--primary)"></span><span class="swatch" style="--c:var(--success)"></span><span class="swatch" style="--c:var(--warning)"></span><span class="swatch" style="--c:var(--danger)"></span></div>
+        <div class="codes"><code>#0B0D10</code><code>#151A20</code><code>#1B2028</code><code>#7BB7FF</code><code>#7EE787</code><code>#FFCB6B</code></div>
+      </article>
+
+      <article class="theme-card aurora">
+        <div class="theme-meta"><div class="theme-title"><h2>03 Aurora Terminal</h2><p>冷绿色极光，保留技术感但比青色更自然，适合夜间长时间使用。</p></div><div class="rating">Focus</div></div>
+        <div class="app-window"><div class="traffic"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div><div class="island"><span class="spark"></span><span>Agent active</span><small>4</small></div><div class="workspace"><aside class="sidebar"><div class="nav-item active"><i class="nav-icon"></i>Sessions</div><div class="nav-item"><i class="nav-icon"></i>Skills</div><div class="nav-item"><i class="nav-icon"></i>Noise</div><div class="nav-item"><i class="nav-icon"></i>Display</div></aside><section class="content"><div class="stats"><div class="stat"><label>Tasks</label><strong>12</strong></div><div class="stat"><label>CPU</label><strong>Low</strong></div></div><div class="conversation"><div class="bubble user">Summarize plan</div><div class="bubble">Aurora works well for status-rich dashboards and calm monitoring.</div></div><div class="composer">Continue...<span class="send">↑</span></div></section></div></div>
+        <div class="swatches"><span class="swatch" style="--c:var(--bg)"></span><span class="swatch" style="--c:var(--surface)"></span><span class="swatch" style="--c:var(--card)"></span><span class="swatch" style="--c:var(--primary)"></span><span class="swatch" style="--c:var(--success)"></span><span class="swatch" style="--c:var(--warning)"></span><span class="swatch" style="--c:var(--danger)"></span></div>
+        <div class="codes"><code>#061111</code><code>#0B1C1B</code><code>#102624</code><code>#4ADE80</code><code>#8BFFA8</code><code>#F8D66D</code></div>
+      </article>
+
+      <article class="theme-card ember">
+        <div class="theme-meta"><div class="theme-title"><h2>04 Ember Lab</h2><p>暖黑 + 橙色高亮，适合“执行中 / 构建中 / 实验室”气质。</p></div><div class="rating">Warm</div></div>
+        <div class="app-window"><div class="traffic"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div><div class="island"><span class="spark"></span><span>Build running</span><small>8</small></div><div class="workspace"><aside class="sidebar"><div class="nav-item active"><i class="nav-icon"></i>Build</div><div class="nav-item"><i class="nav-icon"></i>Logs</div><div class="nav-item"><i class="nav-icon"></i>Audio</div><div class="nav-item"><i class="nav-icon"></i>Theme</div></aside><section class="content"><div class="stats"><div class="stat"><label>Jobs</label><strong>8</strong></div><div class="stat"><label>Heat</label><strong>37°</strong></div></div><div class="conversation"><div class="bubble user">Ship it</div><div class="bubble">Ember gives urgency without using destructive red as the brand color.</div></div><div class="composer">Deploy...<span class="send">↑</span></div></section></div></div>
+        <div class="swatches"><span class="swatch" style="--c:var(--bg)"></span><span class="swatch" style="--c:var(--surface)"></span><span class="swatch" style="--c:var(--card)"></span><span class="swatch" style="--c:var(--primary)"></span><span class="swatch" style="--c:var(--success)"></span><span class="swatch" style="--c:var(--warning)"></span><span class="swatch" style="--c:var(--danger)"></span></div>
+        <div class="codes"><code>#120806</code><code>#1E100C</code><code>#2A1711</code><code>#FF8A3D</code><code>#B6E388</code><code>#FFD166</code></div>
+      </article>
+
+      <article class="theme-card sage">
+        <div class="theme-meta"><div class="theme-title"><h2>05 Sage Paper</h2><p>浅色低饱和，适合白天、办公环境和设置页长阅读。</p></div><div class="rating">Light</div></div>
+        <div class="app-window"><div class="traffic"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div><div class="island"><span class="spark"></span><span>Quiet mode</span><small>2</small></div><div class="workspace"><aside class="sidebar"><div class="nav-item active"><i class="nav-icon"></i>General</div><div class="nav-item"><i class="nav-icon"></i>Chat</div><div class="nav-item"><i class="nav-icon"></i>Usage</div><div class="nav-item"><i class="nav-icon"></i>About</div></aside><section class="content"><div class="stats"><div class="stat"><label>Read</label><strong>12m</strong></div><div class="stat"><label>Mode</label><strong>Day</strong></div></div><div class="conversation"><div class="bubble user">Review settings</div><div class="bubble">Sage is calm, readable, and friendly without feeling playful.</div></div><div class="composer">Search settings...<span class="send">↑</span></div></section></div></div>
+        <div class="swatches"><span class="swatch" style="--c:var(--bg)"></span><span class="swatch" style="--c:var(--surface)"></span><span class="swatch" style="--c:var(--card)"></span><span class="swatch" style="--c:var(--primary)"></span><span class="swatch" style="--c:var(--success)"></span><span class="swatch" style="--c:var(--warning)"></span><span class="swatch" style="--c:var(--danger)"></span></div>
+        <div class="codes"><code>#F3F1EA</code><code>#E8E4DA</code><code>#FFFDF6</code><code>#2F6F4E</code><code>#3E8F63</code><code>#A66F1F</code></div>
+      </article>
+
+      <article class="theme-card pacific">
+        <div class="theme-meta"><div class="theme-title"><h2>06 Pacific Glass</h2><p>海洋蓝玻璃，适合更现代、更 SaaS 的 macOS 工具视觉。</p></div><div class="rating">Glass</div></div>
+        <div class="app-window"><div class="traffic"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div><div class="island"><span class="spark"></span><span>Search web</span><small>3</small></div><div class="workspace"><aside class="sidebar"><div class="nav-item active"><i class="nav-icon"></i>Web</div><div class="nav-item"><i class="nav-icon"></i>Models</div><div class="nav-item"><i class="nav-icon"></i>Files</div><div class="nav-item"><i class="nav-icon"></i>API</div></aside><section class="content"><div class="stats"><div class="stat"><label>Sources</label><strong>18</strong></div><div class="stat"><label>Latency</label><strong>0.8s</strong></div></div><div class="conversation"><div class="bubble user">Find context</div><div class="bubble">Pacific feels crisp and native for research-heavy workflows.</div></div><div class="composer">Ask with sources...<span class="send">↑</span></div></section></div></div>
+        <div class="swatches"><span class="swatch" style="--c:var(--bg)"></span><span class="swatch" style="--c:var(--surface)"></span><span class="swatch" style="--c:var(--card)"></span><span class="swatch" style="--c:var(--primary)"></span><span class="swatch" style="--c:var(--success)"></span><span class="swatch" style="--c:var(--warning)"></span><span class="swatch" style="--c:var(--danger)"></span></div>
+        <div class="codes"><code>#061222</code><code>#0B2038</code><code>#102B49</code><code>#38BDF8</code><code>#5EEAD4</code><code>#FACC15</code></div>
+      </article>
+
+      <article class="theme-card sandstone">
+        <div class="theme-meta"><div class="theme-title"><h2>07 Sandstone Studio</h2><p>暖浅色，适合创作型设置页和可读性优先的工作流。</p></div><div class="rating">Warm Light</div></div>
+        <div class="app-window"><div class="traffic"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div><div class="island"><span class="spark"></span><span>Draft ready</span><small>5</small></div><div class="workspace"><aside class="sidebar"><div class="nav-item active"><i class="nav-icon"></i>Draft</div><div class="nav-item"><i class="nav-icon"></i>Skills</div><div class="nav-item"><i class="nav-icon"></i>Export</div><div class="nav-item"><i class="nav-icon"></i>Prefs</div></aside><section class="content"><div class="stats"><div class="stat"><label>Words</label><strong>1.2K</strong></div><div class="stat"><label>Tone</label><strong>Soft</strong></div></div><div class="conversation"><div class="bubble user">Polish copy</div><div class="bubble">Sandstone makes Aisland feel less terminal-like and more editorial.</div></div><div class="composer">Rewrite...<span class="send">↑</span></div></section></div></div>
+        <div class="swatches"><span class="swatch" style="--c:var(--bg)"></span><span class="swatch" style="--c:var(--surface)"></span><span class="swatch" style="--c:var(--card)"></span><span class="swatch" style="--c:var(--primary)"></span><span class="swatch" style="--c:var(--success)"></span><span class="swatch" style="--c:var(--warning)"></span><span class="swatch" style="--c:var(--danger)"></span></div>
+        <div class="codes"><code>#F7EFE2</code><code>#EADCC8</code><code>#FFF8ED</code><code>#B45309</code><code>#4D7C0F</code><code>#CA8A04</code></div>
+      </article>
+
+      <article class="theme-card orchid">
+        <div class="theme-meta"><div class="theme-title"><h2>08 Orchid Signal</h2><p>更情绪化的深色主题，用粉红作信号色，适合品牌差异化但不建议默认。</p></div><div class="rating">Expressive</div></div>
+        <div class="app-window"><div class="traffic"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div><div class="island"><span class="spark"></span><span>Idea captured</span><small>7</small></div><div class="workspace"><aside class="sidebar"><div class="nav-item active"><i class="nav-icon"></i>Ideas</div><div class="nav-item"><i class="nav-icon"></i>Chat</div><div class="nav-item"><i class="nav-icon"></i>Archive</div><div class="nav-item"><i class="nav-icon"></i>Theme</div></aside><section class="content"><div class="stats"><div class="stat"><label>Notes</label><strong>24</strong></div><div class="stat"><label>Mood</label><strong>Bold</strong></div></div><div class="conversation"><div class="bubble user">Brainstorm</div><div class="bubble">Orchid is memorable, but use it as an optional personality theme.</div></div><div class="composer">Capture...<span class="send">↑</span></div></section></div></div>
+        <div class="swatches"><span class="swatch" style="--c:var(--bg)"></span><span class="swatch" style="--c:var(--surface)"></span><span class="swatch" style="--c:var(--card)"></span><span class="swatch" style="--c:var(--primary)"></span><span class="swatch" style="--c:var(--success)"></span><span class="swatch" style="--c:var(--warning)"></span><span class="swatch" style="--c:var(--danger)"></span></div>
+        <div class="codes"><code>#130D18</code><code>#201529</code><code>#2A1C35</code><code>#F472B6</code><code>#86EFAC</code><code>#FDE68A</code></div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>
