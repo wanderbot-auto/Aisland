@@ -20,11 +20,13 @@
 ## 设计原则
 
 - 延续现有 Figma 稿的深色磨砂面板、低饱和描边、荧光强调色和 macOS utility window 结构。
-- 每个页面统一保留：
-  - 左侧导航
-  - 顶部标题与单一主动作
-  - 顶部 2 张摘要卡
-  - 4 个内容分区标题
+- 每个页面统一保留相同的视觉系统：深色磨砂容器、细描边、荧光强调、macOS utility window 节奏。
+- 左侧导航改为固定信息架构，不再为了强调当前页而打乱顺序；分区基于真实功能：
+  - `App Settings`：General / Appearance / Shortcuts
+  - `Agent Tasks`：Setup / Display / Usage
+  - `AI Chat`：AI Chat / Skills
+  - `White Noise`：White Noise / Sound
+- 右侧内容区不再强制套用 `General` 页的统一骨架，而是按照实际配置项数量与操作密度决定是 2 段、3 段还是 4 段式布局。
 - 内容映射以 `Sources/AislandApp/Views/SettingsView.swift` 与 `Sources/AislandApp/Views/AppearanceSettingsPane.swift` 的真实功能为准，不新增超出当前产品边界的设置项。
 
 ## 页面映射
@@ -101,5 +103,6 @@
 
 ## 当前说明
 
-- 为了在静态稿里更清楚地表达“当前页已选中”，除 `General` 外，其余设置稿将当前页面放到侧栏第一项高亮展示；后续如需进入高保真阶段，可再恢复固定侧栏顺序。
-- 本轮重点是把所有设置页补齐到统一视觉系统中，后续若进入实现阶段，再逐页细化控件状态、空态、错误态和滚动细节。
+- 已移除左下角会员卡片以及 `Behavior defaults` 按钮，避免出现当前产品里并不存在的会员 / 默认模板心智。
+- 当前静态稿侧重评审信息架构与布局差异：`General`、`Skills`、`Sound`、`Shortcuts` 等低配置密度页面已收敛成 2 段式；`Display` 保留 3 段；`AI Chat`、`Setup`、`Appearance` 继续承载更高的信息量。
+- 后续如进入实现阶段，再逐页细化控件状态、空态、错误态和滚动细节。
