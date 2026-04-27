@@ -51,6 +51,10 @@
 
 /* Settings - Appearance */
 "settings.tab.appearance" = "個人化";
+"settings.appearance.theme" = "全域主題";
+"settings.appearance.theme.cyberMinimalist" = "賽博極簡";
+"settings.appearance.theme.graphiteClassic" = "石墨經典";
+"settings.appearance.theme.help" = "主題 token 會統一驅動島嶼、聊天、白噪音、用量和所有設定頁，後續可低成本快速切換全域風格。";
 "settings.appearance.mode" = "模式";
 "settings.appearance.mode.default" = "預設";
 "settings.appearance.mode.custom" = "自訂";

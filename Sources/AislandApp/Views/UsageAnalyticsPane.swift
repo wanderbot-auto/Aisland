@@ -6,6 +6,7 @@ struct UsageAnalyticsPane: View {
     var model: AppModel
 
     @State private var selectedPeriod: UsageAggregationPeriod = .day
+    @Environment(\.islandTheme) private var theme
 
     private var lang: LanguageManager { model.lang }
     private var snapshot: UsageAnalyticsSnapshot? { model.usageAnalyticsSnapshot(for: selectedPeriod) }
@@ -34,7 +35,7 @@ struct UsageAnalyticsPane: View {
             }
             .padding(20)
         }
-        .background(Color(nsColor: .windowBackgroundColor))
+        .islandSettingsPaneBackground()
         .navigationTitle(lang.t("settings.tab.usage"))
         .onAppear {
             if snapshot == nil {
@@ -80,11 +81,11 @@ struct UsageAnalyticsPane: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.58))
+                .fill(theme.card.opacity(0.82))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(Color.secondary.opacity(0.10))
+                .strokeBorder(theme.outline.opacity(0.12))
         )
     }
 
@@ -184,11 +185,11 @@ struct UsageAnalyticsPane: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.58))
+                .fill(theme.card.opacity(0.82))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(Color.secondary.opacity(0.10))
+                .strokeBorder(theme.outline.opacity(0.12))
         )
     }
 
@@ -214,11 +215,11 @@ struct UsageAnalyticsPane: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.58))
+                .fill(theme.card.opacity(0.82))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(Color.secondary.opacity(0.10))
+                .strokeBorder(theme.outline.opacity(0.12))
         )
     }
 
@@ -250,7 +251,7 @@ struct UsageAnalyticsPane: View {
         .padding(.horizontal, 10)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(nsColor: .windowBackgroundColor).opacity(0.46))
+                .fill(theme.surfaceContainer.opacity(0.46))
         )
     }
 
@@ -269,7 +270,7 @@ struct UsageAnalyticsPane: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.58))
+                .fill(theme.card.opacity(0.82))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -316,11 +317,11 @@ struct UsageAnalyticsPane: View {
         .padding(.horizontal, 10)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(nsColor: .windowBackgroundColor).opacity(isShownOnIsland ? 0.58 : 0.40))
+                .fill(theme.surfaceContainer.opacity(isShownOnIsland ? 0.58 : 0.40))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(isShownOnIsland ? Color.accentColor.opacity(0.22) : Color.secondary.opacity(0.08))
+                .strokeBorder(isShownOnIsland ? theme.primary.opacity(0.22) : theme.outline.opacity(0.08))
         )
     }
 }

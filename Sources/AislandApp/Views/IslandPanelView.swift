@@ -61,6 +61,8 @@ struct IslandPanelView: View {
     @State private var isHovering = false
     @State private var showingQuitConfirmation = false
 
+    private var theme: IslandThemePalette { IslandTheme.palette(for: model.interfaceTheme) }
+
     private var isOpened: Bool {
         model.notchStatus == .opened
     }
@@ -197,6 +199,7 @@ struct IslandPanelView: View {
         }
         .ignoresSafeArea()
         .preferredColorScheme(.dark)
+        .islandTheme(model.interfaceTheme)
         .alert(model.lang.t("island.quit.confirmTitle"), isPresented: $showingQuitConfirmation) {
             Button(model.lang.t("island.quit.confirmAction"), role: .destructive) {
                 model.quitApplication()
@@ -241,7 +244,7 @@ struct IslandPanelView: View {
         VStack(spacing: 0) {
             ZStack(alignment: .top) {
                 surfaceShape
-                    .fill(Color.black.opacity(hidesClosedSurfaceChrome ? 0 : 1))
+                    .fill(theme.glass.opacity(hidesClosedSurfaceChrome ? 0 : 1))
                     .frame(width: surfaceWidth, height: surfaceHeight)
 
                 VStack(spacing: 0) {
@@ -262,7 +265,7 @@ struct IslandPanelView: View {
                 .overlay(alignment: .top) {
                     // Black strip to blend with physical notch at the very top
                     Rectangle()
-                        .fill(Color.black)
+                        .fill(theme.background)
                         .frame(height: 1)
                         .padding(.horizontal, usesOpenedVisualState ? NotchShape.openedTopRadius : NotchShape.closedTopRadius)
                         .opacity(hidesClosedSurfaceChrome ? 0 : 1)
@@ -273,11 +276,11 @@ struct IslandPanelView: View {
                 }
                 .overlay(alignment: .top) {
                     Capsule()
-                        .fill(Color.black)
+                        .fill(theme.background)
                         .frame(width: idleEdgeWidth, height: Self.closedIdleEdgeHeight)
                         .overlay {
                             Capsule()
-                                .stroke(Color.white.opacity(0.05), lineWidth: 1)
+                                .stroke(theme.outline.opacity(0.12), lineWidth: 1)
                         }
                         .opacity(showsIdleEdgeWhenCollapsed ? 1 : 0)
                 }
@@ -352,7 +355,7 @@ struct IslandPanelView: View {
                         .frame(width: closedNotchWidth - 20)
                 } else {
                     Rectangle()
-                        .fill(Color.black)
+                        .fill(theme.background)
                         .frame(width: closedNotchWidth - NotchShape.closedTopRadius + (isPopping ? 18 : 0))
                         .overlay(
                             CentralActivityLabel(
@@ -435,7 +438,7 @@ struct IslandPanelView: View {
                 model.toggleSoundMuted()
             }
 
-            headerIconButton(systemName: "gearshape.fill", tint: .white.opacity(0.62)) {
+            headerIconButton(systemName: "gearshape.fill", tint: theme.textSecondary.opacity(0.72)) {
                 model.showSettings()
             }
 
@@ -460,7 +463,7 @@ struct IslandPanelView: View {
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(tint)
                 .frame(width: Self.headerControlButtonSize, height: Self.headerControlButtonSize)
-                .background(.white.opacity(0.08), in: Circle())
+                .background(theme.surfaceContainerHighest.opacity(0.56), in: Circle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(accessibilityLabel ?? systemName)
@@ -498,7 +501,7 @@ struct IslandPanelView: View {
             }
         }
         .padding(2)
-        .background(.white.opacity(0.07), in: Capsule())
+        .background(theme.surfaceContainerHighest.opacity(0.56), in: Capsule())
         .frame(maxWidth: openedSurfaceSwitcherWidth)
     }
 
@@ -510,10 +513,10 @@ struct IslandPanelView: View {
             let isSelected = tab.matches(model.islandSurface)
             ZStack {
                 Capsule()
-                    .fill(isSelected ? Color.cyan : Color.white.opacity(0.001))
+                    .fill(isSelected ? theme.primary : Color.white.opacity(0.001))
                 Image(systemName: tab.systemImageName)
                     .font(.system(size: 10.5, weight: .semibold))
-                    .foregroundStyle(isSelected ? Color.black.opacity(0.86) : Color.white.opacity(0.58))
+                    .foregroundStyle(isSelected ? theme.onPrimary.opacity(0.92) : theme.textSecondary.opacity(0.72))
             }
             .frame(width: 34, height: 20)
             .contentShape(Capsule())
@@ -534,7 +537,7 @@ struct IslandPanelView: View {
             HStack(spacing: 8) {
                 Image(systemName: "sparkles")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(theme.primary)
                 Text(model.lang.t("island.hint.installHooks"))
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.white.opacity(0.85))
@@ -549,10 +552,10 @@ struct IslandPanelView: View {
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Color.accentColor.opacity(0.14))
+                    .fill(theme.primary.opacity(0.14))
                     .overlay(
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .stroke(Color.accentColor.opacity(0.35), lineWidth: 0.5)
+                            .stroke(theme.primary.opacity(0.35), lineWidth: 0.5)
                     )
             )
         }
@@ -830,11 +833,11 @@ struct IslandPanelView: View {
 
             Text(Self.compactTokenCount(provider.totalTokens))
                 .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(.mint.opacity(0.95))
+                .foregroundStyle(theme.primary.opacity(0.95))
         }
         .padding(.horizontal, 7)
         .padding(.vertical, 3)
-        .background(.white.opacity(0.07), in: Capsule())
+        .background(theme.surfaceContainerHighest.opacity(0.56), in: Capsule())
         .help(provider.helpText)
     }
 

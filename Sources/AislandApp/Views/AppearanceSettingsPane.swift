@@ -5,12 +5,29 @@ struct AppearanceSettingsPane: View {
     var model: AppModel
     @State private var previewPhase: SessionPhase = .running
     @State private var showsAdvancedCustomization = false
+    @Environment(\.islandTheme) private var theme
 
     private var lang: LanguageManager { model.lang }
     private var isCustom: Bool { model.islandAppearanceMode == .custom }
 
     var body: some View {
         Form {
+            Section(lang.t("settings.appearance.theme")) {
+                Picker(lang.t("settings.appearance.theme"), selection: Binding(
+                    get: { model.interfaceTheme },
+                    set: { model.interfaceTheme = $0 }
+                )) {
+                    ForEach(IslandInterfaceTheme.allCases) { theme in
+                        Text(theme.displayName(lang)).tag(theme)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                Text(lang.t("settings.appearance.theme.help"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             Section(lang.t("settings.appearance.mode")) {
                 Picker(lang.t("settings.appearance.mode"), selection: Binding(
                     get: { model.islandAppearanceMode },
@@ -55,6 +72,7 @@ struct AppearanceSettingsPane: View {
             }
         }
         .formStyle(.grouped)
+        .islandSettingsPaneBackground()
         .navigationTitle(lang.t("settings.tab.appearance"))
     }
 
@@ -126,7 +144,11 @@ struct AppearanceSettingsPane: View {
     private var notchPreviewCard: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(white: 0.12))
+                .fill(theme.backgroundElevated)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(theme.outline.opacity(0.14), lineWidth: 1)
+                )
 
             VStack(spacing: 14) {
                 previewIslandBar
@@ -181,7 +203,11 @@ struct AppearanceSettingsPane: View {
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 10)
-        .background(Color.black, in: RoundedRectangle(cornerRadius: 18, style: .continuous)))
+        .background(theme.glassStrong, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(theme.outline.opacity(0.16), lineWidth: 1)
+        ))
     }
 
     private var shouldPreviewIdleEdgeOnly: Bool {
@@ -192,11 +218,11 @@ struct AppearanceSettingsPane: View {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
             Capsule()
-                .fill(Color.black)
+                .fill(theme.glassStrong)
                 .frame(height: 4)
                 .overlay {
                     Capsule()
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        .stroke(theme.outline.opacity(0.18), lineWidth: 1)
                 }
         }
         .frame(maxWidth: .infinity)
@@ -210,14 +236,14 @@ struct AppearanceSettingsPane: View {
                 } label: {
                     Text(phaseTitle(phase))
                         .font(.system(size: 11, weight: .medium, design: .rounded))
-                        .foregroundStyle(previewPhase == phase ? .white : .white.opacity(0.5))
+                        .foregroundStyle(previewPhase == phase ? theme.onPrimary : theme.textSecondary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
                         .background(
                             Capsule().fill(
                                 previewPhase == phase
                                     ? model.statusColor(for: phase).opacity(0.35)
-                                    : Color.white.opacity(0.06)
+                                    : theme.surfaceContainer.opacity(0.72)
                             )
                         )
                 }
@@ -267,7 +293,7 @@ struct AppearanceSettingsPane: View {
         } label: {
             VStack(spacing: 8) {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Color.white.opacity(0.05))
+                    .fill(theme.surfaceContainer)
                     .frame(height: 48)
                     .overlay {
                         if style == .custom {
@@ -281,7 +307,7 @@ struct AppearanceSettingsPane: View {
                             } else {
                                 Image(systemName: "person.crop.circle.badge.plus")
                                     .font(.system(size: 20))
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(theme.textSecondary)
                             }
                         } else {
                             IslandPixelGlyph(
@@ -296,18 +322,18 @@ struct AppearanceSettingsPane: View {
 
                 Text(pixelShapeTitle(style))
                     .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(theme.text)
             }
             .padding(10)
             .frame(maxWidth: .infinity)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color.white.opacity(selected ? 0.06 : 0.02))
+                    .fill(selected ? theme.cardSelected : theme.card.opacity(0.78))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(
-                        selected ? Color.accentColor : Color.white.opacity(0.08),
+                        selected ? theme.primary : theme.outline.opacity(0.12),
                         lineWidth: selected ? 2 : 1
                     )
             )
@@ -332,6 +358,17 @@ struct AppearanceSettingsPane: View {
         case .steps:  lang.t("settings.appearance.pixelShape.steps")
         case .blocks: lang.t("settings.appearance.pixelShape.blocks")
         case .custom: lang.t("settings.appearance.pixelShape.custom")
+        }
+    }
+}
+
+private extension IslandInterfaceTheme {
+    func displayName(_ lang: LanguageManager) -> String {
+        switch self {
+        case .cyberMinimalist:
+            lang.t("settings.appearance.theme.cyberMinimalist")
+        case .graphiteClassic:
+            lang.t("settings.appearance.theme.graphiteClassic")
         }
     }
 }

@@ -51,6 +51,10 @@
 
 /* Settings - Appearance */
 "settings.tab.appearance" = "Appearance";
+"settings.appearance.theme" = "Global Theme";
+"settings.appearance.theme.cyberMinimalist" = "Cyber-Minimalist";
+"settings.appearance.theme.graphiteClassic" = "Graphite";
+"settings.appearance.theme.help" = "Theme tokens drive the island, chat, white-noise, usage, and every settings pane so a global restyle stays low-cost.";
 "settings.appearance.mode" = "Mode";
 "settings.appearance.mode.default" = "Default";
 "settings.appearance.mode.custom" = "Custom";

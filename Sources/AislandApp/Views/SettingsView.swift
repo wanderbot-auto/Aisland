@@ -52,12 +52,12 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         switch self {
         case .general:    .gray
         case .setup:      .orange
-        case .ai:         .cyan
-        case .skills:     .teal
-        case .whiteNoise: .mint
-        case .appearance: .purple
-        case .display:    .blue
-        case .usage:      .mint
+        case .ai:         IslandTheme.cyber.primary
+        case .skills:     IslandTheme.cyber.secondary
+        case .whiteNoise: IslandTheme.cyber.success
+        case .appearance: IslandTheme.cyber.primary
+        case .display:    IslandTheme.cyber.primaryContainer
+        case .usage:      IslandTheme.cyber.success
         case .sound:      .green
         case .shortcuts:  .gray
         }
@@ -104,6 +104,7 @@ struct SettingsView: View {
     @State private var selectedTab: SettingsTab = .general
 
     private var lang: LanguageManager { model.lang }
+    private var theme: IslandThemePalette { IslandTheme.palette(for: model.interfaceTheme) }
 
     var body: some View {
         NavigationSplitView {
@@ -114,6 +115,8 @@ struct SettingsView: View {
         }
         .frame(minWidth: 680, idealWidth: 780, minHeight: 480, idealHeight: 560)
         .preferredColorScheme(.dark)
+        .islandTheme(model.interfaceTheme)
+        .background(theme.background.ignoresSafeArea())
         .onReceive(NotificationCenter.default.publisher(for: .openIslandSelectSetupTab)) { _ in
             selectedTab = .setup
         }
@@ -141,6 +144,8 @@ struct SettingsView: View {
             }
         }
         .listStyle(.sidebar)
+        .scrollContentBackground(.hidden)
+        .background(theme.backgroundElevated)
     }
 
     // MARK: Detail
@@ -224,6 +229,7 @@ struct GeneralSettingsPane: View {
 
         }
         .formStyle(.grouped)
+        .islandSettingsPaneBackground()
         .navigationTitle(lang.t("settings.tab.general"))
     }
 }
@@ -233,6 +239,7 @@ struct GeneralSettingsPane: View {
 struct LLMSettingsPane: View {
     var model: AppModel
     @State private var providerSearchText = ""
+    @Environment(\.islandTheme) private var theme
 
     private var lang: LanguageManager { model.lang }
     private let providerGridColumns = [
@@ -274,11 +281,11 @@ struct LLMSettingsPane: View {
                 .padding(.vertical, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color(nsColor: .controlBackgroundColor).opacity(0.82))
+                        .fill(theme.surfaceContainer.opacity(0.82))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .strokeBorder(Color.secondary.opacity(0.14), lineWidth: 1)
+                        .strokeBorder(theme.outline.opacity(0.16), lineWidth: 1)
                 )
 
                 LazyVGrid(columns: providerGridColumns, spacing: 10) {
@@ -320,6 +327,7 @@ struct LLMSettingsPane: View {
             }
         }
         .formStyle(.grouped)
+        .islandSettingsPaneBackground()
         .navigationTitle(lang.t("settings.tab.ai"))
     }
 }
@@ -386,6 +394,7 @@ struct SkillsSettingsPane: View {
             }
         }
         .formStyle(.grouped)
+        .islandSettingsPaneBackground()
         .navigationTitle(lang.t("settings.tab.skills"))
         .onAppear {
             model.refreshTemporaryChatSkills()
@@ -519,7 +528,7 @@ struct WhiteNoiseSettingsPane: View {
                 .padding(.horizontal, 22)
                 .padding(.bottom, 18)
         }
-        .background(Color(nsColor: .windowBackgroundColor))
+        .islandSettingsPaneBackground()
         .navigationTitle(lang.t("settings.tab.whiteNoise"))
     }
 }
@@ -527,29 +536,30 @@ struct WhiteNoiseSettingsPane: View {
 private struct LLMProviderCard: View {
     let provider: LLMProviderKind
     let isSelected: Bool
+    @Environment(\.islandTheme) private var theme
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             ZStack {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(isSelected ? Color.accentColor.opacity(0.14) : Color.secondary.opacity(0.08))
+                    .fill(isSelected ? theme.primary.opacity(0.14) : theme.surfaceContainerHigh.opacity(0.62))
 
                 Image(systemName: provider.systemImageName)
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(isSelected ? Color.accentColor : Color.secondary.opacity(0.82))
+                    .foregroundStyle(isSelected ? theme.primary : theme.textSecondary.opacity(0.82))
             }
             .frame(width: 34, height: 34)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(provider.displayName)
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(theme.text)
                     .lineLimit(1)
                     .truncationMode(.tail)
 
                 Text(provider.defaultModel)
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(theme.textSecondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
 
@@ -557,12 +567,12 @@ private struct LLMProviderCard: View {
 
                 Text(provider.shortName)
                     .font(.system(size: 9, weight: .bold, design: .rounded))
-                    .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
+                    .foregroundStyle(isSelected ? theme.primary : theme.textSecondary)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
                     .background(
                         Capsule(style: .continuous)
-                            .fill(isSelected ? Color.accentColor.opacity(0.10) : Color.secondary.opacity(0.08))
+                            .fill(isSelected ? theme.primary.opacity(0.10) : theme.surfaceContainerHigh.opacity(0.62))
                     )
             }
 
@@ -579,19 +589,19 @@ private struct LLMProviderCard: View {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 14, weight: .semibold))
                     .symbolRenderingMode(.palette)
-                    .foregroundStyle(Color.white, Color.accentColor)
+                    .foregroundStyle(theme.onPrimary, theme.primary)
                     .padding(8)
             }
         }
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .strokeBorder(
-                    isSelected ? Color.accentColor : Color.secondary.opacity(0.16),
+                    isSelected ? theme.primary : theme.outline.opacity(0.16),
                     lineWidth: isSelected ? 1.8 : 1
                 )
         )
         .shadow(
-            color: isSelected ? Color.accentColor.opacity(0.10) : Color.black.opacity(0.03),
+            color: isSelected ? theme.primary.opacity(0.10) : theme.shadow.opacity(0.08),
             radius: isSelected ? 8 : 3,
             x: 0,
             y: isSelected ? 4 : 2
@@ -601,10 +611,10 @@ private struct LLMProviderCard: View {
 
     private var cardBackground: Color {
         if isSelected {
-            return Color.accentColor.opacity(0.06)
+            return theme.primary.opacity(0.06)
         }
 
-        return Color(nsColor: .controlBackgroundColor).opacity(0.74)
+        return theme.card.opacity(0.74)
     }
 }
 
@@ -635,6 +645,7 @@ struct ShortcutSettingsPane: View {
             }
         }
         .formStyle(.grouped)
+        .islandSettingsPaneBackground()
         .navigationTitle(lang.t("settings.tab.shortcuts"))
     }
 
@@ -756,6 +767,7 @@ struct DisplaySettingsPane: View {
             }
         }
         .formStyle(.grouped)
+        .islandSettingsPaneBackground()
         .navigationTitle(lang.t("settings.tab.display"))
     }
 }
@@ -816,6 +828,7 @@ struct SoundSettingsPane: View {
             }
         }
         .formStyle(.grouped)
+        .islandSettingsPaneBackground()
         .navigationTitle(lang.t("settings.tab.sound"))
     }
 }
@@ -966,6 +979,7 @@ struct SetupSettingsPane: View {
             }
         }
         .formStyle(.grouped)
+        .islandSettingsPaneBackground()
         .navigationTitle(lang.t("settings.tab.setup"))
     }
 
@@ -1422,6 +1436,7 @@ struct UpdateBanner: View {
     let version: String
     let lang: LanguageManager
     var onUpdate: () -> Void
+    @Environment(\.islandTheme) private var theme
 
     var body: some View {
         Button(action: onUpdate) {
@@ -1438,10 +1453,10 @@ struct UpdateBanner: View {
             .padding(.vertical, 6)
             .background(
                 Capsule()
-                    .fill(Color.blue)
+                    .fill(theme.primary)
             )
         }
         .buttonStyle(.plain)
-        .shadow(color: .blue.opacity(0.3), radius: 4, y: 2)
+        .shadow(color: theme.primary.opacity(0.3), radius: 4, y: 2)
     }
 }

@@ -8,6 +8,7 @@ struct TemporaryChatView: View {
     @State private var draft = ""
     @State private var showsClearConfirmation = false
     @FocusState private var isInputFocused: Bool
+    @Environment(\.islandTheme) private var theme
 
     private var lang: LanguageManager { model.lang }
 
@@ -74,9 +75,9 @@ struct TemporaryChatView: View {
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
                     Capsule()
-                        .fill(Color.white.opacity(0.08))
+                        .fill(theme.surfaceContainerHighest.opacity(0.44))
                     Capsule()
-                        .fill(model.temporaryChatTokenStats.contextRatio > 0.8 ? Color.orange.opacity(0.76) : Color.cyan.opacity(0.66))
+                        .fill(model.temporaryChatTokenStats.contextRatio > 0.8 ? theme.warning.opacity(0.76) : theme.primary.opacity(0.66))
                         .frame(width: max(3, proxy.size.width * model.temporaryChatTokenStats.contextRatio))
                 }
             }
@@ -163,7 +164,7 @@ struct TemporaryChatView: View {
         VStack(spacing: 8) {
             Image(systemName: "bubble.left.and.sparkles.fill")
                 .font(.system(size: 24, weight: .semibold))
-                .foregroundStyle(.cyan.opacity(0.82))
+                .foregroundStyle(theme.primary.opacity(0.82))
             Text(lang.t("chat.empty.title"))
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.82))
@@ -195,9 +196,9 @@ struct TemporaryChatView: View {
                 Button(action: send) {
                     Image(systemName: "arrow.up")
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(.black.opacity(canSend ? 0.9 : 0.35))
+                        .foregroundStyle(theme.onPrimary.opacity(canSend ? 0.9 : 0.35))
                         .frame(width: 26, height: 26)
-                        .background(canSend ? Color.cyan : Color.white.opacity(0.22), in: Circle())
+                        .background(canSend ? theme.primary : theme.surfaceBright.opacity(0.44), in: Circle())
                 }
                 .buttonStyle(.plain)
                 .disabled(!canSend)
@@ -208,10 +209,10 @@ struct TemporaryChatView: View {
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.white.opacity(0.08))
+                .fill(theme.glassStrong)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                        .stroke(theme.outline.opacity(0.14), lineWidth: 1)
                 )
         )
     }
@@ -263,12 +264,12 @@ struct TemporaryChatView: View {
                         .textCase(.uppercase)
                 }
             }
-                .foregroundStyle(isSelected ? Color.black.opacity(0.86) : Color.white.opacity(isSupported ? 0.64 : 0.24))
+                .foregroundStyle(isSelected ? theme.onPrimary.opacity(0.86) : theme.textSecondary.opacity(isSupported ? 0.78 : 0.3))
                 .frame(width: badge == nil ? 24 : 42, height: 24)
-                .background(isSelected ? Color.cyan : Color.white.opacity(isSupported ? 0.10 : 0.04), in: Capsule())
+                .background(isSelected ? theme.primary : theme.surfaceContainerHighest.opacity(isSupported ? 0.52 : 0.22), in: Capsule())
                 .overlay(
                     Capsule()
-                        .stroke(Color.white.opacity(isSupported ? 0.05 : 0.10), lineWidth: 1)
+                        .stroke(theme.outline.opacity(isSupported ? 0.10 : 0.16), lineWidth: 1)
                 )
         }
         .buttonStyle(.plain)
@@ -305,6 +306,7 @@ struct TemporaryChatView: View {
 private struct TemporaryChatBubble: View {
     let message: TemporaryChatMessage
     let lang: LanguageManager
+    @Environment(\.islandTheme) private var theme
 
     private var isUser: Bool { message.role == .user }
 
@@ -322,10 +324,10 @@ private struct TemporaryChatBubble: View {
                 .padding(.vertical, 9)
                 .background(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(isUser ? Color.cyan.opacity(0.24) : Color.white.opacity(0.08))
+                        .fill(isUser ? theme.primary.opacity(0.24) : theme.card.opacity(0.92))
                         .overlay(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .stroke(isUser ? Color.cyan.opacity(0.26) : Color.white.opacity(0.08), lineWidth: 1)
+                                .stroke(isUser ? theme.primary.opacity(0.26) : theme.outline.opacity(0.12), lineWidth: 1)
                         )
                 )
 
@@ -343,12 +345,12 @@ private struct TemporaryChatBubble: View {
         } label: {
             Image(systemName: "doc.on.doc")
                 .font(.system(size: 10.5, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.58))
+                .foregroundStyle(theme.textSecondary.opacity(0.72))
                 .frame(width: 22, height: 22)
-                .background(Color.white.opacity(0.08), in: Circle())
+                .background(theme.surfaceContainerHighest.opacity(0.56), in: Circle())
                 .overlay(
                     Circle()
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        .stroke(theme.outline.opacity(0.12), lineWidth: 1)
                 )
         }
         .buttonStyle(.plain)

@@ -30,6 +30,13 @@ enum IslandAppearanceMode: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+enum IslandInterfaceTheme: String, CaseIterable, Identifiable {
+    case cyberMinimalist
+    case graphiteClassic
+
+    var id: String { rawValue }
+}
+
 enum IslandClosedDisplayStyle: String, CaseIterable, Identifiable {
     case minimal
     case detailed

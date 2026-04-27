@@ -24,6 +24,7 @@ final class AppModel {
     private static let soundMutedDefaultsKey = "overlay.sound.muted"
     private static let showDockIconDefaultsKey = "app.showDockIcon"
     private static let hapticFeedbackEnabledDefaultsKey = "app.hapticFeedbackEnabled"
+    private static let interfaceThemeDefaultsKey = "appearance.interface.theme"
     private static let islandAppearanceModeDefaultsKey = "appearance.island.mode"
     private static let islandClosedDisplayStyleDefaultsKey = "appearance.island.closedDisplayStyle"
     private static let islandHideIdleToEdgeDefaultsKey = "appearance.island.hideIdleToEdge"
@@ -42,7 +43,7 @@ final class AppModel {
     private static let whiteNoiseGlobalVolumeDefaultsKey = "whiteNoise.globalVolume"
 
     static let defaultStatusColors: [SessionPhase: String] = [
-        .running: "#6E9FFF",
+        .running: "#00D1FF",
         .waitingForApproval: "#FFB547",
         .waitingForAnswer: "#FFD95A",
         .completed: "#42E86B",
@@ -348,6 +349,13 @@ final class AppModel {
 
     // MARK: - Appearance
 
+    var interfaceTheme: IslandInterfaceTheme = .cyberMinimalist {
+        didSet {
+            guard interfaceTheme != oldValue else { return }
+            UserDefaults.standard.set(interfaceTheme.rawValue, forKey: Self.interfaceThemeDefaultsKey)
+        }
+    }
+
     var islandAppearanceMode: IslandAppearanceMode = .default {
         didSet {
             guard islandAppearanceMode != oldValue else { return }
@@ -562,6 +570,9 @@ final class AppModel {
         refreshTemporaryChatTokenStats()
         whiteNoiseState = Self.loadWhiteNoiseState(defaults: whiteNoiseDefaults)
         shortcuts = Self.loadShortcuts()
+        interfaceTheme = IslandInterfaceTheme(
+            rawValue: UserDefaults.standard.string(forKey: Self.interfaceThemeDefaultsKey) ?? ""
+        ) ?? .cyberMinimalist
         islandAppearanceMode = IslandAppearanceMode(
             rawValue: UserDefaults.standard.string(forKey: Self.islandAppearanceModeDefaultsKey) ?? ""
         ) ?? .default

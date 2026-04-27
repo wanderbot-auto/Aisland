@@ -25,6 +25,8 @@ struct ControlCenterView: View {
     @State private var previewSnapshot = IslandDebugScenario.approvalCard.snapshot()
     @State private var selectedDebugSection: ControlCenterSection = .preview
 
+    private var theme: IslandThemePalette { IslandTheme.palette(for: model.interfaceTheme) }
+
     private var lang: LanguageManager { model.lang }
 
     var body: some View {
@@ -36,6 +38,7 @@ struct ControlCenterView: View {
         .frame(width: 1280, height: 820)
         .background(debugBackground)
         .preferredColorScheme(.dark)
+        .islandTheme(model.interfaceTheme)
         .onAppear {
             refreshPreview(for: selectedScenario)
         }
@@ -395,18 +398,18 @@ struct ControlCenterView: View {
 
     private var debugCardBackground: some View {
         RoundedRectangle(cornerRadius: 22, style: .continuous)
-            .fill(Color.white.opacity(0.04))
+            .fill(theme.card.opacity(0.74))
             .overlay(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .strokeBorder(.white.opacity(0.06))
+                    .strokeBorder(theme.outline.opacity(0.12))
             )
     }
 
     private var debugBackground: some View {
         LinearGradient(
             colors: [
-                Color.black,
-                Color(red: 0.03, green: 0.03, blue: 0.04),
+                theme.background,
+                theme.backgroundElevated,
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing

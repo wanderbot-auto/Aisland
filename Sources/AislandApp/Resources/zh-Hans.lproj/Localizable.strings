@@ -51,6 +51,10 @@
 
 /* Settings - Appearance */
 "settings.tab.appearance" = "个性化";
+"settings.appearance.theme" = "全局主题";
+"settings.appearance.theme.cyberMinimalist" = "赛博极简";
+"settings.appearance.theme.graphiteClassic" = "石墨经典";
+"settings.appearance.theme.help" = "主题 token 会统一驱动岛屿、聊天、白噪音、用量和所有设置页，后续可低成本快速切换全局风格。";
 "settings.appearance.mode" = "模式";
 "settings.appearance.mode.default" = "默认";
 "settings.appearance.mode.custom" = "自定义";
