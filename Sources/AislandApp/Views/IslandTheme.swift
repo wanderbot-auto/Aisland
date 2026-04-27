@@ -92,6 +92,11 @@ struct IslandThemePalette: Equatable {
 }
 
 enum IslandTheme {
+    enum GlassStrength {
+        case regular
+        case strong
+    }
+
     static let cyber = IslandThemePalette.cyberMinimalist
 
     static let workingBlue = cyber.primaryContainer
@@ -106,6 +111,26 @@ enum IslandTheme {
         case .cyberMinimalist: return .cyberMinimalist
         case .graphiteClassic: return .graphiteClassic
         }
+    }
+
+    static func glassColor(
+        for theme: IslandInterfaceTheme,
+        transparency: Double,
+        strength: GlassStrength = .regular
+    ) -> Color {
+        let opacity = 1 - InterfaceTransparencySetting.clamped(transparency)
+        let hex: String
+        switch (theme, strength) {
+        case (.cyberMinimalist, .regular):
+            hex = "#000000"
+        case (.cyberMinimalist, .strong):
+            hex = "#131313"
+        case (.graphiteClassic, .regular):
+            hex = "#101419"
+        case (.graphiteClassic, .strong):
+            hex = "#151A20"
+        }
+        return (Color(hex: hex) ?? .black).opacity(opacity)
     }
 
     static func statusTint(for phase: SessionPhase, palette: IslandThemePalette = .cyberMinimalist) -> Color {

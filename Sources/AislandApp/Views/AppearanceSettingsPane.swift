@@ -9,6 +9,25 @@ struct AppearanceSettingsPane: View {
 
     private var lang: LanguageManager { model.lang }
     private var isCustom: Bool { model.islandAppearanceMode == .custom }
+    private var interfaceTransparencyPercent: Int {
+        Int((model.interfaceTransparency * 100).rounded())
+    }
+    private var interfaceTransparencyPercentBinding: Binding<Double> {
+        Binding(
+            get: { model.interfaceTransparency * 100 },
+            set: { model.interfaceTransparency = $0 / 100 }
+        )
+    }
+    private var interfaceTransparencyPercentRange: ClosedRange<Double> {
+        (InterfaceTransparencySetting.range.lowerBound * 100)...(InterfaceTransparencySetting.range.upperBound * 100)
+    }
+    private var previewGlass: Color {
+        IslandTheme.glassColor(
+            for: model.interfaceTheme,
+            transparency: model.interfaceTransparency,
+            strength: .strong
+        )
+    }
 
     var body: some View {
         Form {
@@ -26,6 +45,27 @@ struct AppearanceSettingsPane: View {
                 Text(lang.t("settings.appearance.theme.help"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+
+            Section(lang.t("settings.appearance.transparency")) {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 12) {
+                        Slider(
+                            value: interfaceTransparencyPercentBinding,
+                            in: interfaceTransparencyPercentRange,
+                            step: 1
+                        )
+
+                        Text("\(interfaceTransparencyPercent)%")
+                            .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 42, alignment: .trailing)
+                    }
+
+                    Text(lang.t("settings.appearance.transparency.help"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             Section(lang.t("settings.appearance.mode")) {
@@ -203,7 +243,7 @@ struct AppearanceSettingsPane: View {
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 10)
-        .background(theme.glassStrong, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background(previewGlass, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .strokeBorder(theme.outline.opacity(0.16), lineWidth: 1)
@@ -218,7 +258,7 @@ struct AppearanceSettingsPane: View {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
             Capsule()
-                .fill(theme.glassStrong)
+                .fill(previewGlass)
                 .frame(height: 4)
                 .overlay {
                     Capsule()

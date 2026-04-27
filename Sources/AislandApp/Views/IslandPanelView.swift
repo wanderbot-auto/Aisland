@@ -62,6 +62,12 @@ struct IslandPanelView: View {
     @State private var showingQuitConfirmation = false
 
     private var theme: IslandThemePalette { IslandTheme.palette(for: model.interfaceTheme) }
+    private var interfaceGlass: Color {
+        IslandTheme.glassColor(
+            for: model.interfaceTheme,
+            transparency: model.interfaceTransparency
+        )
+    }
 
     private var isOpened: Bool {
         model.notchStatus == .opened
@@ -244,7 +250,7 @@ struct IslandPanelView: View {
         VStack(spacing: 0) {
             ZStack(alignment: .top) {
                 surfaceShape
-                    .fill(theme.glass.opacity(hidesClosedSurfaceChrome ? 0 : 1))
+                    .fill(interfaceGlass.opacity(hidesClosedSurfaceChrome ? 0 : 1))
                     .frame(width: surfaceWidth, height: surfaceHeight)
 
                 VStack(spacing: 0) {

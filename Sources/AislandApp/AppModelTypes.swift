@@ -37,6 +37,15 @@ enum IslandInterfaceTheme: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+enum InterfaceTransparencySetting {
+    static let defaultValue = 0.10
+    static let range: ClosedRange<Double> = 0...0.80
+
+    static func clamped(_ value: Double) -> Double {
+        min(max(value, range.lowerBound), range.upperBound)
+    }
+}
+
 enum IslandClosedDisplayStyle: String, CaseIterable, Identifiable {
     case minimal
     case detailed

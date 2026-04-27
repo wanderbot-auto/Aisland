@@ -25,6 +25,7 @@ final class AppModel {
     private static let showDockIconDefaultsKey = "app.showDockIcon"
     private static let hapticFeedbackEnabledDefaultsKey = "app.hapticFeedbackEnabled"
     private static let interfaceThemeDefaultsKey = "appearance.interface.theme"
+    private static let interfaceTransparencyDefaultsKey = "appearance.interface.transparency"
     private static let islandAppearanceModeDefaultsKey = "appearance.island.mode"
     private static let islandClosedDisplayStyleDefaultsKey = "appearance.island.closedDisplayStyle"
     private static let islandHideIdleToEdgeDefaultsKey = "appearance.island.hideIdleToEdge"
@@ -370,6 +371,18 @@ final class AppModel {
         }
     }
 
+    var interfaceTransparency: Double = InterfaceTransparencySetting.defaultValue {
+        didSet {
+            let clamped = InterfaceTransparencySetting.clamped(interfaceTransparency)
+            guard interfaceTransparency == clamped else {
+                interfaceTransparency = clamped
+                return
+            }
+            guard hasFinishedInit, interfaceTransparency != oldValue else { return }
+            UserDefaults.standard.set(interfaceTransparency, forKey: Self.interfaceTransparencyDefaultsKey)
+        }
+    }
+
     var islandAppearanceMode: IslandAppearanceMode = .default {
         didSet {
             guard islandAppearanceMode != oldValue else { return }
@@ -557,6 +570,7 @@ final class AppModel {
             Self.completionReplyEnabledDefaultsKey: false,
             Self.suppressFrontmostNotificationsDefaultsKey: true,
             Self.questionOptionLayoutDefaultsKey: QuestionOptionLayout.horizontal.rawValue,
+            Self.interfaceTransparencyDefaultsKey: InterfaceTransparencySetting.defaultValue,
         ])
         isSoundMuted = UserDefaults.standard.bool(forKey: Self.soundMutedDefaultsKey)
         selectedSoundName = NotificationSoundService.selectedSoundName
@@ -593,6 +607,9 @@ final class AppModel {
         interfaceTheme = IslandInterfaceTheme(
             rawValue: UserDefaults.standard.string(forKey: Self.interfaceThemeDefaultsKey) ?? ""
         ) ?? .cyberMinimalist
+        interfaceTransparency = InterfaceTransparencySetting.clamped(
+            UserDefaults.standard.double(forKey: Self.interfaceTransparencyDefaultsKey)
+        )
         islandAppearanceMode = IslandAppearanceMode(
             rawValue: UserDefaults.standard.string(forKey: Self.islandAppearanceModeDefaultsKey) ?? ""
         ) ?? .default
