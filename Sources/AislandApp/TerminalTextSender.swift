@@ -5,7 +5,7 @@ import AislandCore
 ///
 /// Currently supported:
 /// - **tmux**: `tmux send-keys -l "text" Enter`
-/// - **Ghostty**: AppleScript `input text` (requires Automation permission)
+/// - **Ghostty**: AppleScript focus + System Events keystrokes
 ///
 /// The static ``canReply(to:)`` method gates the UI — the reply input field
 /// is only shown when the session's terminal supports text injection.
@@ -21,7 +21,7 @@ struct TerminalTextSender {
         // tmux sessions: any terminal can receive send-keys.
         if target.tmuxTarget != nil { return true }
 
-        // Ghostty: native AppleScript input text (1.3.0+).
+        // Ghostty: focus the matching terminal, then type through System Events.
         let app = target.terminalApp.lowercased()
         if app == "ghostty" { return true }
 
@@ -74,29 +74,39 @@ struct TerminalTextSender {
         // Build an AppleScript that:
         //   1. Finds the correct terminal (by session id, working directory, or name)
         //   2. Focuses it
-        //   3. Sends the reply text + newline via `input text`
+        //   3. Sends the reply text + newline via System Events
         let script = ghosttySendScript(text: text, target: target)
         return runAppleScript(script)
     }
 
-    private static func ghosttySendScript(text: String, target: JumpTarget) -> String {
-        let terminalSessionID = escapeAppleScript(target.terminalSessionID)
-        let workingDirectory = escapeAppleScript(target.workingDirectory)
-        let paneTitle = escapeAppleScript(target.paneTitle)
-        let escapedText = escapeAppleScript(text)
+    static func ghosttySendScript(text: String, target: JumpTarget) -> String {
+        let terminalSessionID = appleScriptStringExpression(target.terminalSessionID)
+        let workingDirectory = appleScriptStringExpression(target.workingDirectory)
+        let paneTitle = appleScriptStringExpression(target.paneTitle)
+        let replyText = appleScriptStringExpression(text)
 
         return """
+        set targetSessionID to \(terminalSessionID)
+        set targetWorkingDirectory to \(workingDirectory)
+        set targetPaneTitle to \(paneTitle)
+        set replyText to \(replyText)
+
         tell application "Ghostty"
             if not (it is running) then return "error"
+            activate
 
+            set targetWindow to missing value
+            set targetTab to missing value
             set targetTerminal to missing value
 
             -- Match by terminal session ID (most precise)
-            if "\(terminalSessionID)" is not "" then
+            if targetSessionID is not "" then
                 repeat with aWindow in windows
                     repeat with aTab in tabs of aWindow
                         repeat with aTerminal in terminals of aTab
-                            if (id of aTerminal as text) is "\(terminalSessionID)" then
+                            if (id of aTerminal as text) is targetSessionID then
+                                set targetWindow to aWindow
+                                set targetTab to aTab
                                 set targetTerminal to aTerminal
                                 exit repeat
                             end if
@@ -108,11 +118,13 @@ struct TerminalTextSender {
             end if
 
             -- Fallback: match by working directory
-            if targetTerminal is missing value and "\(workingDirectory)" is not "" then
+            if targetTerminal is missing value and targetWorkingDirectory is not "" then
                 repeat with aWindow in windows
                     repeat with aTab in tabs of aWindow
                         repeat with aTerminal in terminals of aTab
-                            if (working directory of aTerminal as text) is "\(workingDirectory)" then
+                            if (working directory of aTerminal as text) is targetWorkingDirectory then
+                                set targetWindow to aWindow
+                                set targetTab to aTab
                                 set targetTerminal to aTerminal
                                 exit repeat
                             end if
@@ -124,11 +136,13 @@ struct TerminalTextSender {
             end if
 
             -- Fallback: match by pane title
-            if targetTerminal is missing value and "\(paneTitle)" is not "" then
+            if targetTerminal is missing value and targetPaneTitle is not "" then
                 repeat with aWindow in windows
                     repeat with aTab in tabs of aWindow
                         repeat with aTerminal in terminals of aTab
-                            if (name of aTerminal as text) contains "\(paneTitle)" then
+                            if (name of aTerminal as text) contains targetPaneTitle then
+                                set targetWindow to aWindow
+                                set targetTab to aTab
                                 set targetTerminal to aTerminal
                                 exit repeat
                             end if
@@ -141,22 +155,66 @@ struct TerminalTextSender {
 
             if targetTerminal is missing value then return "error"
 
-            -- Send the text, then press Enter as a separate key event.
-            -- `input text` sends characters; `send key` simulates a key press.
-            input text "\(escapedText)" to targetTerminal
-            send key "enter" to targetTerminal
-            return "ok"
+            if targetWindow is not missing value then
+                activate window targetWindow
+                delay 0.04
+            end if
+
+            if targetTab is not missing value then
+                select tab targetTab
+                delay 0.04
+            end if
+
+            focus targetTerminal
         end tell
+
+        delay 0.08
+
+        tell application "System Events"
+            keystroke replyText
+            key code 36
+        end tell
+
+        return "ok"
         """
     }
 
     // MARK: - Helpers
 
-    private static func escapeAppleScript(_ value: String?) -> String {
-        guard let value else { return "" }
-        return value
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
+    private static func appleScriptStringExpression(_ value: String?) -> String {
+        guard let value, !value.isEmpty else { return "\"\"" }
+
+        var expressions: [String] = []
+        var literal = ""
+
+        func flushLiteral() {
+            guard !literal.isEmpty else { return }
+            expressions.append("\"\(literal)\"")
+            literal = ""
+        }
+
+        for character in value {
+            switch character {
+            case "\n":
+                flushLiteral()
+                expressions.append("linefeed")
+            case "\r":
+                flushLiteral()
+                expressions.append("return")
+            case "\t":
+                flushLiteral()
+                expressions.append("tab")
+            case "\"":
+                literal += "\\\""
+            case "\\":
+                literal += "\\\\"
+            default:
+                literal.append(character)
+            }
+        }
+
+        flushLiteral()
+        return expressions.isEmpty ? "\"\"" : expressions.joined(separator: " & ")
     }
 
     private static func runAppleScript(_ script: String) -> Bool {
