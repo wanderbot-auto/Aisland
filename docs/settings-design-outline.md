@@ -47,10 +47,10 @@
 
 ### AI Chat
 
-- Provider 选择
-- Model / Base URL / API Key
-- 推荐模型
-- 打开临时聊天快捷键
+- Provider 搜索与选择状态
+- Model override / Keychain 凭据状态
+- 推荐模型 chips 与默认推荐
+- 打开临时聊天快捷键与首发可用性提示
 
 ### Skills
 
@@ -105,4 +105,5 @@
 
 - 已移除左下角会员卡片以及 `Behavior defaults` 按钮，避免出现当前产品里并不存在的会员 / 默认模板心智。
 - 当前静态稿侧重评审信息架构与布局差异：`General`、`Skills`、`Sound`、`Shortcuts` 等低配置密度页面已收敛成 2 段式；`Display` 保留 3 段；`AI Chat`、`Setup`、`Appearance` 继续承载更高的信息量。
+- `Settings · AI Chat` 已按当前 `SettingsView.swift` 的真实实现语义调整为 provider-first：顶部卡片强调当前 provider 与 Keychain 凭据状态；主体区围绕 provider 搜索、默认模型/override、API key 存储、推荐模型 chips、快捷键与 ready-state 组织。
 - 后续如进入实现阶段，再逐页细化控件状态、空态、错误态和滚动细节。
