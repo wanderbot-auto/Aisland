@@ -14,9 +14,10 @@ struct UsageAnalyticsPane: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 usageToolbar
-                tokensPerDaySection
                 contributionGraphSection
+                tokensPerDaySection
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(20)
         }
         .islandSettingsPaneBackground()
@@ -124,6 +125,7 @@ struct UsageAnalyticsPane: View {
 
     private func usagePanel<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(18)
             .background(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
@@ -204,42 +206,73 @@ private struct ContributionGraph: View {
     @Binding var selectedDate: String?
     var theme: IslandThemePalette
 
-    private var days: [UsageDaySummary] { UsageDaySummary.makeCompleteDays(from: rows, trailingDayCount: 112) }
-    private var weeks: [[UsageDaySummary]] { days.chunked(into: 7) }
-    private var maxCost: Double { max(days.map(\.costUSD).max() ?? 0, 0.01) }
+    private var maxCost: Double { max(rows.map(\.costUSD).max() ?? 0, 0.01) }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .top, spacing: 5) {
-                ForEach(Array(weeks.enumerated()), id: \.offset) { _, week in
-                    VStack(spacing: 5) {
-                        ForEach(week) { day in
-                            RoundedRectangle(cornerRadius: 3.5, style: .continuous)
-                                .fill(fillColor(for: day))
-                                .frame(width: 13, height: 13)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 3.5, style: .continuous)
-                                        .strokeBorder(selectedDate == day.dateKey ? Color.primary.opacity(0.72) : Color.clear, lineWidth: 1.5)
-                                )
-                                .help(day.helpText)
-                                .onTapGesture { selectedDate = day.dateKey }
+        GeometryReader { proxy in
+            let layout = layout(for: proxy.size.width)
+            let days = UsageDaySummary.makeCompleteDays(from: rows, trailingDayCount: layout.weekCount * 7)
+            let weeks = days.chunked(into: 7)
+
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .top, spacing: layout.weekSpacing) {
+                    ForEach(Array(weeks.enumerated()), id: \.offset) { _, week in
+                        VStack(spacing: layout.daySpacing) {
+                            ForEach(week) { day in
+                                RoundedRectangle(cornerRadius: layout.cellSize * 0.26, style: .continuous)
+                                    .fill(fillColor(for: day))
+                                    .frame(width: layout.cellSize, height: layout.cellSize)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: layout.cellSize * 0.26, style: .continuous)
+                                            .strokeBorder(selectedDate == day.dateKey ? Color.primary.opacity(0.72) : Color.clear, lineWidth: 1.5)
+                                    )
+                                    .help(day.helpText)
+                                    .onTapGesture { selectedDate = day.dateKey }
+                            }
                         }
                     }
                 }
-            }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-            HStack(spacing: 6) {
-                Text("Less")
-                ForEach(0..<5, id: \.self) { index in
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(intensityColor(Double(index) / 4))
-                        .frame(width: 12, height: 12)
+                HStack(spacing: 6) {
+                    Text("Less")
+                    ForEach(0..<5, id: \.self) { index in
+                        RoundedRectangle(cornerRadius: 3, style: .continuous)
+                            .fill(intensityColor(Double(index) / 4))
+                            .frame(width: 12, height: 12)
+                    }
+                    Text("More")
                 }
-                Text("More")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.secondary)
             }
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity)
+        .frame(height: 170)
+    }
+
+    private struct GraphLayout {
+        var weekCount: Int
+        var cellSize: CGFloat
+        var weekSpacing: CGFloat
+        var daySpacing: CGFloat
+    }
+
+    private func layout(for width: CGFloat) -> GraphLayout {
+        let weekCount = min(52, max(12, Int((width + 5) / 18)))
+        let baseWeekSpacing: CGFloat = 5
+        let availableForCells = max(0, width - baseWeekSpacing * CGFloat(weekCount - 1))
+        let cellSize = min(18, max(9, availableForCells / CGFloat(weekCount)))
+        let weekSpacing = weekCount > 1
+            ? max(4, (width - cellSize * CGFloat(weekCount)) / CGFloat(weekCount - 1))
+            : 0
+        return GraphLayout(
+            weekCount: weekCount,
+            cellSize: cellSize,
+            weekSpacing: weekSpacing,
+            daySpacing: min(5, max(3, cellSize * 0.34))
+        )
     }
 
     private func fillColor(for day: UsageDaySummary) -> Color {
