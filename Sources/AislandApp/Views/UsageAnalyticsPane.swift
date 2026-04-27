@@ -39,11 +39,11 @@ struct UsageAnalyticsPane: View {
             if model.usageAnalyticsIsRefreshing {
                 Label(lang.t("usage.refreshing"), systemImage: "arrow.triangle.2.circlepath")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(theme.textSecondary)
             } else if let refreshedAt = model.usageAnalyticsLastRefreshedAt {
                 Text(refreshedAt.formatted(date: .abbreviated, time: .shortened))
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(theme.textSecondary)
             }
 
             Spacer(minLength: 12)
@@ -69,7 +69,7 @@ struct UsageAnalyticsPane: View {
                 } else {
                     DailyStackedTokenChart(rows: dailyUsage, theme: theme)
                         .frame(minHeight: 280)
-                    ModelLegend(rows: dailyUsage)
+                    ModelLegend(rows: dailyUsage, theme: theme)
                 }
             }
         }
@@ -93,7 +93,7 @@ struct UsageAnalyticsPane: View {
                     )
 
                     if let day = selectedContributionDay {
-                        ContributionDetail(day: day)
+                        ContributionDetail(day: day, theme: theme)
                     }
                 }
             }
@@ -112,9 +112,10 @@ struct UsageAnalyticsPane: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(lang.t("usage.empty.title"))
                 .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(theme.text)
             Text(lang.t("usage.empty.subtitle"))
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(theme.textSecondary)
             if model.usageAnalyticsIsRefreshing {
                 ProgressView()
                     .controlSize(.small)
@@ -141,9 +142,10 @@ struct UsageAnalyticsPane: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(.system(size: 20, weight: .semibold, design: .rounded))
+                .foregroundStyle(theme.text)
             Text(subtitle)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(theme.textSecondary)
         }
     }
 }
@@ -163,7 +165,7 @@ private struct DailyStackedTokenChart: View {
                     VStack(spacing: 7) {
                         Text(day.costUSD.currencyString)
                             .font(.system(size: 9, weight: .bold, design: .rounded))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(theme.textSecondary)
                             .lineLimit(1)
                             .minimumScaleFactor(0.65)
 
@@ -171,7 +173,7 @@ private struct DailyStackedTokenChart: View {
                             Spacer(minLength: 0)
                             ForEach(day.modelRows.reversed()) { row in
                                 Rectangle()
-                                    .fill(UsageModelColor.color(for: row.modelIdentifier))
+                                    .fill(UsageModelColor.color(for: row.modelIdentifier, theme: theme))
                                     .frame(height: segmentHeight(row.totalTokens, chartHeight: chartHeight))
                             }
                         }
@@ -186,7 +188,7 @@ private struct DailyStackedTokenChart: View {
 
                         Text(day.shortLabel)
                             .font(.system(size: 9, weight: .semibold))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(theme.textSecondary)
                             .lineLimit(1)
                     }
                     .frame(maxWidth: .infinity)
@@ -224,7 +226,7 @@ private struct ContributionGraph: View {
                                     .frame(width: layout.cellSize, height: layout.cellSize)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: layout.cellSize * 0.26, style: .continuous)
-                                            .strokeBorder(selectedDate == day.dateKey ? Color.primary.opacity(0.72) : Color.clear, lineWidth: 1.5)
+                                            .strokeBorder(selectedDate == day.dateKey ? theme.text.opacity(0.72) : Color.clear, lineWidth: 1.5)
                                     )
                                     .help(day.helpText)
                                     .onTapGesture { selectedDate = day.dateKey }
@@ -244,7 +246,7 @@ private struct ContributionGraph: View {
                     Text("More")
                 }
                 .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(theme.textSecondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -284,53 +286,55 @@ private struct ContributionGraph: View {
 
     private func intensityColor(_ value: Double) -> Color {
         let clamped = min(max(value, 0), 1)
-        return Color(
-            red: 0.18 + (0.02 * clamped),
-            green: 0.36 + (0.42 * clamped),
-            blue: 0.35 + (0.08 * clamped)
-        )
+        return theme.primary.opacity(0.18 + (0.72 * clamped))
     }
 }
 
 private struct ContributionDetail: View {
     var day: UsageDaySummary
+    var theme: IslandThemePalette
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text(day.longLabel)
                     .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(theme.text)
                 Spacer()
                 Text("\(day.totalTokens.abbreviatedTokenString) · \(day.costUSD.currencyString)")
                     .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .foregroundStyle(theme.text)
             }
 
             VStack(spacing: 7) {
                 ForEach(day.modelRows) { row in
                     HStack(spacing: 8) {
                         Circle()
-                            .fill(UsageModelColor.color(for: row.modelIdentifier))
+                            .fill(UsageModelColor.color(for: row.modelIdentifier, theme: theme))
                             .frame(width: 8, height: 8)
                         Text(row.modelDisplayName)
                             .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(theme.text)
                             .lineLimit(1)
                         Spacer(minLength: 10)
                         Text(row.totalTokens.abbreviatedTokenString)
                             .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundStyle(theme.text)
                         Text(row.costUSD.currencyString)
                             .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(theme.textSecondary)
                     }
                 }
             }
         }
         .padding(13)
-        .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(theme.surfaceContainer.opacity(0.48), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 
 private struct ModelLegend: View {
     var rows: [UsageAnalyticsDailyModelBucket]
+    var theme: IslandThemePalette
 
     private var models: [UsageModelSummary] {
         Dictionary(grouping: rows, by: \.modelIdentifier)
@@ -353,19 +357,20 @@ private struct ModelLegend: View {
             ForEach(models) { model in
                 HStack(spacing: 8) {
                     Circle()
-                        .fill(UsageModelColor.color(for: model.modelIdentifier))
+                        .fill(UsageModelColor.color(for: model.modelIdentifier, theme: theme))
                         .frame(width: 9, height: 9)
                     Text(model.modelDisplayName)
                         .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(theme.text)
                         .lineLimit(1)
                     Spacer(minLength: 6)
                     Text(model.costUSD.currencyString)
                         .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(theme.textSecondary)
                 }
                 .padding(.horizontal, 9)
                 .padding(.vertical, 7)
-                .background(Color.secondary.opacity(0.08), in: Capsule())
+                .background(theme.surfaceContainer.opacity(0.48), in: Capsule())
             }
         }
     }
@@ -450,18 +455,17 @@ private struct UsageModelSummary: Identifiable {
 }
 
 private enum UsageModelColor {
-    private static let palette: [Color] = [
-        Color(red: 0.12, green: 0.56, blue: 0.92),
-        Color(red: 0.93, green: 0.40, blue: 0.22),
-        Color(red: 0.18, green: 0.67, blue: 0.43),
-        Color(red: 0.91, green: 0.73, blue: 0.24),
-        Color(red: 0.74, green: 0.40, blue: 0.92),
-        Color(red: 0.10, green: 0.70, blue: 0.76),
-        Color(red: 0.90, green: 0.30, blue: 0.48),
-        Color(red: 0.48, green: 0.62, blue: 0.18),
-    ]
-
-    static func color(for modelIdentifier: String) -> Color {
+    static func color(for modelIdentifier: String, theme: IslandThemePalette) -> Color {
+        let palette: [Color] = [
+            theme.primary,
+            theme.secondary,
+            theme.tertiary,
+            theme.success,
+            theme.warning,
+            theme.error,
+            theme.primaryContainer,
+            theme.cardSelected,
+        ]
         let hash = abs(modelIdentifier.unicodeScalars.reduce(0) { ($0 &* 31) &+ Int($1.value) })
         return palette[hash % palette.count]
     }
