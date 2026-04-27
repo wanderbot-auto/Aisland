@@ -524,8 +524,7 @@ public final class BridgeServer: @unchecked Sendable {
                         summary: payload.implicitStartSummary,
                         timestamp: .now,
                         jumpTarget: payload.defaultJumpTarget,
-                        claudeMetadata: payload.defaultClaudeMetadata.isEmpty ? nil : payload.defaultClaudeMetadata,
-                        isRemote: payload.remote == true
+                        claudeMetadata: payload.defaultClaudeMetadata.isEmpty ? nil : payload.defaultClaudeMetadata
                     )
                 )
             )
@@ -1389,8 +1388,7 @@ public final class BridgeServer: @unchecked Sendable {
                     summary: payload.implicitStartSummary,
                     timestamp: .now,
                     jumpTarget: payload.defaultJumpTarget,
-                    claudeMetadata: payload.defaultClaudeMetadata.isEmpty ? nil : payload.defaultClaudeMetadata,
-                    isRemote: payload.remote == true
+                    claudeMetadata: payload.defaultClaudeMetadata.isEmpty ? nil : payload.defaultClaudeMetadata
                 )
             )
         )

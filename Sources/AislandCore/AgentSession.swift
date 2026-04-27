@@ -315,9 +315,6 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
     /// Demo sessions are synthetic UI fixtures that should always remain visible.
     public var isDemoSession: Bool = false
 
-    /// Whether this session originates from a remote (SSH) connection.
-    public var isRemote: Bool = false
-
     /// Whether this session's lifecycle is driven by hook events rather than
     /// process polling. When `true`, visibility is determined by hook signals
     /// (`SessionStart` / `SessionEnd`) instead of `ps`/`lsof` process discovery.

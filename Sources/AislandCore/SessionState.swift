@@ -69,7 +69,6 @@ public struct SessionState: Equatable, Sendable {
                 claudeMetadata: payload.claudeMetadata?.isEmpty == true ? nil : payload.claudeMetadata,
                 openCodeMetadata: payload.openCodeMetadata?.isEmpty == true ? nil : payload.openCodeMetadata
             )
-            session.isRemote = payload.isRemote
             session.isHookManaged = !payload.isDemoSession
             // Codex.app sessions use app-level liveness (NSRunningApplication)
             // rather than hook-managed processNotSeenCount polling — flag is
@@ -308,12 +307,6 @@ public struct SessionState: Equatable, Sendable {
         var changed: Set<String> = []
 
         for (id, var session) in sessionsByID {
-            // Remote sessions have no local process — keep them alive as long
-            // as the bridge is delivering hook events.
-            if session.isRemote {
-                continue
-            }
-
             // Codex.app sessions use app-level liveness (NSRunningApplication)
             // rather than subprocess matching.  Phase is driven by hooks or
             // the rollout watcher / app-server notifications.
@@ -383,17 +376,6 @@ public struct SessionState: Equatable, Sendable {
         }
 
         return changed
-    }
-
-    /// Manually mark a session as completed and ended.
-    /// Intended for remote sessions whose SSH tunnel dropped without a
-    /// SessionEnd hook.
-    public mutating func dismissSession(id: String) {
-        guard var session = sessionsByID[id] else { return }
-        session.isSessionEnded = true
-        session.phase = .completed
-        session.updatedAt = .now
-        upsert(session)
     }
 
     /// Remove sessions that are no longer visible in the island.

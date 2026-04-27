@@ -54,9 +54,6 @@ struct IslandSessionRow: View {
 
                         HStack(spacing: 6) {
                             compactBadge(session.tool.displayName, presence: presence)
-                            if session.isRemote {
-                                compactBadge("SSH", presence: presence, icon: "network")
-                            }
                             if let terminalBadge = session.spotlightTerminalBadge {
                                 compactBadge(terminalBadge, presence: presence)
                             }

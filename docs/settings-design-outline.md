@@ -43,7 +43,7 @@
 - Claude / Codex / OpenCode 安装入口
 - 健康检查与修复
 - 权限说明
-- Remote sessions 与 usage bridge
+- Usage bridge
 
 ### AI Chat
 

@@ -97,7 +97,7 @@ Largest Swift files:
 - Large state facade: `AppModel` coordinates bridge, overlay, settings, hooks, process discovery, persistence, sounds, usage, and jump actions.
 - Mixed protocol responsibilities: `BridgeServer` combines socket mechanics, command routing, event adaptation, pending interactions, and local state merging.
 - UI concentration: `IslandPanelView` includes root panel behavior, presentation logic, all row variants, action controls, structured questions, reply input, usage, and menu content.
-- Domain model pressure: `AgentSession` carries terminal metadata, per-agent metadata, permissions, questions, tasks, subagents, liveness, remote state, and display state.
+- Domain model pressure: `AgentSession` carries terminal metadata, per-agent metadata, permissions, questions, tasks, subagents, liveness, and display state.
 
 ## Refactor Route
 
@@ -199,7 +199,7 @@ Target: reduce pressure on `AgentSession` and make deletions safer.
 - Separate cross-agent session state from per-agent metadata.
 - Keep `AgentEvent` small and stable.
 - Move display-only summaries and colors out of core models where possible.
-- Review whether `SessionOrigin`, attachment state, process liveness, task/subagent details, and remote/watch fields belong in one model.
+- Review whether `SessionOrigin`, attachment state, process liveness, task/subagent details, and watch fields belong in one model.
 - Coordinate with `docs/session-state-refactor.md` before changing session liveness semantics.
 
 ### Phase 8: Feature Simplification And Deletion

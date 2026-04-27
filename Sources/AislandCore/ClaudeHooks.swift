@@ -366,8 +366,6 @@ public struct ClaudeHookPayload: Equatable, Codable, Sendable {
     /// at hook runtime. Not sent over the wire by the hook script — populated
     /// in `withRuntimeContext` and serialized through the bridge.
     public var warpPaneUUID: String?
-    /// Set to `true` by the Python hook client to indicate a remote (SSH) session.
-    public var remote: Bool?
 
     /// The agent tool that produced this hook payload. Only Claude Code is supported.
     /// Set by the hooks CLI from the `--source` argument; absent from the JSON emitted by agents
@@ -406,7 +404,6 @@ public struct ClaudeHookPayload: Equatable, Codable, Sendable {
         case terminalTTY = "terminal_tty"
         case terminalTitle = "terminal_title"
         case warpPaneUUID = "warp_pane_uuid"
-        case remote
     }
 
     public init(
@@ -438,8 +435,7 @@ public struct ClaudeHookPayload: Equatable, Codable, Sendable {
         terminalSessionID: String? = nil,
         terminalTTY: String? = nil,
         terminalTitle: String? = nil,
-        warpPaneUUID: String? = nil,
-        remote: Bool? = nil
+        warpPaneUUID: String? = nil
     ) {
         self.cwd = cwd
         self.hookEventName = hookEventName
@@ -470,7 +466,6 @@ public struct ClaudeHookPayload: Equatable, Codable, Sendable {
         self.terminalTTY = terminalTTY
         self.terminalTitle = terminalTitle
         self.warpPaneUUID = warpPaneUUID
-        self.remote = remote
     }
 }
 
