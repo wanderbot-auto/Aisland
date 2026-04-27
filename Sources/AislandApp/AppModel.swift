@@ -2008,10 +2008,8 @@ final class AppModel {
                 // install decision.
                 self.hooks.migrateIntentStoreIfNeeded()
 
-                // Install only hooks the user has not explicitly opted out of.
-                // `shouldAutoInstall` skips `.uninstalled` agents and agents
-                // whose hooks are already present — it is the single checkpoint
-                // that fixes #324.
+                // Install every managed hook by default while preserving
+                // explicit user opt-outs.
                 if self.hooks.shouldAutoInstall(.claudeCode) { self.installClaudeHooks() }
                 if self.hooks.shouldAutoInstall(.codex) { self.installCodexHooks() }
                 if self.hooks.shouldAutoInstall(.openCode) { self.installOpenCodePlugin() }

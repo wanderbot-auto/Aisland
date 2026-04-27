@@ -121,7 +121,7 @@
 "usage.empty.title" = "No usage data yet";
 "usage.empty.subtitle" = "Open Claude Code or Codex and let Aisland import the JSONL logs in the background.";
 "usage.today.title" = "Today by provider";
-"usage.today.subtitle" = "These totals power the island header.";
+"usage.today.subtitle" = "These totals can be shown on the island.";
 "usage.today.islandDisplay" = "Island display";
 "usage.today.onIsland" = "ON ISLAND";
 "usage.today.tokenBreakdown" = "%@ in · %@ out";
@@ -129,6 +129,7 @@
 /* Settings - Sound */
 "settings.sound.notifications" = "Notification Sounds";
 "settings.sound.mute" = "Mute";
+"settings.sound.enabled" = "Enable notification sounds";
 "settings.sound.selectSound" = "Select Sound";
 
 /* Settings - Setup */
@@ -146,6 +147,8 @@
 "setup.binaryMissing" = "Not found — build AislandHooks first";
 "setup.hookReady" = "Hooks installed";
 "setup.hookMissing" = "Hooks not installed";
+"setup.hookAutomaticPending" = "Automatic setup pending";
+"setup.hooks.autoManagedFooter" = "Aisland installs and enables supported CLI hooks automatically at startup. No manual install or enable step is required.";
 "setup.usageBridge" = "Claude Usage Bridge";
 "setup.usageBridgeReady" = "Installed";
 "setup.usageBridgeDesc" = "Tracks Claude API usage locally";
@@ -154,7 +157,7 @@
 "setup.permissionsDesc" = "Aisland may need Accessibility permission to detect terminal windows. Grant it in System Settings → Privacy & Security → Accessibility.";
 "setup.installAll" = "Install All";
 "setup.banner.noHooks.title" = "Get started with Aisland";
-"setup.banner.noHooks.message" = "Install hooks for the agents you use below — Aisland will start monitoring those sessions.";
+"setup.banner.noHooks.message" = "Aisland installs and enables supported CLI hooks automatically at startup. Diagnostics below can verify or repair them if needed.";
 "setup.revealConfigLocation" = "Reveal config in Finder";
 "setup.section.diagnostics" = "Hook Diagnostics";
 "setup.diagnostics.notRun" = "Health check not yet run.";

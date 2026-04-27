@@ -121,7 +121,7 @@
 "usage.empty.title" = "尚無用量資料";
 "usage.empty.subtitle" = "打開 Claude Code 或 Codex，Aisland 會在背景匯入 JSONL 日誌。";
 "usage.today.title" = "今日按來源統計";
-"usage.today.subtitle" = "這些總量會用於島嶼標題列顯示。";
+"usage.today.subtitle" = "這些總量可顯示在島嶼中。";
 "usage.today.islandDisplay" = "島嶼顯示";
 "usage.today.onIsland" = "顯示中";
 "usage.today.tokenBreakdown" = "%@ 輸入 · %@ 輸出";
@@ -129,6 +129,7 @@
 /* Settings - Sound */
 "settings.sound.notifications" = "通知音效";
 "settings.sound.mute" = "靜音";
+"settings.sound.enabled" = "啟用通知音效";
 "settings.sound.selectSound" = "選擇音效";
 
 /* Settings - Setup */
@@ -146,6 +147,8 @@
 "setup.binaryMissing" = "未找到 — 請先建構 AislandHooks";
 "setup.hookReady" = "Hooks 已安裝";
 "setup.hookMissing" = "Hooks 未安裝";
+"setup.hookAutomaticPending" = "等待自動設定";
+"setup.hooks.autoManagedFooter" = "Aisland 會在啟動時自動安裝並啟用支援的 CLI Hooks，無需手動安裝或啟用。";
 "setup.usageBridge" = "Claude 用量橋接";
 "setup.usageBridgeReady" = "已安裝";
 "setup.usageBridgeDesc" = "在本機追蹤 Claude API 用量";
@@ -154,7 +157,7 @@
 "setup.permissionsDesc" = "Aisland 可能需要輔助使用權限來偵測終端機視窗。請在「系統設定 → 隱私權與安全性 → 輔助使用」中授權。";
 "setup.installAll" = "全部安裝";
 "setup.banner.noHooks.title" = "開始使用 Aisland";
-"setup.banner.noHooks.message" = "在下方為你使用的 Agent 安裝 hook，Aisland 就會開始監聽對應工作階段。";
+"setup.banner.noHooks.message" = "Aisland 會在啟動時自動安裝並啟用支援的 CLI Hooks。如需確認狀態，可在下方執行診斷或修復。";
 "setup.revealConfigLocation" = "在 Finder 中顯示設定";
 "setup.section.diagnostics" = "Hooks 診斷";
 "setup.diagnostics.notRun" = "尚未執行健康檢查。";

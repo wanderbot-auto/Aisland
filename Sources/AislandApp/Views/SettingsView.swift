@@ -10,9 +10,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     case ai
     case skills
     case whiteNoise
-    case display
     case usage
-    case sound
     case appearance
     case shortcuts
 
@@ -26,9 +24,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .skills:     lang.t("settings.tab.skills")
         case .whiteNoise: lang.t("settings.tab.whiteNoise")
         case .appearance: lang.t("settings.tab.appearance")
-        case .display:    lang.t("settings.tab.display")
         case .usage:      lang.t("settings.tab.usage")
-        case .sound:      lang.t("settings.tab.sound")
         case .shortcuts:  lang.t("settings.tab.shortcuts")
         }
     }
@@ -41,9 +37,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .skills:     "wand.and.stars"
         case .whiteNoise: "waveform"
         case .appearance: "paintbrush.fill"
-        case .display:    "textformat.size"
         case .usage:      "chart.bar.xaxis"
-        case .sound:      "speaker.wave.2.fill"
         case .shortcuts:  "keyboard.fill"
         }
     }
@@ -56,20 +50,18 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .skills:     IslandTheme.cyber.secondary
         case .whiteNoise: IslandTheme.cyber.success
         case .appearance: IslandTheme.cyber.primary
-        case .display:    IslandTheme.cyber.primaryContainer
         case .usage:      IslandTheme.cyber.success
-        case .sound:      .green
         case .shortcuts:  .gray
         }
     }
 
     var section: SettingsSection {
         switch self {
-        case .setup, .usage, .display:
+        case .setup, .usage:
             .agentTasks
         case .ai, .skills:
             .aiChat
-        case .whiteNoise, .sound:
+        case .whiteNoise:
             .whiteNoise
         case .general, .appearance, .shortcuts:
             .appSettings
@@ -166,12 +158,8 @@ struct SettingsView: View {
                 WhiteNoiseSettingsPane(model: model)
             case .appearance:
                 AppearanceSettingsPane(model: model)
-            case .display:
-                DisplaySettingsPane(model: model)
             case .usage:
                 UsageAnalyticsPane(model: model)
-            case .sound:
-                SoundSettingsPane(model: model)
             case .shortcuts:
                 ShortcutSettingsPane(model: model)
             }
@@ -193,6 +181,13 @@ struct GeneralSettingsPane: View {
     var model: AppModel
 
     private var lang: LanguageManager { model.lang }
+    private var notificationSoundNames: [String] {
+        let names = NotificationSoundService.availableSounds()
+        guard !names.contains(model.selectedSoundName) else {
+            return names
+        }
+        return [model.selectedSoundName] + names
+    }
 
     var body: some View {
         Form {
@@ -205,6 +200,23 @@ struct GeneralSettingsPane: View {
                     Text(lang.t("settings.general.languageEnglish")).tag(LanguageManager.AppLanguage.en)
                     Text(lang.t("settings.general.languageChinese")).tag(LanguageManager.AppLanguage.zhHans)
                     Text(lang.t("settings.general.languageTraditionalChinese")).tag(LanguageManager.AppLanguage.zhHant)
+                }
+            }
+
+            Section(lang.t("settings.display.monitor")) {
+                Picker(lang.t("settings.display.position"), selection: Binding(
+                    get: { model.overlayDisplaySelectionID },
+                    set: { model.overlayDisplaySelectionID = $0 }
+                )) {
+                    Text(lang.t("settings.general.automatic")).tag(OverlayDisplayOption.automaticID)
+                    ForEach(model.overlayDisplayOptions) { option in
+                        Text(option.title).tag(option.id)
+                    }
+                }
+
+                if let diag = model.overlayPlacementDiagnostics {
+                    LabeledContent(lang.t("settings.display.currentScreen"), value: diag.targetScreenName)
+                    LabeledContent(lang.t("settings.display.layoutMode"), value: diag.modeDescription)
                 }
             }
 
@@ -232,6 +244,27 @@ struct GeneralSettingsPane: View {
                     get: { model.suppressFrontmostNotifications },
                     set: { model.suppressFrontmostNotifications = $0 }
                 ))
+            }
+
+            Section(lang.t("settings.sound.notifications")) {
+                Toggle(lang.t("settings.sound.enabled"), isOn: Binding(
+                    get: { !model.isSoundMuted },
+                    set: { model.isSoundMuted = !$0 }
+                ))
+
+                Picker(lang.t("settings.sound.selectSound"), selection: Binding(
+                    get: { model.selectedSoundName },
+                    set: { name in
+                        model.selectedSoundName = name
+                        NotificationSoundService.play(name)
+                    }
+                )) {
+                    ForEach(notificationSoundNames, id: \.self) { name in
+                        Text(name).tag(name)
+                    }
+                }
+                .pickerStyle(.menu)
+                .disabled(model.isSoundMuted)
             }
 
         }
@@ -733,126 +766,10 @@ private struct ShortcutCaptureView: NSViewRepresentable {
     }
 }
 
-// MARK: - Display
-
-struct DisplaySettingsPane: View {
-    var model: AppModel
-
-    private var lang: LanguageManager { model.lang }
-
-    var body: some View {
-        Form {
-            Section(lang.t("settings.display.monitor")) {
-                Picker(lang.t("settings.display.position"), selection: Binding(
-                    get: { model.overlayDisplaySelectionID },
-                    set: { model.overlayDisplaySelectionID = $0 }
-                )) {
-                    Text(lang.t("settings.general.automatic")).tag(OverlayDisplayOption.automaticID)
-                    ForEach(model.overlayDisplayOptions) { option in
-                        Text(option.title).tag(option.id)
-                    }
-                }
-            }
-
-            if let diag = model.overlayPlacementDiagnostics {
-                Section(lang.t("settings.display.diagnostics")) {
-                    LabeledContent(lang.t("settings.display.currentScreen"), value: diag.targetScreenName)
-                    LabeledContent(lang.t("settings.display.layoutMode"), value: diag.modeDescription)
-                }
-            }
-
-            Section(lang.t("settings.display.islandHeader")) {
-                Picker(lang.t("settings.display.tokenUsageDisplay"), selection: Binding(
-                    get: { model.islandTokenUsageDisplayMode },
-                    set: { model.islandTokenUsageDisplayMode = $0 }
-                )) {
-                    ForEach(IslandTokenUsageDisplayMode.allCases) { mode in
-                        Text(mode.displayName(lang)).tag(mode)
-                    }
-                }
-                .pickerStyle(.segmented)
-
-                Text(lang.t("settings.display.tokenUsageDisplay.help"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .formStyle(.grouped)
-        .islandSettingsPaneBackground()
-        .navigationTitle(lang.t("settings.tab.display"))
-    }
-}
-
-private extension IslandTokenUsageDisplayMode {
-    func displayName(_ lang: LanguageManager) -> String {
-        switch self {
-        case .claude:
-            lang.t("settings.display.tokenUsageDisplay.claude")
-        case .codex:
-            lang.t("settings.display.tokenUsageDisplay.codex")
-        case .both:
-            lang.t("settings.display.tokenUsageDisplay.both")
-        }
-    }
-}
-
-// MARK: - Sound
-
-struct SoundSettingsPane: View {
-    var model: AppModel
-
-    private var lang: LanguageManager { model.lang }
-
-    private var availableSounds: [String] {
-        NotificationSoundService.availableSounds()
-    }
-
-    var body: some View {
-        Form {
-            Section(lang.t("settings.sound.notifications")) {
-                Toggle(lang.t("settings.sound.mute"), isOn: Binding(
-                    get: { model.isSoundMuted },
-                    set: { _ in model.toggleSoundMuted() }
-                ))
-            }
-
-            Section(lang.t("settings.sound.selectSound")) {
-                List(availableSounds, id: \.self) { name in
-                    Button {
-                        model.selectedSoundName = name
-                        NotificationSoundService.play(name)
-                    } label: {
-                        HStack {
-                            Text(name)
-                                .foregroundStyle(.primary)
-                            Spacer()
-                            if name == model.selectedSoundName {
-                                Image(systemName: "checkmark")
-                                    .foregroundStyle(.blue)
-                                    .fontWeight(.semibold)
-                            }
-                        }
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-        .formStyle(.grouped)
-        .islandSettingsPaneBackground()
-        .navigationTitle(lang.t("settings.tab.sound"))
-    }
-}
-
 // MARK: - Setup
 
 struct SetupSettingsPane: View {
     var model: AppModel
-
-    @State private var confirmingUninstallClaude = false
-    @State private var confirmingUninstallCodex = false
-    @State private var confirmingUninstallOpenCode = false
-    @State private var confirmingUninstallClaudeUsage = false
 
     private var lang: LanguageManager { model.lang }
 
@@ -862,100 +779,33 @@ struct SetupSettingsPane: View {
                 emptyStateBanner
             }
 
-            claudeConfigDirectorySection
-
-            Section(lang.t("setup.section.hooks")) {
-                hookRow(
+            Section {
+                automaticHookRow(
                     name: "Claude Code",
                     installed: model.claudeHooksInstalled,
                     busy: model.isClaudeHookSetupBusy,
-                    configLocationURL: model.claudeHookStatus?.settingsURL,
-                    installAction: { model.installClaudeHooks() },
-                    uninstallAction: { confirmingUninstallClaude = true }
+                    configLocationURL: model.claudeHookStatus?.settingsURL
                 )
-                .alert(lang.t("settings.general.uninstallConfirmTitle"), isPresented: $confirmingUninstallClaude) {
-                    Button(lang.t("settings.general.uninstallConfirmAction"), role: .destructive) {
-                        model.uninstallClaudeHooks()
-                    }
-                    Button(lang.t("settings.general.cancel"), role: .cancel) {}
-                } message: {
-                    Text(lang.t("settings.general.uninstallConfirmMessage.claude"))
-                }
 
-                hookRow(
+                automaticHookRow(
                     name: "Codex",
                     installed: model.codexHooksInstalled,
                     busy: model.isCodexSetupBusy,
-                    configLocationURL: codexHookConfigURL,
-                    installAction: { model.installCodexHooks() },
-                    uninstallAction: { confirmingUninstallCodex = true }
+                    configLocationURL: codexHookConfigURL
                 )
-                .alert(lang.t("settings.general.uninstallConfirmTitle"), isPresented: $confirmingUninstallCodex) {
-                    Button(lang.t("settings.general.uninstallConfirmAction"), role: .destructive) {
-                        model.uninstallCodexHooks()
-                    }
-                    Button(lang.t("settings.general.cancel"), role: .cancel) {}
-                } message: {
-                    Text(lang.t("settings.general.uninstallConfirmMessage.codex"))
-                }
 
-                hookRow(
+                automaticHookRow(
                     name: "OpenCode",
                     installed: model.openCodePluginInstalled,
                     busy: model.isOpenCodeSetupBusy,
-                    requiresBinary: false,
-                    configLocationURL: model.openCodePluginStatus?.configURL,
-                    installAction: { model.installOpenCodePlugin() },
-                    uninstallAction: { confirmingUninstallOpenCode = true }
+                    configLocationURL: model.openCodePluginStatus?.configURL
                 )
-                .alert(lang.t("settings.general.uninstallConfirmTitle"), isPresented: $confirmingUninstallOpenCode) {
-                    Button(lang.t("settings.general.uninstallConfirmAction"), role: .destructive) {
-                        model.uninstallOpenCodePlugin()
-                    }
-                    Button(lang.t("settings.general.cancel"), role: .cancel) {}
-                } message: {
-                    Text("This will remove the Aisland plugin from ~/.config/opencode/plugins/.")
-                }
-
-            }
-
-            Section {
-                HStack {
-                    Label(lang.t("setup.usageBridge"), systemImage: "chart.bar")
-                    Spacer()
-                    if model.claudeUsageInstalled {
-                        HStack(spacing: 4) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
-                            Text(lang.t("setup.usageBridgeReady"))
-                                .foregroundStyle(.secondary)
-                        }
-                        Button(lang.t("settings.general.uninstall")) {
-                            confirmingUninstallClaudeUsage = true
-                        }
-                    } else if model.isClaudeUsageSetupBusy {
-                        ProgressView().controlSize(.small)
-                    } else {
-                        Button(lang.t("settings.general.install")) {
-                            model.installClaudeUsageBridge()
-                        }
-                    }
-                }
-                .alert(lang.t("settings.general.uninstallConfirmTitle"), isPresented: $confirmingUninstallClaudeUsage) {
-                    Button(lang.t("settings.general.uninstallConfirmAction"), role: .destructive) {
-                        model.uninstallClaudeUsageBridge()
-                    }
-                    Button(lang.t("settings.general.cancel"), role: .cancel) {}
-                } message: {
-                    Text(lang.t("settings.general.uninstallConfirmMessage.claudeUsage"))
-                }
-
             } header: {
-                HStack(spacing: 4) {
-                    Text(lang.t("setup.section.usage"))
-                    Text(lang.t("setup.optional"))
-                        .foregroundStyle(.tertiary)
-                }
+                Text(lang.t("setup.section.hooks"))
+            } footer: {
+                Text(lang.t("setup.hooks.autoManagedFooter"))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
             }
 
             Section(lang.t("setup.section.permissions")) {
@@ -975,73 +825,10 @@ struct SetupSettingsPane: View {
             }
 
             hookDiagnosticsSection
-
-            Section {
-                Button(lang.t("setup.installAll")) {
-                    if !model.claudeHooksInstalled { model.installClaudeHooks() }
-                    if !model.codexHooksInstalled { model.installCodexHooks() }
-                    if !model.openCodePluginInstalled { model.installOpenCodePlugin() }
-                    if !model.claudeUsageInstalled { model.installClaudeUsageBridge() }
-                }
-                .disabled(model.hooksBinaryURL == nil || allReady)
-                .frame(maxWidth: .infinity, alignment: .center)
-            }
         }
         .formStyle(.grouped)
         .islandSettingsPaneBackground()
         .navigationTitle(lang.t("settings.tab.setup"))
-    }
-
-    @ViewBuilder
-    private var claudeConfigDirectorySection: some View {
-        Section {
-            HStack {
-                Label {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(lang.t("setup.claudeConfigDir.title"))
-                        Text(ClaudeConfigDirectory.resolved().path)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                    }
-                } icon: {
-                    Image(systemName: "folder")
-                }
-                Spacer()
-                if ClaudeConfigDirectory.customDirectory != nil {
-                    Button(lang.t("setup.claudeConfigDir.reset")) {
-                        model.updateClaudeConfigDirectory(to: nil)
-                    }
-                    .font(.caption)
-                }
-                Button(lang.t("setup.claudeConfigDir.choose")) {
-                    let panel = NSOpenPanel()
-                    panel.canChooseDirectories = true
-                    panel.canChooseFiles = false
-                    panel.canCreateDirectories = true
-                    panel.showsHiddenFiles = true
-                    panel.prompt = lang.t("setup.claudeConfigDir.choose")
-                    if panel.runModal() == .OK, let url = panel.url {
-                        model.updateClaudeConfigDirectory(to: url)
-                    }
-                }
-            }
-        } header: {
-            HStack(spacing: 4) {
-                Text(lang.t("setup.claudeConfigDir.section"))
-                Text(lang.t("setup.optional"))
-                    .foregroundStyle(.tertiary)
-            }
-        } footer: {
-            Text(lang.t("setup.claudeConfigDir.footer"))
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-        }
-    }
-
-    private var allReady: Bool {
-        model.claudeHooksInstalled && model.codexHooksInstalled && model.openCodePluginInstalled && model.claudeUsageInstalled
     }
 
     @ViewBuilder
@@ -1213,21 +1000,20 @@ struct SetupSettingsPane: View {
     }
 
     @ViewBuilder
-    private func hookRow(
+    private func automaticHookRow(
         name: String,
         installed: Bool,
         busy: Bool,
-        requiresBinary: Bool = true,
-        configLocationURL: URL? = nil,
-        installAction: @escaping () -> Void,
-        uninstallAction: @escaping () -> Void
+        configLocationURL: URL? = nil
     ) -> some View {
         HStack {
             Label(name, systemImage: "terminal")
             Spacer()
-            if installed {
+            if busy {
+                ProgressView().controlSize(.small)
+            } else {
                 HStack(spacing: 8) {
-                    if let configLocationURL {
+                    if installed, let configLocationURL {
                         Button {
                             revealInFinder(configLocationURL)
                         } label: {
@@ -1238,24 +1024,12 @@ struct SetupSettingsPane: View {
                         .help(lang.t("setup.revealConfigLocation"))
                     }
                     HStack(spacing: 4) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                        Text(lang.t("settings.general.activated"))
+                        Image(systemName: installed ? "checkmark.circle.fill" : "clock.arrow.circlepath")
+                            .foregroundStyle(installed ? .green : .secondary)
+                        Text(installed ? lang.t("settings.general.activated") : lang.t("setup.hookAutomaticPending"))
                             .foregroundStyle(.secondary)
                     }
-                    Button(lang.t("settings.general.uninstall")) {
-                        uninstallAction()
-                    }
-                    .foregroundStyle(.red)
-                    .font(.caption)
                 }
-            } else if busy {
-                ProgressView().controlSize(.small)
-            } else {
-                Button(lang.t("settings.general.install")) {
-                    installAction()
-                }
-                .disabled(requiresBinary && model.hooksBinaryURL == nil)
             }
         }
     }

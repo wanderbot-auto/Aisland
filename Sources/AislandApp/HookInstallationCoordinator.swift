@@ -540,15 +540,12 @@ final class HookInstallationCoordinator {
     /// Reports whether the startup flow should auto-install hooks for the
     /// given agent.
     ///
-    /// Post-onboarding, the only case that triggers auto-install is
-    /// `.installed && !present` — i.e. the user asked for this hook in the
-    /// past but it is currently missing (fresh machine, config wiped,
-    /// upgraded binary path, etc). This is a repair, not a surprise
-    /// install. `.untouched` and `.uninstalled` both return false;
-    /// untouched agents are surfaced to the user via the first-run
-    /// onboarding window and the empty-state banner instead.
+    /// Startup keeps hooks enabled by default. `.uninstalled` is the only
+    /// opt-out state that blocks auto-install; `.untouched` covers first-run
+    /// users and `.installed` covers repair after a config wipe or binary
+    /// path change.
     func shouldAutoInstall(_ agent: AgentIdentifier) -> Bool {
-        guard intentStore.intent(for: agent) == .installed else {
+        guard intentStore.intent(for: agent) != .uninstalled else {
             return false
         }
 

@@ -4,7 +4,7 @@ import Foundation
 ///
 /// Backed by `UserDefaults`. Tests inject a throwaway suite so production
 /// preferences aren't touched. `AgentIntentStore` is the single source of
-/// truth for whether the startup flow should auto-install, skip, or prompt.
+/// truth for whether the startup flow should auto-install or skip.
 public final class AgentIntentStore: @unchecked Sendable {
     private let defaults: UserDefaults
 
