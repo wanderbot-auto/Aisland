@@ -20,6 +20,8 @@ final class TerminalTextSenderTests: XCTestCase {
         XCTAssertTrue(script.contains("tell application \"System Events\""))
         XCTAssertTrue(script.contains("tell process \"Ghostty\""))
         XCTAssertTrue(script.contains("set frontmost to true"))
+        XCTAssertTrue(script.contains("repeat 10 times"))
+        XCTAssertTrue(script.contains("frontmost of process \"Ghostty\""))
         XCTAssertTrue(script.contains("keystroke replyText"))
         XCTAssertTrue(script.contains("key code 36"))
     }

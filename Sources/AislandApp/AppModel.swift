@@ -1763,7 +1763,9 @@ final class AppModel {
         }
 
         lastActionMessage = "Sending answer to Codex terminal for \(session.title)…"
+        prepareForTerminalTextInjection()
         Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(180))
             let success = await Task.detached(priority: .userInitiated) {
                 TerminalTextSender.send(answerText, to: session)
             }.value
@@ -1797,8 +1799,10 @@ final class AppModel {
         refreshOverlayPlacementIfVisible()
 
         lastActionMessage = "Sending reply to \(session.title)…"
+        prepareForTerminalTextInjection()
 
         Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(180))
             let success = await Task.detached(priority: .userInitiated) {
                 TerminalTextSender.send(text, to: session)
             }.value
@@ -1807,6 +1811,11 @@ final class AppModel {
                 ? "Sent reply to \(session.title)."
                 : "Failed to send reply to \(session.title)."
         }
+    }
+
+    private func prepareForTerminalTextInjection() {
+        dismissOverlayForJump()
+        NSApp.deactivate()
     }
 
 

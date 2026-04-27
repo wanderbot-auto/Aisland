@@ -95,6 +95,10 @@ struct TerminalTextSender {
             tell process "Ghostty"
                 set frontmost to true
             end tell
+            repeat 10 times
+                if frontmost of process "Ghostty" then exit repeat
+                delay 0.05
+            end repeat
             keystroke replyText
             key code 36
         end tell
