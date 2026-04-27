@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aisland Cyber-Minimalist Design Preview</title>
+  <style>
+    :root {
+      --surface: #131313;
+      --surface-dim: #131313;
+      --surface-bright: #393939;
+      --surface-container-lowest: #0e0e0e;
+      --surface-container-low: #1b1b1b;
+      --surface-container: #1f1f1f;
+      --surface-container-high: #2a2a2a;
+      --surface-container-highest: #353535;
+      --on-surface: #e2e2e2;
+      --on-surface-variant: #bbc9cf;
+      --outline: #859399;
+      --outline-variant: #3c494e;
+      --primary: #a4e6ff;
+      --primary-container: #00d1ff;
+      --on-primary: #003543;
+      --secondary: #c8c6c5;
+      --secondary-container: #474746;
+      --background: #000;
+      --error: #ffb4ab;
+      --radius-sm: 4px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --hairline: rgba(255, 255, 255, 0.1);
+      --hairline-strong: rgba(164, 230, 255, 0.28);
+      --glass: rgba(0, 0, 0, 0.7);
+      --shadow-cyan: 0 0 34px rgba(0, 209, 255, 0.16);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      color-scheme: dark;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background:
+        radial-gradient(circle at 50% -10%, rgba(0, 209, 255, 0.13), transparent 32rem),
+        radial-gradient(circle at 88% 12%, rgba(255, 255, 255, 0.06), transparent 22rem),
+        linear-gradient(180deg, #000 0%, var(--surface-lowest, #080808) 100%);
+      color: var(--on-surface);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.16;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(circle at top, black, transparent 72%);
+    }
+
+    .shell {
+      width: min(1120px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 28px 0 96px;
+    }
+
+    .top-island {
+      position: sticky;
+      top: 12px;
+      z-index: 5;
+      width: min(560px, 100%);
+      margin: 0 auto 52px;
+      padding: 10px 12px;
+      border: 1px solid var(--hairline);
+      border-radius: 999px;
+      background: var(--glass);
+      box-shadow: var(--shadow-cyan), inset 0 1px rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(34px) saturate(1.15);
+    }
+
+    .island-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .orb {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--primary-container);
+      box-shadow: 0 0 22px var(--primary-container);
+      flex: 0 0 auto;
+    }
+
+    .island-title {
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .island-meta {
+      margin-left: auto;
+      color: var(--on-surface-variant);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .copy {
+      max-width: 680px;
+    }
+
+    .kicker,
+    .eyebrow {
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 12px 0 14px;
+      color: white;
+      font-size: clamp(38px, 7vw, 72px);
+      line-height: 0.94;
+      letter-spacing: -0.06em;
+    }
+
+    .lead {
+      max-width: 620px;
+      margin: 0;
+      color: var(--on-surface-variant);
+      font-size: 15px;
+      line-height: 22px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 0 16px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 999px;
+      color: var(--on-surface);
+      background: transparent;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      text-decoration: none;
+    }
+
+    .button.primary {
+      border-color: transparent;
+      color: #001f28;
+      background: var(--primary-container);
+      box-shadow: 0 0 24px rgba(0, 209, 255, 0.24);
+    }
+
+    .panel,
+    .machine-card,
+    .metric-card,
+    .setting-card {
+      border: 1px solid var(--hairline);
+      background: rgba(26, 26, 26, 0.74);
+      backdrop-filter: blur(24px);
+      box-shadow: inset 0 1px rgba(255, 255, 255, 0.04);
+    }
+
+    .panel {
+      border-radius: var(--radius-xl);
+      padding: 16px;
+    }
+
+    .status-panel {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .status-panel::after {
+      content: "";
+      position: absolute;
+      inset: -60px -100px auto auto;
+      width: 180px;
+      height: 180px;
+      border-radius: 999px;
+      background: rgba(0, 209, 255, 0.14);
+      filter: blur(38px);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .panel-title {
+      margin: 0;
+      color: white;
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 24px;
+      letter-spacing: -0.01em;
+    }
+
+    .ghost-chip {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      padding: 5px 8px;
+      color: var(--on-surface-variant);
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .task-stack {
+      display: grid;
+      gap: 8px;
+    }
+
+    .task {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .task-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--primary-container);
+    }
+
+    .task-name {
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .task-subtitle,
+    .tiny {
+      color: var(--on-surface-variant);
+      font-size: 11px;
+      line-height: 16px;
+    }
+
+    .progress {
+      height: 2px;
+      margin-top: 14px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .progress span {
+      display: block;
+      width: 64%;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--primary-container);
+      box-shadow: 0 0 18px var(--primary-container);
+    }
+
+    .showcase {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 24px;
+      margin-top: 44px;
+    }
+
+    .settings-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .setting-card {
+      border-radius: var(--radius-lg);
+      padding: 13px;
+    }
+
+    .setting-card.active {
+      border-color: var(--hairline-strong);
+      background: rgba(0, 209, 255, 0.07);
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .setting-label {
+      color: white;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .toggle {
+      width: 38px;
+      height: 22px;
+      border-radius: 999px;
+      padding: 3px;
+      background: var(--secondary-container);
+    }
+
+    .toggle::before {
+      content: "";
+      display: block;
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      background: var(--secondary);
+    }
+
+    .toggle.on {
+      background: var(--primary-container);
+    }
+
+    .toggle.on::before {
+      margin-left: 16px;
+      background: var(--on-primary);
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .metric-card {
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .metric-label {
+      color: var(--on-surface-variant);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      margin-top: 5px;
+      color: white;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .chat-panel {
+      min-height: 570px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 18px;
+    }
+
+    .messages {
+      display: grid;
+      align-content: start;
+      gap: 14px;
+    }
+
+    .user-message {
+      justify-self: end;
+      max-width: 74%;
+      color: white;
+      font-size: 15px;
+      line-height: 22px;
+      text-align: right;
+    }
+
+    .machine-card {
+      max-width: 86%;
+      border-radius: var(--radius-lg);
+      padding: 15px;
+    }
+
+    .machine-card p {
+      margin: 8px 0 0;
+      color: var(--on-surface-variant);
+      font-size: 13px;
+      line-height: 20px;
+    }
+
+    .response-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .code-row {
+      display: grid;
+      gap: 6px;
+      margin-top: 14px;
+    }
+
+    .code-line {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .code-line:nth-child(1) { width: 88%; }
+    .code-line:nth-child(2) { width: 62%; }
+    .code-line:nth-child(3) { width: 74%; background: rgba(0, 209, 255, 0.28); }
+
+    .composer {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 56px;
+      padding: 8px 8px 8px 16px;
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius-xl);
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(36px);
+      box-shadow: inset 0 1px rgba(255, 255, 255, 0.08), var(--shadow-cyan);
+    }
+
+    .composer-text {
+      flex: 1;
+      color: var(--on-surface-variant);
+      font-size: 13px;
+    }
+
+    .send {
+      width: 38px;
+      height: 38px;
+      border: 0;
+      border-radius: 999px;
+      color: #001f28;
+      background: var(--primary-container);
+      font-weight: 900;
+      box-shadow: 0 0 24px rgba(0, 209, 255, 0.32);
+    }
+
+    .control-strip {
+      display: flex;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .round-control {
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--hairline);
+      border-radius: 999px;
+      color: var(--on-surface);
+      background: rgba(26, 26, 26, 0.76);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 860px) {
+      .hero,
+      .showcase {
+        grid-template-columns: 1fr;
+      }
+
+      .top-island {
+        margin-bottom: 32px;
+      }
+
+      .user-message,
+      .machine-card {
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .shell {
+        width: min(100% - 20px, 1120px);
+        padding-top: 10px;
+      }
+
+      .top-island {
+        top: 8px;
+      }
+
+      .island-meta {
+        display: none;
+      }
+
+      .metric-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="top-island" aria-label="Floating island status preview">
+      <div class="island-row">
+        <span class="orb"></span>
+        <span class="island-title">Aisland is monitoring two AI sessions</span>
+        <span class="island-meta">Live context 64%</span>
+      </div>
+    </section>
+
+    <section class="hero">
+      <div class="copy">
+        <div class="kicker">Cyber-Minimalist AI</div>
+        <h1>Clinical dark surfaces for fast local AI control.</h1>
+        <p class="lead">This standalone preview translates DESIGN.md into a browser-native mockup: true black stage, glassmorphic island, neon cyan action states, compact Inter typography, thin borders, and dense power-user controls.</p>
+        <div class="actions">
+          <a class="button primary" href="#chat">Inspect chat surface</a>
+          <a class="button" href="#settings">View settings cards</a>
+        </div>
+        <div class="control-strip" aria-label="System controls preview">
+          <button class="round-control">SET</button>
+          <button class="round-control">LOG</button>
+          <button class="round-control">SND</button>
+        </div>
+      </div>
+
+      <aside class="panel status-panel" aria-label="Session status panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Runtime</h2>
+          <span class="ghost-chip">Focus</span>
+        </div>
+        <div class="task-stack">
+          <div class="task">
+            <span class="task-dot"></span>
+            <div>
+              <div class="task-name">Codex refactor</div>
+              <div class="task-subtitle">Running tests in AislandCore</div>
+            </div>
+            <span class="tiny">12m</span>
+          </div>
+          <div class="task">
+            <span class="task-dot"></span>
+            <div>
+              <div class="task-name">Claude review</div>
+              <div class="task-subtitle">Waiting for permission decision</div>
+            </div>
+            <span class="tiny">Now</span>
+          </div>
+        </div>
+        <div class="progress"><span></span></div>
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="metric-label">Input</div>
+            <div class="metric-value">42k</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Output</div>
+            <div class="metric-value">8.7k</div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="showcase" id="settings">
+      <aside class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Settings Surface</h2>
+          <span class="ghost-chip">Compact</span>
+        </div>
+        <div class="settings-grid">
+          <div class="setting-card active">
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Temporary chat</div>
+                <div class="task-subtitle">Provider credentials saved locally</div>
+              </div>
+              <span class="toggle on"></span>
+            </div>
+          </div>
+          <div class="setting-card">
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">Island usage</div>
+                <div class="task-subtitle">Show Claude and Codex tokens</div>
+              </div>
+              <span class="toggle on"></span>
+            </div>
+          </div>
+          <div class="setting-card">
+            <div class="setting-row">
+              <div>
+                <div class="setting-label">White noise</div>
+                <div class="task-subtitle">Muted while coding</div>
+              </div>
+              <span class="toggle"></span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="panel chat-panel" id="chat" aria-label="Temporary chat preview">
+        <div class="panel-head">
+          <h2 class="panel-title">Temporary Chat</h2>
+          <span class="ghost-chip">GPT-5</span>
+        </div>
+        <div class="messages">
+          <div class="user-message">Summarize the current branch and flag the riskiest UI change.</div>
+          <article class="machine-card">
+            <div class="response-label"><span class="orb"></span>AI response</div>
+            <p>The branch is focused on settings polish. The highest-risk area is visual density: keep action color reserved for live or selected state, and use neutral cards for passive metrics.</p>
+            <div class="code-row" aria-hidden="true">
+              <span class="code-line"></span>
+              <span class="code-line"></span>
+              <span class="code-line"></span>
+            </div>
+          </article>
+        </div>
+        <div class="composer">
+          <span class="composer-text">Ask without leaving the island...</span>
+          <button class="send" aria-label="Send message">AI</button>
+        </div>
+      </section>
+    </section>
+  </main>
+</body>
+</html>
