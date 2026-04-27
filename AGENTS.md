@@ -60,12 +60,11 @@ Keep all work incremental, reviewable, and reversible. Every meaningful round of
 
 ## Canonical Docs In This Checkout
 
-- Use `CLAUDE.md` for the highest-level architecture and repo conventions.
 - Use `DESIGN.md` for the current visual system and product styling direction.
 - Use `docs/refactor-plan.md` for the current simplification roadmap and file hotspots.
 - Use `docs/extension-architecture.md` for Skills and MCP direction.
 - Use `docs/llm-chat-sdk-recommendation.md` for the temporary-chat provider strategy.
-- Do not assume `README.md`, `docs/product.md`, `docs/architecture.md`, or `docs/worktree-workflow.md` exist in this checkout unless the same round adds or restores them.
+- Do not assume `CLAUDE.md`, `README.md`, `docs/product.md`, `docs/architecture.md`, or `docs/worktree-workflow.md` exist in this checkout unless the same round adds or restores them.
 
 ## App Targets And Naming
 

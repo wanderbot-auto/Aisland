@@ -6,15 +6,11 @@ repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$repo_root"
 
 required_files=(
-    "README.md"
     "AGENTS.md"
-    "docs/index.md"
-    "docs/product.md"
-    "docs/architecture.md"
-    "docs/quality.md"
-    "docs/worktree-workflow.md"
-    "docs/exec-plans/README.md"
-    "docs/references/README.md"
+    "DESIGN.md"
+    "docs/extension-architecture.md"
+    "docs/llm-chat-sdk-recommendation.md"
+    "docs/refactor-plan.md"
 )
 
 for file in "${required_files[@]}"; do
@@ -24,39 +20,38 @@ for file in "${required_files[@]}"; do
     fi
 done
 
-while IFS= read -r file; do
-    case "$file" in
-        docs/review/*)
-            continue
-            ;;
-    esac
+has_required_heading() {
+    local file="$1"
 
-    if ! grep -qE '^# ' "$file"; then
-        echo "missing top-level heading: $file" >&2
+    if grep -qE '^# ' "$file"; then
+        return 0
+    fi
+
+    # Some design documents start with front matter and then use lower-level
+    # headings for the narrative body.
+    if grep -qE '^---$' "$file" && grep -qE '^##+ ' "$file"; then
+        return 0
+    fi
+
+    return 1
+}
+
+while IFS= read -r file; do
+    if ! has_required_heading "$file"; then
+        echo "missing required heading structure: $file" >&2
+        exit 1
+    fi
+done < <(printf '%s\n' "AGENTS.md" "DESIGN.md" && find docs -name '*.md' -type f | sort)
+
+while IFS= read -r file; do
+    if ! grep -Fq "$file" AGENTS.md; then
+        echo "AGENTS.md should reference: $file" >&2
         exit 1
     fi
 done < <(find docs -name '*.md' -type f | sort)
 
-while IFS= read -r file; do
-    case "$file" in
-        docs/index.md|docs/review/*|docs/exec-plans/active/*|docs/exec-plans/completed/*)
-            continue
-            ;;
-    esac
-
-    if ! grep -Fq "$file" docs/index.md; then
-        echo "docs index is missing link to: $file" >&2
-        exit 1
-    fi
-done < <(find docs -name '*.md' -type f | sort)
-
-if ! grep -Fq "docs/index.md" README.md; then
-    echo "README.md should link to docs/index.md" >&2
-    exit 1
-fi
-
-if ! grep -Fq "scripts/harness.sh" README.md; then
-    echo "README.md should mention scripts/harness.sh" >&2
+if ! grep -Fq "DESIGN.md" AGENTS.md; then
+    echo "AGENTS.md should reference: DESIGN.md" >&2
     exit 1
 fi
 
