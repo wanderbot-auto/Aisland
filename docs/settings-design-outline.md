@@ -74,10 +74,11 @@
 
 ### Usage
 
-- 刷新与数据源
-- 今日岛上展示
-- 汇总指标
-- Day / Month / Session bucket 列表
+- 刷新与最近更新时间
+- 今日岛上展示配置
+- 关键汇总指标（Total / Input / Output / Entries）
+- Day / Month / Session 紧凑列表
+- 使用中性色与弱描边，避免 provider 与指标颜色抢占视觉层级
 
 ### Sound
 
@@ -105,4 +106,5 @@
 - 已移除左下角会员卡片以及 `Behavior defaults` 按钮，避免出现当前产品里并不存在的会员 / 默认模板心智。
 - 当前静态稿侧重评审信息架构与布局差异：`General`、`Skills`、`Sound`、`Shortcuts` 等低配置密度页面已收敛成 2 段式；`Display` 保留 3 段；`AI Chat`、`Setup`、`Appearance` 继续承载更高的信息量。
 - `Settings · AI Chat` 已按当前 `SettingsView.swift` 的真实实现语义调整为 provider-first：主体区围绕 provider 搜索、默认模型/override、API key 存储组织，不再单独展示推荐模型与快捷键设置区。
+- `Settings · Usage` 已收敛为紧凑统计配置页：隐藏低价值数据源明细，减少汇总卡片数量，并统一使用弱色彩、弱描边与更小行高。
 - 后续如进入实现阶段，再逐页细化控件状态、空态、错误态和滚动细节。
