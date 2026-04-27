@@ -10,8 +10,8 @@ struct RecentModelUsageView: View {
         model.usageAnalyticsHourlyModelUsage
     }
 
-    private var hours: [RecentUsageHour] {
-        RecentUsageHour.completeLast24Hours(from: rows)
+    private var days: [RecentUsageDay] {
+        RecentUsageDay.completeRecentDays(from: rows, dayCount: 7)
     }
 
     private var totalTokens: Int {
@@ -64,7 +64,7 @@ struct RecentModelUsageView: View {
                     .frame(maxHeight: .infinity)
             }
         }
-        .frame(height: 244)
+        .frame(height: 500)
         .onAppear {
             if rows.isEmpty {
                 model.refreshUsageAnalytics()
@@ -96,10 +96,12 @@ struct RecentModelUsageView: View {
                 if totalTokens == 0 && totalCostUSD == 0 {
                     emptyState
                 } else {
-                    HourlyUsageHeatmap(
-                        hours: hours,
+                    HourlyContributionHeatmap(
+                        days: days,
                         theme: theme,
-                        legend: model.lang.t("usage.surface.legend")
+                        legend: model.lang.t("usage.surface.legend"),
+                        lessLabel: model.lang.t("usage.surface.less"),
+                        moreLabel: model.lang.t("usage.surface.more")
                     )
                 }
             }
@@ -125,7 +127,7 @@ struct RecentModelUsageView: View {
                 summaryCard(
                     title: model.lang.t("usage.surface.cost"),
                     value: totalCostUSD.recentUsageCurrencyString,
-                    detail: model.lang.t("usage.surface.last24h")
+                    detail: model.lang.t("usage.surface.recentDays")
                 )
             }
         }
@@ -194,104 +196,215 @@ struct RecentModelUsageView: View {
     }
 }
 
-private struct HourlyUsageHeatmap: View {
-    var hours: [RecentUsageHour]
+private struct HourlyContributionHeatmap: View {
+    var days: [RecentUsageDay]
     var theme: IslandThemePalette
     var legend: String
+    var lessLabel: String
+    var moreLabel: String
 
     private var maxTokens: Int {
-        max(hours.map(\.totalTokens).max() ?? 1, 1)
+        max(days.flatMap(\.cells).map(\.totalTokens).max() ?? 1, 1)
     }
 
     var body: some View {
         GeometryReader { proxy in
-            let cellSpacing: CGFloat = 4
-            let cellWidth = max(8, (proxy.size.width - CGFloat(hours.count - 1) * cellSpacing) / CGFloat(hours.count))
+            let labelWidth: CGFloat = 42
+            let cellSpacing: CGFloat = 3
+            let availableCellWidth = proxy.size.width - labelWidth - CGFloat(23) * cellSpacing
+            let cellSize = min(16, max(8, availableCellWidth / 24))
 
-            VStack(alignment: .leading, spacing: 9) {
-                HStack(alignment: .bottom, spacing: cellSpacing) {
-                    ForEach(hours) { hour in
-                        VStack(spacing: 5) {
-                            Spacer(minLength: 0)
-                            RoundedRectangle(cornerRadius: min(8, cellWidth * 0.4), style: .continuous)
-                                .fill(fill(for: hour))
-                                .frame(width: cellWidth, height: height(for: hour, maxHeight: 116))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: min(8, cellWidth * 0.4), style: .continuous)
-                                        .strokeBorder(theme.text.opacity(hour.totalTokens > 0 ? 0.10 : 0.04), lineWidth: 0.6)
-                                )
-                                .help(hour.helpText)
+            VStack(alignment: .leading, spacing: 12) {
+                hourHeader(labelWidth: labelWidth, cellSize: cellSize, spacing: cellSpacing)
 
-                            Text(hour.shortLabel)
-                                .font(.system(size: 8, weight: .bold, design: .rounded))
-                                .foregroundStyle(theme.textSecondary.opacity(hour.isMajorTick ? 0.86 : 0.34))
+                VStack(alignment: .leading, spacing: cellSpacing) {
+                    ForEach(days) { day in
+                        HStack(spacing: cellSpacing) {
+                            Text(day.shortLabel)
+                                .font(.system(size: 9, weight: .bold, design: .rounded))
+                                .foregroundStyle(theme.textSecondary.opacity(day.isToday ? 0.95 : 0.62))
                                 .lineLimit(1)
-                                .frame(width: cellWidth + 2)
+                                .frame(width: labelWidth, alignment: .trailing)
+
+                            ForEach(day.cells) { cell in
+                                RoundedRectangle(cornerRadius: cellSize * 0.24, style: .continuous)
+                                    .fill(fill(for: cell))
+                                    .frame(width: cellSize, height: cellSize)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: cellSize * 0.24, style: .continuous)
+                                            .strokeBorder(stroke(for: cell), lineWidth: 0.55)
+                                    )
+                                    .help(cell.helpText)
+                            }
                         }
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(theme.surfaceContainer.opacity(0.34))
+                )
 
                 HStack(spacing: 7) {
-                    heatmapLegendSwatch(opacity: 0.18)
-                    heatmapLegendSwatch(opacity: 0.42)
-                    heatmapLegendSwatch(opacity: 0.70)
                     Text(legend)
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundStyle(theme.textSecondary)
                     Spacer(minLength: 0)
+                    Text(lessLabel)
+                    ForEach([0.16, 0.30, 0.48, 0.66, 0.84], id: \.self) { opacity in
+                        RoundedRectangle(cornerRadius: 3, style: .continuous)
+                            .fill(theme.primary.opacity(opacity))
+                            .frame(width: 12, height: 12)
+                    }
+                    Text(moreLabel)
                 }
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(theme.textSecondary)
+
+                RecentUsageDayTotals(days: days, theme: theme)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+    }
+
+    private func hourHeader(labelWidth: CGFloat, cellSize: CGFloat, spacing: CGFloat) -> some View {
+        HStack(spacing: spacing) {
+            Color.clear.frame(width: labelWidth, height: 1)
+            ForEach(0..<24, id: \.self) { hour in
+                Text(hour % 6 == 0 ? String(format: "%02d", hour) : "")
+                    .font(.system(size: 8, weight: .bold, design: .rounded))
+                    .foregroundStyle(theme.textSecondary.opacity(0.58))
+                    .frame(width: cellSize)
             }
         }
     }
 
-    private func height(for hour: RecentUsageHour, maxHeight: CGFloat) -> CGFloat {
-        guard hour.totalTokens > 0 else { return 14 }
-        return max(18, maxHeight * CGFloat(hour.totalTokens) / CGFloat(maxTokens))
-    }
-
-    private func fill(for hour: RecentUsageHour) -> LinearGradient {
-        guard hour.totalTokens > 0 else {
-            return LinearGradient(
-                colors: [theme.surfaceContainer.opacity(0.34), theme.surfaceContainer.opacity(0.28)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+    private func fill(for cell: RecentUsageHourCell) -> Color {
+        guard !cell.isFuture else {
+            return theme.surfaceContainer.opacity(0.16)
+        }
+        guard cell.totalTokens > 0 || cell.costUSD > 0 else {
+            return theme.surfaceContainer.opacity(0.44)
         }
 
-        let intensity = min(1, Double(hour.totalTokens) / Double(maxTokens))
-        return LinearGradient(
-            colors: [
-                theme.primary.opacity(0.28 + 0.52 * intensity),
-                theme.secondary.opacity(0.22 + 0.42 * intensity),
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
+        let intensity = min(1, Double(cell.totalTokens) / Double(maxTokens))
+        return theme.primary.opacity(0.18 + 0.70 * intensity)
     }
 
-    private func heatmapLegendSwatch(opacity: Double) -> some View {
-        RoundedRectangle(cornerRadius: 3, style: .continuous)
-            .fill(theme.primary.opacity(opacity))
-            .frame(width: 12, height: 8)
+    private func stroke(for cell: RecentUsageHourCell) -> Color {
+        if cell.isCurrentHour {
+            return theme.text.opacity(0.48)
+        }
+        return theme.text.opacity(cell.totalTokens > 0 ? 0.10 : 0.04)
     }
 }
 
-private struct RecentUsageHour: Identifiable {
+private struct RecentUsageDayTotals: View {
+    var days: [RecentUsageDay]
+    var theme: IslandThemePalette
+
+    private var maxTokens: Int {
+        max(days.map(\.totalTokens).max() ?? 1, 1)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            ForEach(days) { day in
+                HStack(spacing: 8) {
+                    Text(day.longLabel)
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(theme.textSecondary)
+                        .frame(width: 46, alignment: .leading)
+                    GeometryReader { proxy in
+                        RoundedRectangle(cornerRadius: 5, style: .continuous)
+                            .fill(theme.primary.opacity(day.totalTokens > 0 ? 0.28 : 0.08))
+                            .frame(width: max(day.totalTokens > 0 ? 3 : 0, proxy.size.width * CGFloat(day.totalTokens) / CGFloat(maxTokens)))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(height: 8)
+                    Text(day.totalTokens.recentUsageTokenString)
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(theme.textSecondary)
+                        .monospacedDigit()
+                        .frame(width: 42, alignment: .trailing)
+                }
+            }
+        }
+        .padding(.horizontal, 4)
+    }
+}
+
+private struct RecentUsageDay: Identifiable {
+    var dayStartAt: Date
+    var cells: [RecentUsageHourCell]
+
+    var id: TimeInterval { dayStartAt.timeIntervalSince1970 }
+    var totalTokens: Int { cells.reduce(0) { $0 + $1.totalTokens } }
+
+    var isToday: Bool {
+        Calendar.current.isDateInToday(dayStartAt)
+    }
+
+    var shortLabel: String {
+        Self.shortFormatter.string(from: dayStartAt)
+    }
+
+    var longLabel: String {
+        Self.longFormatter.string(from: dayStartAt)
+    }
+
+    static func completeRecentDays(from rows: [UsageAnalyticsHourlyModelBucket], dayCount: Int) -> [RecentUsageDay] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        let currentHour = calendar.dateInterval(of: .hour, for: .now)?.start ?? .now
+        let grouped = Dictionary(grouping: rows) { row in
+            calendar.dateInterval(of: .hour, for: row.hourStartAt)?.start ?? row.hourStartAt
+        }
+
+        return (0..<max(1, dayCount)).compactMap { dayOffset in
+            guard let day = calendar.date(byAdding: .day, value: dayOffset - max(1, dayCount) + 1, to: today) else {
+                return nil
+            }
+
+            let cells = (0..<24).compactMap { hourOffset -> RecentUsageHourCell? in
+                guard let hour = calendar.date(byAdding: .hour, value: hourOffset, to: day) else {
+                    return nil
+                }
+                let hourRows = (grouped[hour] ?? []).sorted { lhs, rhs in
+                    if lhs.totalTokens == rhs.totalTokens { return lhs.modelDisplayName < rhs.modelDisplayName }
+                    return lhs.totalTokens > rhs.totalTokens
+                }
+                return RecentUsageHourCell(hourStartAt: hour, rows: hourRows, isCurrentHour: hour == currentHour)
+            }
+
+            return RecentUsageDay(dayStartAt: day, cells: cells)
+        }
+    }
+
+    private static let shortFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = .current
+        formatter.setLocalizedDateFormatFromTemplate("EEE")
+        return formatter
+    }()
+
+    private static let longFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = .current
+        formatter.setLocalizedDateFormatFromTemplate("Md")
+        return formatter
+    }()
+}
+
+private struct RecentUsageHourCell: Identifiable {
     var hourStartAt: Date
     var rows: [UsageAnalyticsHourlyModelBucket]
+    var isCurrentHour: Bool
 
     var id: TimeInterval { hourStartAt.timeIntervalSince1970 }
     var totalTokens: Int { rows.reduce(0) { $0 + $1.totalTokens } }
     var costUSD: Double { rows.reduce(0) { $0 + $1.costUSD } }
-
-    var isMajorTick: Bool {
-        Calendar.current.component(.hour, from: hourStartAt) % 6 == 0
-    }
-
-    var shortLabel: String {
-        isMajorTick ? Self.hourFormatter.string(from: hourStartAt) : " "
-    }
+    var isFuture: Bool { hourStartAt > .now }
 
     var helpText: String {
         let modelText = rows.prefix(4)
@@ -299,32 +412,6 @@ private struct RecentUsageHour: Identifiable {
             .joined(separator: "\n")
         return "\(Self.longFormatter.string(from: hourStartAt))\n\(totalTokens.recentUsageTokenString) · \(costUSD.recentUsageCurrencyString)\n\(modelText)"
     }
-
-    static func completeLast24Hours(from rows: [UsageAnalyticsHourlyModelBucket]) -> [RecentUsageHour] {
-        let calendar = Calendar.current
-        let currentHour = calendar.dateInterval(of: .hour, for: .now)?.start ?? .now
-        let grouped = Dictionary(grouping: rows) { row in
-            calendar.dateInterval(of: .hour, for: row.hourStartAt)?.start ?? row.hourStartAt
-        }
-
-        return (0..<24).compactMap { offset in
-            guard let hour = calendar.date(byAdding: .hour, value: offset - 23, to: currentHour) else {
-                return nil
-            }
-            let hourRows = (grouped[hour] ?? []).sorted { lhs, rhs in
-                if lhs.totalTokens == rhs.totalTokens { return lhs.modelDisplayName < rhs.modelDisplayName }
-                return lhs.totalTokens > rhs.totalTokens
-            }
-            return RecentUsageHour(hourStartAt: hour, rows: hourRows)
-        }
-    }
-
-    private static let hourFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = .current
-        formatter.setLocalizedDateFormatFromTemplate("ha")
-        return formatter
-    }()
 
     private static let longFormatter: DateFormatter = {
         let formatter = DateFormatter()

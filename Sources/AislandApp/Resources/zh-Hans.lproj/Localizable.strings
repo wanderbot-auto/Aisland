@@ -351,12 +351,15 @@
 
 /* Recent Usage */
 "usage.surface.title" = "近期模型用量";
-"usage.surface.subtitle" = "按小时聚合近 24 小时。";
-"usage.surface.legend" = "每小时 Tokens";
+"usage.surface.subtitle" = "近几天按小时聚合，像贡献图一样查看高峰。";
+"usage.surface.legend" = "每小时贡献";
 "usage.surface.latest" = "最近";
 "usage.surface.model" = "模型";
 "usage.surface.cost" = "Cost";
 "usage.surface.last24h" = "近 24 小时";
+"usage.surface.recentDays" = "近 7 天";
+"usage.surface.less" = "少";
+"usage.surface.more" = "多";
 "usage.surface.noRecent" = "暂无近期用量";
 "usage.surface.noModel" = "暂无模型";
 "usage.surface.empty.title" = "还没有模型用量";

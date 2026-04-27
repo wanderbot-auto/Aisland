@@ -5,6 +5,8 @@ import AislandCore
 @MainActor
 @Observable
 final class UsageAnalyticsCoordinator {
+    private static let recentHourlyWindow = 7 * 24
+
     @ObservationIgnored
     private let store: UsageAnalyticsStore
 
@@ -38,12 +40,13 @@ final class UsageAnalyticsCoordinator {
             defer { self.isRefreshing = false }
 
             do {
-                let (report, snapshots, todayProviderTotals, dailyModelUsage, hourlyModelUsage) = try await Task.detached(priority: .utility) { [store] in
+                let recentHourlyWindow = Self.recentHourlyWindow
+                let (report, snapshots, todayProviderTotals, dailyModelUsage, hourlyModelUsage) = try await Task.detached(priority: .utility) { [store, recentHourlyWindow] in
                     let report = try store.refresh()
                     let snapshots = try store.snapshots()
                     let todayProviderTotals = try store.providerTotals()
                     let dailyModelUsage = try store.dailyModelUsage()
-                    let hourlyModelUsage = try store.hourlyModelUsage()
+                    let hourlyModelUsage = try store.hourlyModelUsage(lastHours: recentHourlyWindow)
                     return (report, snapshots, todayProviderTotals, dailyModelUsage, hourlyModelUsage)
                 }.value
 

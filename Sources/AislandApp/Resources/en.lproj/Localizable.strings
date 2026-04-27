@@ -351,12 +351,15 @@
 
 /* Recent Usage */
 "usage.surface.title" = "Recent model usage";
-"usage.surface.subtitle" = "Last 24 hours, grouped by hour.";
-"usage.surface.legend" = "Tokens by hour";
+"usage.surface.subtitle" = "Recent days, grouped into hourly contribution cells.";
+"usage.surface.legend" = "Hourly contribution";
 "usage.surface.latest" = "Latest";
 "usage.surface.model" = "Model";
 "usage.surface.cost" = "Cost";
 "usage.surface.last24h" = "Last 24h";
+"usage.surface.recentDays" = "Recent 7 days";
+"usage.surface.less" = "Less";
+"usage.surface.more" = "More";
 "usage.surface.noRecent" = "No recent usage";
 "usage.surface.noModel" = "No model yet";
 "usage.surface.empty.title" = "No model usage yet";
