@@ -103,7 +103,7 @@ Keep all work incremental, reviewable, and reversible. Every meaningful round of
 - Use `swift build` or product-specific builds when package structure, resources, or packaging scripts change.
 - Use `zsh scripts/lint-strings.sh` when touching localized strings.
 - Use `zsh scripts/smoke-dev-app.sh` or `zsh scripts/harness.sh smoke` when overlay or harness behavior needs runtime verification.
-- For docs-only changes, manually verify links and file references. `zsh scripts/check-docs.sh` currently expects a larger docs tree than this checkout contains, so treat missing-file failures there as an existing repo gap unless your round restores those files.
+- For docs-only changes, run `zsh scripts/check-docs.sh` and manually verify links or references that the script does not cover.
 - If no automated verification exists yet, state that explicitly in the final summary and still commit the change.
 
 ## Important Files

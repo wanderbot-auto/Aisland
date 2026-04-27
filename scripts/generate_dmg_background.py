@@ -3,7 +3,7 @@
 
 Produces a 660x400 (Retina: 1320x800) PNG with:
 - Dark gradient background matching the app's brand palette
-- "OPEN ISLAND" pixel-art-style title
+- "AISLAND" pixel-art-style title
 - Dashed arrow with "drag to install" label between icon positions
 - Subtle star-field decoration
 """
@@ -58,7 +58,7 @@ def draw_stars(draw, w, h, count=80):
 
 
 def draw_corner_brackets(draw, w, h):
-    """Draw decorative corner brackets like Vibe Island."""
+    """Draw decorative corner brackets that frame the installer window."""
     length = 50
     thickness = 2
     margin = 60
@@ -185,7 +185,7 @@ def main():
     draw_gradient(draw, W, H, BG_TOP, BG_BOTTOM)
     draw_stars(draw, W, H)
     draw_corner_brackets(draw, W, H)
-    draw_pixel_title(draw, "OPEN ISLAND", W // 2, 60)
+    draw_pixel_title(draw, "AISLAND", W // 2, 60)
     draw_dashed_arrow(draw, ARROW_Y, ARROW_LEFT, ARROW_RIGHT)
     draw_bottom_bar(draw, W, H)
 

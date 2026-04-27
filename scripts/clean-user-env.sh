@@ -182,6 +182,9 @@ clean_path /tmp/vibe-island-rl.json
 
 # --- Installed app ---
 echo "--- App bundle ---"
+clean_path /Applications/Aisland.app
+clean_path ~/Applications/Aisland.app
+clean_path ~/Applications/Aisland\ Dev.app
 clean_path /Applications/Open\ Island.app
 clean_path ~/Applications/Open\ Island.app
 clean_path ~/Applications/Open\ Island\ Dev.app
@@ -189,7 +192,7 @@ clean_path ~/Applications/Open\ Island\ Dev.app
 # --- UserDefaults ---
 echo "--- UserDefaults ---"
 # Find the bundle ID used by the app
-for bid in app.aisland.dev app.vibeisland.dev; do
+for bid in app.aisland.dev app.aisland.Aisland app.vibeisland.dev; do
     plist=~/Library/Preferences/${bid}.plist
     if [[ -e "$plist" ]]; then
         if $DRY_RUN; then

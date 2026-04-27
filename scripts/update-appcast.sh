@@ -21,6 +21,7 @@ BUILD_NUMBER="$2"
 ED_SIGNATURE="$3"
 LENGTH="$4"
 PUB_DATE="${5:-$(date -u '+%a, %d %b %Y %H:%M:%S +0000')}"
+ARCHIVE_NAME="${AISLAND_RELEASE_ARCHIVE_NAME:-Aisland.zip}"
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 appcast="$repo_root/appcast.xml"
@@ -30,10 +31,31 @@ if [[ ! -f "$appcast" ]]; then
     exit 1
 fi
 
-download_url="https://github.com/Octane0411/open-vibe-island/releases/download/v${VERSION}/Open.Island.zip"
+resolve_github_repo() {
+    if [[ -n "${AISLAND_GITHUB_REPO:-}" ]]; then
+        echo "$AISLAND_GITHUB_REPO"
+        return
+    fi
+
+    local remote_url
+    remote_url="$(git -C "$repo_root" remote get-url origin 2>/dev/null || true)"
+    case "$remote_url" in
+        https://github.com/*) remote_url="${remote_url#https://github.com/}" ;;
+        git@github.com:*) remote_url="${remote_url#git@github.com:}" ;;
+        ssh://git@github.com/*) remote_url="${remote_url#ssh://git@github.com/}" ;;
+        *) echo "wanderbot-auto/Aisland"; return ;;
+    esac
+
+    echo "${remote_url%.git}"
+}
+
+github_repo="$(resolve_github_repo)"
+releases_url="${AISLAND_RELEASES_URL:-https://github.com/${github_repo}/releases}"
+download_url="${releases_url}/download/v${VERSION}/${ARCHIVE_NAME}"
 
 # Use Python for reliable XML-adjacent text insertion
-python3 - "$appcast" "$VERSION" "$BUILD_NUMBER" "$ED_SIGNATURE" "$LENGTH" "$PUB_DATE" "$download_url" <<'PYEOF'
+python3 - "$appcast" "$VERSION" "$BUILD_NUMBER" "$ED_SIGNATURE" "$LENGTH" "$PUB_DATE" "$download_url" "$releases_url" <<'PYEOF'
+import re
 import sys
 
 appcast_path = sys.argv[1]
@@ -43,6 +65,7 @@ ed_signature = sys.argv[4]
 length = sys.argv[5]
 pub_date = sys.argv[6]
 download_url = sys.argv[7]
+releases_url = sys.argv[8]
 
 new_item = f"""        <item>
             <title>Version {version}</title>
@@ -61,12 +84,35 @@ new_item = f"""        <item>
 with open(appcast_path, "r") as f:
     content = f.read()
 
-marker = "<!-- Items are added by the release workflow. See docs/releasing.md. -->"
-if marker not in content:
-    print("Error: marker comment not found in appcast.xml", file=sys.stderr)
+if f"<sparkle:shortVersionString>{version}</sparkle:shortVersionString>" in content:
+    print(f"Error: version {version} already exists in appcast.xml", file=sys.stderr)
     sys.exit(1)
 
-content = content.replace(marker, marker + "\n" + new_item)
+content, link_rewrites = re.subn(
+    r"<link>https://github\.com/[^<]+/releases</link>",
+    f"<link>{releases_url}</link>",
+    content,
+    count=1,
+)
+
+if link_rewrites == 0 and "<title>Aisland Updates</title>" in content:
+    content = content.replace(
+        "<title>Aisland Updates</title>",
+        f"<title>Aisland Updates</title>\n        <link>{releases_url}</link>",
+        1,
+    )
+
+marker_match = re.search(r"<!-- Items are added by the release workflow.*?-->", content)
+if marker_match:
+    insert_at = marker_match.end()
+    content = content[:insert_at] + "\n" + new_item + content[insert_at:]
+elif "<item>" in content:
+    content = content.replace("<item>", new_item + "\n        <item>", 1)
+elif "</channel>" in content:
+    content = content.replace("</channel>", new_item + "\n    </channel>", 1)
+else:
+    print("Error: could not find a safe insertion point in appcast.xml", file=sys.stderr)
+    sys.exit(1)
 
 with open(appcast_path, "w") as f:
     f.write(content)

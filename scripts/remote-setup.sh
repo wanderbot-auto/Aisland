@@ -81,11 +81,22 @@ if 'hooks' not in existing:
     existing['hooks'] = {}
 for event, entries in new_hooks['hooks'].items():
     cur = existing['hooks'].get(event, [])
-    # Avoid duplicating the same command
-    existing_cmds = {e.get('command') for e in cur if isinstance(e, dict)}
+
+    def command_for(entry):
+        if not isinstance(entry, dict):
+            return None
+        for hook in entry.get('hooks', []):
+            if isinstance(hook, dict) and hook.get('type') == 'command':
+                return hook.get('command')
+        return None
+
+    # Avoid duplicating the same command entry on repeated installs.
+    existing_cmds = {cmd for cmd in (command_for(entry) for entry in cur) if cmd}
     for entry in entries:
-        if entry.get('command') not in existing_cmds:
+        command = command_for(entry)
+        if command and command not in existing_cmds:
             cur.append(entry)
+            existing_cmds.add(command)
     existing['hooks'][event] = cur
 
 with open(settings_path, 'w') as f:

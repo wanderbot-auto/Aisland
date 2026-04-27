@@ -9,7 +9,7 @@ fi
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 app_name="${AISLAND_APP_NAME:-Aisland}"
-bundle_identifier="${AISLAND_BUNDLE_ID:-app.aisland.dev}"
+bundle_identifier="${AISLAND_BUNDLE_ID:-app.aisland.Aisland}"
 version="${AISLAND_VERSION:-0.1.0}"
 build_number="${AISLAND_BUILD_NUMBER:-$(git -C "$repo_root" rev-list --count HEAD 2>/dev/null || echo 1)}"
 package_root="${AISLAND_PACKAGE_ROOT:-$repo_root/output/package}"
@@ -22,6 +22,27 @@ notary_profile="${AISLAND_NOTARY_PROFILE:-}"
 brand_script="$repo_root/scripts/generate_brand_icons.py"
 dmg_bg_script="$repo_root/scripts/generate_dmg_background.py"
 entitlements_path="$repo_root/config/packaging/AislandApp.entitlements"
+
+resolve_github_repo() {
+    if [[ -n "${AISLAND_GITHUB_REPO:-}" ]]; then
+        echo "$AISLAND_GITHUB_REPO"
+        return
+    fi
+
+    local remote_url
+    remote_url="$(git -C "$repo_root" remote get-url origin 2>/dev/null || true)"
+    case "$remote_url" in
+        https://github.com/*) remote_url="${remote_url#https://github.com/}" ;;
+        git@github.com:*) remote_url="${remote_url#git@github.com:}" ;;
+        ssh://git@github.com/*) remote_url="${remote_url#ssh://git@github.com/}" ;;
+        *) echo "wanderbot-auto/Aisland"; return ;;
+    esac
+
+    echo "${remote_url%.git}"
+}
+
+github_repo="$(resolve_github_repo)"
+appcast_feed_url="${AISLAND_APPCAST_FEED_URL:-https://raw.githubusercontent.com/${github_repo}/main/appcast.xml}"
 
 cd "$repo_root"
 
@@ -111,7 +132,7 @@ cat > "$bundle_dir/Contents/Info.plist" <<EOF
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
     <key>SUFeedURL</key>
-    <string>https://raw.githubusercontent.com/Octane0411/open-vibe-island/main/appcast.xml</string>
+    <string>${appcast_feed_url}</string>
     <key>SUPublicEDKey</key>
     <string>${AISLAND_EDDSA_PUBLIC_KEY:-3IF8txq9RRNanzE2FNhyGRcwhslTucCcJHpTkpxcgBQ=}</string>
 </dict>

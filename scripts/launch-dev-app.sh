@@ -17,6 +17,27 @@ bundle_dir="$HOME/Applications/Aisland Dev.app"
 plist_path="$bundle_dir/Contents/Info.plist"
 bundle_binary="$bundle_dir/Contents/MacOS/AislandApp"
 
+resolve_github_repo() {
+  if [[ -n "${AISLAND_GITHUB_REPO:-}" ]]; then
+    echo "$AISLAND_GITHUB_REPO"
+    return
+  fi
+
+  local remote_url
+  remote_url="$(git -C "$repo_root" remote get-url origin 2>/dev/null || true)"
+  case "$remote_url" in
+    https://github.com/*) remote_url="${remote_url#https://github.com/}" ;;
+    git@github.com:*) remote_url="${remote_url#git@github.com:}" ;;
+    ssh://git@github.com/*) remote_url="${remote_url#ssh://git@github.com/}" ;;
+    *) echo "wanderbot-auto/Aisland"; return ;;
+  esac
+
+  echo "${remote_url%.git}"
+}
+
+github_repo="$(resolve_github_repo)"
+appcast_feed_url="${AISLAND_APPCAST_FEED_URL:-https://raw.githubusercontent.com/${github_repo}/main/appcast.xml}"
+
 cd "$repo_root"
 
 swift build -c debug --product AislandApp
@@ -96,7 +117,7 @@ cat > "$plist_path" <<EOF
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
     <key>SUFeedURL</key>
-    <string>https://raw.githubusercontent.com/Octane0411/open-vibe-island/main/appcast.xml</string>
+    <string>${appcast_feed_url}</string>
     <key>SUPublicEDKey</key>
     <string>3IF8txq9RRNanzE2FNhyGRcwhslTucCcJHpTkpxcgBQ=</string>
 </dict>
