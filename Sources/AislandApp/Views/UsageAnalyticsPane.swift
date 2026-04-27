@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import AislandCore
 
@@ -169,11 +170,11 @@ private struct DailyStackedTokenChart: View {
                             .lineLimit(1)
                             .minimumScaleFactor(0.65)
 
-                        VStack(spacing: 0) {
+                        VStack(spacing: 1) {
                             Spacer(minLength: 0)
                             ForEach(day.modelRows.reversed()) { row in
                                 Rectangle()
-                                    .fill(UsageModelColor.color(for: row.modelIdentifier, theme: theme))
+                                    .fill(UsageModelColor.chartGradient(for: row.modelIdentifier, theme: theme))
                                     .frame(height: segmentHeight(row.totalTokens, chartHeight: chartHeight))
                             }
                         }
@@ -458,16 +459,50 @@ private enum UsageModelColor {
     static func color(for modelIdentifier: String, theme: IslandThemePalette) -> Color {
         let palette: [Color] = [
             theme.primary,
+            blended(theme.primary, with: theme.warning, amount: 0.36),
             theme.secondary,
+            blended(theme.secondary, with: theme.success, amount: 0.32),
             theme.tertiary,
+            blended(theme.tertiary, with: theme.primary, amount: 0.34),
             theme.success,
+            blended(theme.success, with: theme.primary, amount: 0.28),
             theme.warning,
+            blended(theme.warning, with: theme.error, amount: 0.25),
             theme.error,
-            theme.primaryContainer,
-            theme.cardSelected,
+            blended(theme.primaryContainer, with: theme.text, amount: 0.18),
+            blended(theme.cardSelected, with: theme.primary, amount: 0.30),
         ]
         let hash = abs(modelIdentifier.unicodeScalars.reduce(0) { ($0 &* 31) &+ Int($1.value) })
         return palette[hash % palette.count]
+    }
+
+    static func chartGradient(for modelIdentifier: String, theme: IslandThemePalette) -> LinearGradient {
+        let base = color(for: modelIdentifier, theme: theme)
+        return LinearGradient(
+            colors: [
+                blended(base, with: theme.surfaceBright, amount: 0.24),
+                base,
+                blended(base, with: theme.text, amount: 0.10),
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+
+    private static func blended(_ color: Color, with otherColor: Color, amount: CGFloat) -> Color {
+        guard let lhs = NSColor(color).usingColorSpace(.deviceRGB),
+              let rhs = NSColor(otherColor).usingColorSpace(.deviceRGB) else {
+            return color
+        }
+
+        let clampedAmount = min(max(amount, 0), 1)
+        let inverse = 1 - clampedAmount
+        return Color(
+            red: Double(lhs.redComponent * inverse + rhs.redComponent * clampedAmount),
+            green: Double(lhs.greenComponent * inverse + rhs.greenComponent * clampedAmount),
+            blue: Double(lhs.blueComponent * inverse + rhs.blueComponent * clampedAmount),
+            opacity: Double(lhs.alphaComponent * inverse + rhs.alphaComponent * clampedAmount)
+        )
     }
 }
 
