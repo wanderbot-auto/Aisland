@@ -249,9 +249,6 @@
 "settings.ai.baseURL" = "Base URL";
 "settings.ai.apiKey" = "API Key";
 "settings.ai.keychainHelp" = "API keys are saved per provider in macOS Keychain. Model and Base URL are saved in the local database.";
-"settings.ai.shortcut" = "Shortcut";
-"settings.ai.openChat" = "Open chat";
-"settings.ai.shortcutHelp" = "Use this global shortcut to expand the island and focus the temporary chat input.";
 "island.surface.sessions" = "Sessions";
 "island.surface.chat" = "Ask";
 "chat.title" = "Temporary chat";
@@ -292,7 +289,6 @@
 "settings.shortcuts.tabKey" = "Switch island tab";
 "settings.shortcuts.tabKey.help" = "When the island is focused, press Tab to cycle between compact icon tabs.";
 "settings.ai.provider.search" = "Search providers or models";
-"settings.ai.models" = "Suggested models";
 
 /* Skills Settings */
 "settings.skills.about.title" = "Local Skills only";

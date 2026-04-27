@@ -318,41 +318,9 @@ struct LLMSettingsPane: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-
-            Section(lang.t("settings.ai.models")) {
-                ForEach(Array(model.temporaryChatProvider.popularModels), id: \.self) { modelName in
-                    suggestedModelButton(modelName)
-                }
-            }
-
-            Section(lang.t("settings.ai.shortcut")) {
-                LabeledContent(
-                    lang.t("settings.ai.openChat"),
-                    value: model.shortcutDescription(for: .openChat)
-                )
-                Text(lang.t("settings.ai.shortcutHelp"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
         }
         .formStyle(.grouped)
         .navigationTitle(lang.t("settings.tab.ai"))
-    }
-
-    private func suggestedModelButton(_ modelName: String) -> some View {
-        Button {
-            model.temporaryChatModel = modelName
-        } label: {
-            HStack {
-                Text(modelName)
-                Spacer()
-                if model.temporaryChatModel == modelName {
-                    Image(systemName: "checkmark")
-                        .foregroundStyle(Color.accentColor)
-                }
-            }
-        }
-        .buttonStyle(.plain)
     }
 }
 
@@ -564,11 +532,11 @@ private struct LLMProviderCard: View {
         HStack(alignment: .top, spacing: 10) {
             ZStack {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(provider.settingsAccentColor.opacity(isSelected ? 0.22 : 0.14))
+                    .fill(isSelected ? Color.accentColor.opacity(0.14) : Color.secondary.opacity(0.08))
 
                 Image(systemName: provider.systemImageName)
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(provider.settingsAccentColor)
+                    .foregroundStyle(isSelected ? Color.accentColor : Color.secondary.opacity(0.82))
             }
             .frame(width: 34, height: 34)
 
@@ -589,12 +557,12 @@ private struct LLMProviderCard: View {
 
                 Text(provider.shortName)
                     .font(.system(size: 9, weight: .bold, design: .rounded))
-                    .foregroundStyle(provider.settingsAccentColor)
+                    .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
                     .background(
                         Capsule(style: .continuous)
-                            .fill(provider.settingsAccentColor.opacity(0.12))
+                            .fill(isSelected ? Color.accentColor.opacity(0.10) : Color.secondary.opacity(0.08))
                     )
             }
 
@@ -623,49 +591,20 @@ private struct LLMProviderCard: View {
                 )
         )
         .shadow(
-            color: isSelected ? Color.accentColor.opacity(0.16) : Color.black.opacity(0.04),
-            radius: isSelected ? 10 : 4,
+            color: isSelected ? Color.accentColor.opacity(0.10) : Color.black.opacity(0.03),
+            radius: isSelected ? 8 : 3,
             x: 0,
-            y: isSelected ? 5 : 2
+            y: isSelected ? 4 : 2
         )
         .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private var cardBackground: Color {
         if isSelected {
-            return provider.settingsAccentColor.opacity(0.10)
+            return Color.accentColor.opacity(0.06)
         }
 
         return Color(nsColor: .controlBackgroundColor).opacity(0.74)
-    }
-}
-
-private extension LLMProviderKind {
-    var settingsAccentColor: Color {
-        switch self {
-        case .openAI:
-            Color(red: 0.16, green: 0.70, blue: 0.54)
-        case .anthropic:
-            Color(red: 0.80, green: 0.46, blue: 0.28)
-        case .googleGemini:
-            Color(red: 0.25, green: 0.52, blue: 0.96)
-        case .openRouter:
-            Color(red: 0.60, green: 0.47, blue: 0.93)
-        case .groq:
-            Color(red: 0.93, green: 0.29, blue: 0.20)
-        case .mistral:
-            Color(red: 0.93, green: 0.65, blue: 0.13)
-        case .perplexity:
-            Color(red: 0.11, green: 0.67, blue: 0.76)
-        case .deepSeek:
-            Color(red: 0.18, green: 0.45, blue: 0.86)
-        case .xAI:
-            Color(red: 0.34, green: 0.36, blue: 0.42)
-        case .togetherAI:
-            Color(red: 0.14, green: 0.63, blue: 0.37)
-        case .customOpenAICompatible:
-            Color(red: 0.48, green: 0.51, blue: 0.57)
-        }
     }
 }
 

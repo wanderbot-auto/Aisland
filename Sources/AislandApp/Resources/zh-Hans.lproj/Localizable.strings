@@ -249,9 +249,6 @@
 "settings.ai.baseURL" = "Base URL";
 "settings.ai.apiKey" = "API Key";
 "settings.ai.keychainHelp" = "API Key 会按服务商保存到 macOS Keychain；模型和 Base URL 会保存到本地数据库。";
-"settings.ai.shortcut" = "快捷键";
-"settings.ai.openChat" = "打开对话";
-"settings.ai.shortcutHelp" = "使用该全局快捷键展开 island 并聚焦临时对话输入框。";
 "island.surface.sessions" = "任务";
 "island.surface.chat" = "提问";
 "chat.title" = "临时对话";
@@ -292,7 +289,6 @@
 "settings.shortcuts.tabKey" = "切换 island 标签";
 "settings.shortcuts.tabKey.help" = "当 island 获得焦点时，按 Tab 在紧凑图标标签之间切换。";
 "settings.ai.provider.search" = "搜索服务商或模型";
-"settings.ai.models" = "推荐模型";
 
 /* Skills Settings */
 "settings.skills.about.title" = "仅本地 Skills";
