@@ -16,7 +16,7 @@ The SDK was selected because its API is built around provider-agnostic `generate
 - `Package.swift` now depends on `swift-ai-sdk` `from: "0.17.6"`.
 - `TemporaryChatClient` builds the selected provider's SDK model, then calls `streamText(model:messages:)`.
 - Settings exposes searchable provider cards plus suggested models for each provider.
-- API keys remain stored in macOS Keychain.
+- API keys are loaded lazily. Development can supply keys through provider environment variables, or use `AISLAND_DEV_CREDENTIAL_STORE=local` to store them in `~/Library/Application Support/Aisland/dev-credentials.json`; saved release keys remain in macOS Keychain.
 - Custom and OpenRouter-style providers use `OpenAICompatibleProvider`.
 - `TemporaryChatMessage` uses multimodal parts for text, image/file attachments, web citations, and tool-result summaries.
 - `TemporaryChatCapabilityRegistry` gates web search, image input, and file input per provider/model so the island only shows supported chat controls.

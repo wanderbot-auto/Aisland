@@ -299,6 +299,7 @@ struct LLMSettingsPane: View {
                     ForEach(filteredProviders) { provider in
                         Button {
                             model.temporaryChatProvider = provider
+                            model.loadTemporaryChatAPIKeyIfNeeded()
                         } label: {
                             LLMProviderCard(
                                 provider: provider,
@@ -336,6 +337,9 @@ struct LLMSettingsPane: View {
         .formStyle(.grouped)
         .islandSettingsPaneBackground()
         .navigationTitle(lang.t("settings.tab.ai"))
+        .onAppear {
+            model.loadTemporaryChatAPIKeyIfNeeded()
+        }
     }
 }
 

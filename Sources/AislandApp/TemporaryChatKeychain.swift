@@ -79,3 +79,164 @@ enum TemporaryChatKeychain {
         ]
     }
 }
+
+enum TemporaryChatCredentials {
+    static func loadAPIKey(
+        for provider: LLMProviderKind,
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        keychainLoader: @Sendable (LLMProviderKind) -> String = { TemporaryChatKeychain.loadAPIKey(for: $0) }
+    ) -> String {
+        #if DEBUG
+        if TemporaryChatDebugCredentialStore.isEnabled(environment: environment) {
+            if let value = TemporaryChatDebugCredentialStore.loadAPIKey(for: provider, environment: environment) {
+                return value
+            }
+            return apiKeyFromEnvironment(for: provider, environment: environment) ?? ""
+        }
+        #endif
+
+        if let value = apiKeyFromEnvironment(for: provider, environment: environment) {
+            return value
+        }
+
+        return keychainLoader(provider)
+    }
+
+    static func saveAPIKey(
+        _ apiKey: String,
+        for provider: LLMProviderKind,
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        keychainSaver: @Sendable (String, LLMProviderKind) -> Void = { TemporaryChatKeychain.saveAPIKey($0, for: $1) }
+    ) {
+        #if DEBUG
+        if TemporaryChatDebugCredentialStore.isEnabled(environment: environment) {
+            TemporaryChatDebugCredentialStore.saveAPIKey(apiKey, for: provider, environment: environment)
+            return
+        }
+        #endif
+
+        keychainSaver(apiKey, provider)
+    }
+
+    static func apiKeyFromEnvironment(
+        for provider: LLMProviderKind,
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) -> String? {
+        provider.apiKeyEnvironmentVariables
+            .lazy
+            .compactMap { environment[$0]?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .first { !$0.isEmpty }
+    }
+}
+
+private extension LLMProviderKind {
+    var apiKeyEnvironmentVariables: [String] {
+        switch self {
+        case .openAI:
+            ["AISLAND_OPENAI_API_KEY", "OPENAI_API_KEY"]
+        case .anthropic:
+            ["AISLAND_ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY"]
+        case .googleGemini:
+            ["AISLAND_GOOGLE_GEMINI_API_KEY", "GOOGLE_API_KEY", "GEMINI_API_KEY"]
+        case .openRouter:
+            ["AISLAND_OPENROUTER_API_KEY", "OPENROUTER_API_KEY"]
+        case .groq:
+            ["AISLAND_GROQ_API_KEY", "GROQ_API_KEY"]
+        case .mistral:
+            ["AISLAND_MISTRAL_API_KEY", "MISTRAL_API_KEY"]
+        case .perplexity:
+            ["AISLAND_PERPLEXITY_API_KEY", "PERPLEXITY_API_KEY"]
+        case .deepSeek:
+            ["AISLAND_DEEPSEEK_API_KEY", "DEEPSEEK_API_KEY"]
+        case .xAI:
+            ["AISLAND_XAI_API_KEY", "XAI_API_KEY", "X_AI_API_KEY"]
+        case .togetherAI:
+            ["AISLAND_TOGETHER_API_KEY", "TOGETHER_API_KEY", "TOGETHERAI_API_KEY"]
+        case .customOpenAICompatible:
+            ["AISLAND_CUSTOM_OPENAI_API_KEY", "CUSTOM_OPENAI_API_KEY"]
+        }
+    }
+}
+
+#if DEBUG
+enum TemporaryChatDebugCredentialStore {
+    private static let storeEnvironmentKey = "AISLAND_DEV_CREDENTIAL_STORE"
+    private static let pathEnvironmentKey = "AISLAND_DEV_CREDENTIAL_STORE_PATH"
+
+    static func isEnabled(environment: [String: String] = ProcessInfo.processInfo.environment) -> Bool {
+        guard let rawValue = environment[storeEnvironmentKey]?.trimmingCharacters(in: .whitespacesAndNewlines) else {
+            return false
+        }
+
+        switch rawValue.lowercased() {
+        case "1", "true", "yes", "local", "file":
+            return true
+        default:
+            return false
+        }
+    }
+
+    static func loadAPIKey(
+        for provider: LLMProviderKind,
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) -> String? {
+        let credentials = loadCredentials(environment: environment)
+        return credentials[provider.rawValue]?.trimmingCharacters(in: .whitespacesAndNewlines).nonEmpty
+    }
+
+    static func saveAPIKey(
+        _ apiKey: String,
+        for provider: LLMProviderKind,
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) {
+        let trimmed = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        let url = credentialsURL(environment: environment)
+        var credentials = loadCredentials(environment: environment)
+
+        if trimmed.isEmpty {
+            credentials.removeValue(forKey: provider.rawValue)
+        } else {
+            credentials[provider.rawValue] = trimmed
+        }
+
+        do {
+            try FileManager.default.createDirectory(
+                at: url.deletingLastPathComponent(),
+                withIntermediateDirectories: true
+            )
+            let data = try JSONEncoder().encode(credentials)
+            try data.write(to: url, options: [.atomic])
+        } catch {
+            NSLog("Aisland failed to save debug chat credentials: \(error)")
+        }
+    }
+
+    private static func loadCredentials(environment: [String: String]) -> [String: String] {
+        let url = credentialsURL(environment: environment)
+        guard let data = try? Data(contentsOf: url),
+              let credentials = try? JSONDecoder().decode([String: String].self, from: data) else {
+            return [:]
+        }
+        return credentials
+    }
+
+    private static func credentialsURL(environment: [String: String]) -> URL {
+        if let rawPath = environment[pathEnvironmentKey]?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !rawPath.isEmpty {
+            return URL(fileURLWithPath: NSString(string: rawPath).expandingTildeInPath)
+        }
+
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library/Application Support")
+        return appSupport
+            .appendingPathComponent("Aisland", isDirectory: true)
+            .appendingPathComponent("dev-credentials.json")
+    }
+}
+#endif
+
+private extension String {
+    var nonEmpty: String? {
+        isEmpty ? nil : self
+    }
+}

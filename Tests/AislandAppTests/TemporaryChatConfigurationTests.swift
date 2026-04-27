@@ -278,7 +278,7 @@ struct TemporaryChatConfigurationTests {
 
     @MainActor
     @Test
-    func temporaryChatLoadsAndSavesProviderScopedAPIKeys() {
+    func temporaryChatLazilyLoadsAndSavesProviderScopedAPIKeys() {
         let recorder = APIKeyRecorder(values: [
             .openAI: "openai-key",
             .anthropic: "anthropic-key",
@@ -288,13 +288,57 @@ struct TemporaryChatConfigurationTests {
             temporaryChatAPIKeySaver: { recorder.save($0, for: $1) }
         )
 
+        #expect(model.temporaryChatAPIKey == "")
+        #expect(recorder.loaded == [])
+
+        model.loadTemporaryChatAPIKeyIfNeeded()
         #expect(model.temporaryChatAPIKey == "openai-key")
+        #expect(recorder.loaded == [.openAI])
+
         model.temporaryChatProvider = .anthropic
+        #expect(model.temporaryChatAPIKey == "")
+
+        model.loadTemporaryChatAPIKeyIfNeeded()
         #expect(model.temporaryChatAPIKey == "anthropic-key")
+        #expect(recorder.loaded == [.openAI, .anthropic])
 
         model.temporaryChatAPIKey = "new-anthropic-key"
         #expect(recorder.saved == [.init(provider: .anthropic, value: "new-anthropic-key")])
     }
+
+    @Test
+    func temporaryChatCredentialEnvironmentFallbackSkipsKeychain() {
+        let value = TemporaryChatCredentials.loadAPIKey(
+            for: .openAI,
+            environment: ["OPENAI_API_KEY": " env-openai-key "],
+            keychainLoader: { _ in
+                Issue.record("Environment fallback should avoid Keychain access")
+                return ""
+            }
+        )
+
+        #expect(value == "env-openai-key")
+    }
+
+    #if DEBUG
+    @Test
+    func temporaryChatDebugCredentialStoreFallsBackToEnvironmentWithoutKeychain() {
+        let value = TemporaryChatCredentials.loadAPIKey(
+            for: .openAI,
+            environment: [
+                "AISLAND_DEV_CREDENTIAL_STORE": "local",
+                "AISLAND_DEV_CREDENTIAL_STORE_PATH": temporaryDatabaseURL().path,
+                "OPENAI_API_KEY": "env-openai-key",
+            ],
+            keychainLoader: { _ in
+                Issue.record("Debug credential store should avoid Keychain access")
+                return ""
+            }
+        )
+
+        #expect(value == "env-openai-key")
+    }
+    #endif
 }
 
 @MainActor
@@ -328,6 +372,7 @@ private struct SavedAPIKey: Equatable {
 
 private final class APIKeyRecorder: @unchecked Sendable {
     private var values: [LLMProviderKind: String]
+    private(set) var loaded: [LLMProviderKind] = []
     private(set) var saved: [SavedAPIKey] = []
 
     init(values: [LLMProviderKind: String]) {
@@ -335,6 +380,7 @@ private final class APIKeyRecorder: @unchecked Sendable {
     }
 
     func load(_ provider: LLMProviderKind) -> String {
+        loaded.append(provider)
         values[provider] ?? ""
     }
 

@@ -254,7 +254,7 @@
 "settings.ai.model" = "模型";
 "settings.ai.baseURL" = "Base URL";
 "settings.ai.apiKey" = "API Key";
-"settings.ai.keychainHelp" = "API Key 會按服務商儲存到 macOS Keychain；模型和 Base URL 會儲存到本機資料庫。";
+"settings.ai.keychainHelp" = "API Key 只會在需要時讀取；開發時可透過環境變數提供，儲存時仍按服務商寫入 macOS Keychain。";
 "island.surface.sessions" = "任務";
 "island.surface.chat" = "提問";
 "chat.title" = "臨時對話";

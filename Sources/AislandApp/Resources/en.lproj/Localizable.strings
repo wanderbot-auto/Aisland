@@ -255,7 +255,7 @@
 "settings.ai.model" = "Model";
 "settings.ai.baseURL" = "Base URL";
 "settings.ai.apiKey" = "API Key";
-"settings.ai.keychainHelp" = "API keys are saved per provider in macOS Keychain. Model and Base URL are saved in the local database.";
+"settings.ai.keychainHelp" = "API keys load only when needed. Environment variables can provide development keys; saved keys use per-provider macOS Keychain storage.";
 "island.surface.sessions" = "Sessions";
 "island.surface.chat" = "Ask";
 "chat.title" = "Temporary chat";

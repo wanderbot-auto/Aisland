@@ -288,9 +288,7 @@ final class AppModel {
             if temporaryChatBaseURL == oldValue.defaultBaseURL {
                 temporaryChatBaseURL = temporaryChatProvider.defaultBaseURL
             }
-            isRestoringTemporaryChatAPIKey = true
-            temporaryChatAPIKey = temporaryChatAPIKeyLoader(temporaryChatProvider)
-            isRestoringTemporaryChatAPIKey = false
+            resetTemporaryChatAPIKeyForProviderChange()
             refreshTemporaryChatTokenStats()
             persistTemporaryChatConfigurationIfReady()
         }
@@ -311,6 +309,7 @@ final class AppModel {
     var temporaryChatAPIKey: String = "" {
         didSet {
             guard hasFinishedInit, !isRestoringTemporaryChatAPIKey, temporaryChatAPIKey != oldValue else { return }
+            temporaryChatAPIKeyLoadedProvider = temporaryChatProvider
             temporaryChatAPIKeySaver(temporaryChatAPIKey, temporaryChatProvider)
         }
     }
@@ -519,6 +518,9 @@ final class AppModel {
     @ObservationIgnored
     private var isRestoringTemporaryChatAPIKey = false
 
+    @ObservationIgnored
+    private var temporaryChatAPIKeyLoadedProvider: LLMProviderKind?
+
     init(
         terminalJumpAction: @escaping @Sendable (JumpTarget) throws -> String = { target in
             try TerminalJumpService().jump(to: target)
@@ -530,8 +532,8 @@ final class AppModel {
             try TemporaryChatClient().stream(messages: messages, configuration: configuration)
         },
         temporaryChatConfigurationStore: TemporaryChatConfigurationStore = TemporaryChatConfigurationStore(),
-        temporaryChatAPIKeyLoader: @escaping @Sendable (LLMProviderKind) -> String = { TemporaryChatKeychain.loadAPIKey(for: $0) },
-        temporaryChatAPIKeySaver: @escaping @Sendable (String, LLMProviderKind) -> Void = { TemporaryChatKeychain.saveAPIKey($0, for: $1) },
+        temporaryChatAPIKeyLoader: @escaping @Sendable (LLMProviderKind) -> String = { TemporaryChatCredentials.loadAPIKey(for: $0) },
+        temporaryChatAPIKeySaver: @escaping @Sendable (String, LLMProviderKind) -> Void = { TemporaryChatCredentials.saveAPIKey($0, for: $1) },
         whiteNoiseDefaults: UserDefaults = .standard,
         whiteNoisePlayerService: WhiteNoisePlayerServicing = WhiteNoisePlayerService()
     ) {
@@ -579,7 +581,6 @@ final class AppModel {
         temporaryChatProvider = storedChatConfiguration.provider
         temporaryChatModel = storedChatConfiguration.model
         temporaryChatBaseURL = storedChatConfiguration.baseURL
-        temporaryChatAPIKey = temporaryChatAPIKeyLoader(temporaryChatProvider)
         refreshTemporaryChatTokenStats()
         whiteNoiseState = Self.loadWhiteNoiseState(defaults: whiteNoiseDefaults)
         shortcuts = Self.loadShortcuts()
@@ -1081,6 +1082,22 @@ final class AppModel {
         }
     }
 
+    func loadTemporaryChatAPIKeyIfNeeded() {
+        guard temporaryChatAPIKeyLoadedProvider != temporaryChatProvider else { return }
+
+        isRestoringTemporaryChatAPIKey = true
+        temporaryChatAPIKey = temporaryChatAPIKeyLoader(temporaryChatProvider)
+        temporaryChatAPIKeyLoadedProvider = temporaryChatProvider
+        isRestoringTemporaryChatAPIKey = false
+    }
+
+    private func resetTemporaryChatAPIKeyForProviderChange() {
+        isRestoringTemporaryChatAPIKey = true
+        temporaryChatAPIKey = ""
+        temporaryChatAPIKeyLoadedProvider = nil
+        isRestoringTemporaryChatAPIKey = false
+    }
+
     private func refreshTemporaryChatTokenStats(source: TemporaryChatTokenStatsSource = .estimated) {
         switch source {
         case .estimated:
@@ -1388,6 +1405,7 @@ final class AppModel {
             + temporaryChatPendingParts.map(Optional.some))
             .compactMap { $0 }
         temporaryChatPendingParts.removeAll()
+        loadTemporaryChatAPIKeyIfNeeded()
         let configuration = temporaryChatConfiguration
         temporaryChatWebSearchMode = .auto
 
@@ -1403,6 +1421,9 @@ final class AppModel {
         }
 
         temporaryChatLastError = nil
+        if configuration == nil {
+            loadTemporaryChatAPIKeyIfNeeded()
+        }
         let configuration = configuration ?? temporaryChatConfiguration
         temporaryChatMessages.append(TemporaryChatMessage(role: .user, parts: userParts))
         let messages = temporaryChatMessages
