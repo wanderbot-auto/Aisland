@@ -88,19 +88,20 @@ enum QuestionCardLayoutMetrics {
     ) -> CGFloat {
         guard !options.isEmpty else { return 0 }
 
-        let usesVerticalRows = layout == .vertical || options.contains(where: isRichOption)
-        if usesVerticalRows {
+        if layout == .vertical {
             let rows = options.map { option in
                 isRichOption(option) ? CGFloat(44) : CGFloat(30)
             }
             return rows.reduce(0, +) + CGFloat(max(0, rows.count - 1)) * 4
         }
 
-        let minimumChipWidth: CGFloat = 78
+        let hasRichOptions = options.contains(where: isRichOption)
+        let minimumChipWidth: CGFloat = hasRichOptions ? 142 : 78
+        let chipHeight: CGFloat = hasRichOptions ? 52 : 30
         let spacing: CGFloat = 6
         let columnCount = max(1, Int((availableWidth + spacing) / (minimumChipWidth + spacing)))
         let rowCount = Int(ceil(Double(options.count) / Double(columnCount)))
-        return CGFloat(rowCount) * 30 + CGFloat(max(0, rowCount - 1)) * spacing
+        return CGFloat(rowCount) * chipHeight + CGFloat(max(0, rowCount - 1)) * spacing
     }
 
     private static func isRichOption(_ option: QuestionOption) -> Bool {

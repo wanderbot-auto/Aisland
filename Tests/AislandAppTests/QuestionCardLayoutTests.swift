@@ -114,4 +114,35 @@ struct QuestionCardLayoutTests {
         #expect(horizontalHeight >= QuestionCardLayoutMetrics.minimumCardHeight)
         #expect(horizontalHeight < verticalHeight)
     }
+
+    @Test
+    func horizontalHeightEstimateRespectsRichOptionsInsteadOfForcingVerticalRows() {
+        let prompt = QuestionPrompt(
+            title: "Choose one",
+            questions: [
+                QuestionPromptItem(
+                    question: "Choose one",
+                    header: "Choice",
+                    options: [
+                        QuestionOption(label: "Production", description: "Use live settings."),
+                        QuestionOption(label: "Staging", description: "Use test settings."),
+                        QuestionOption(label: "Other", allowsFreeform: true),
+                    ]
+                ),
+            ]
+        )
+
+        let horizontalHeight = QuestionCardLayoutMetrics.estimatedHeight(
+            for: prompt,
+            optionLayout: .horizontal,
+            availableWidth: 508
+        )
+        let verticalHeight = QuestionCardLayoutMetrics.estimatedHeight(
+            for: prompt,
+            optionLayout: .vertical,
+            availableWidth: 508
+        )
+
+        #expect(horizontalHeight < verticalHeight)
+    }
 }

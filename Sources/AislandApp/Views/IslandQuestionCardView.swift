@@ -69,16 +69,24 @@ struct IslandQuestionCardView: View {
 
     @ViewBuilder
     private func optionsView(for question: QuestionPromptItem) -> some View {
-        if optionLayout == .horizontal, !usesRichOptionRows(for: question) {
+        if optionLayout == .horizontal {
             LazyVGrid(
                 columns: [
-                    GridItem(.adaptive(minimum: 78, maximum: 150), spacing: 6, alignment: .leading),
+                    GridItem(
+                        .adaptive(minimum: horizontalOptionMinimumWidth(for: question), maximum: 180),
+                        spacing: 6,
+                        alignment: .leading
+                    ),
                 ],
                 alignment: .leading,
                 spacing: 6
             ) {
                 ForEach(question.options) { option in
-                    optionChip(option, question: question)
+                    if usesRichPresentation(option) {
+                        optionTile(option, question: question)
+                    } else {
+                        optionChip(option, question: question)
+                    }
                 }
             }
         } else {
@@ -114,6 +122,60 @@ struct IslandQuestionCardView: View {
             .padding(.horizontal, 9)
         }
         .buttonStyle(.plain)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(isSelected ? Color.yellow.opacity(0.10) : Color.white.opacity(0.04))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(isSelected ? .yellow.opacity(0.25) : .clear)
+        )
+    }
+
+    @ViewBuilder
+    private func optionTile(_ option: QuestionOption, question: QuestionPromptItem) -> some View {
+        let isSelected = selectedLabels(for: question).contains(option.label)
+        let showsFreeform = option.allowsFreeform && isSelected
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                toggle(option: option.label, for: question)
+            } label: {
+                HStack(alignment: .top, spacing: 7) {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 10.5, weight: .medium))
+                        .foregroundStyle(isSelected ? .yellow : .white.opacity(0.35))
+                        .padding(.top, 1)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(option.label)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.white.opacity(isSelected ? 1 : 0.78))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.82)
+
+                        if !option.description.isEmpty {
+                            Text(option.description)
+                                .font(.system(size: 10.5))
+                                .foregroundStyle(.white.opacity(0.42))
+                                .lineLimit(2)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+
+                    Spacer(minLength: 0)
+                }
+                .contentShape(Rectangle())
+                .padding(.vertical, 7)
+                .padding(.horizontal, 9)
+            }
+            .buttonStyle(.plain)
+
+            if showsFreeform {
+                Divider()
+                    .overlay(Color.white.opacity(0.08))
+                freeformField(for: option, question: question)
+            }
+        }
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(isSelected ? Color.yellow.opacity(0.10) : Color.white.opacity(0.04))
@@ -280,8 +342,16 @@ struct IslandQuestionCardView: View {
 
     private func usesRichOptionRows(for question: QuestionPromptItem) -> Bool {
         question.options.contains { option in
-            option.allowsFreeform || !option.description.trimmedForNotificationCard.isEmpty
+            usesRichPresentation(option)
         }
+    }
+
+    private func usesRichPresentation(_ option: QuestionOption) -> Bool {
+        option.allowsFreeform || !option.description.trimmedForNotificationCard.isEmpty
+    }
+
+    private func horizontalOptionMinimumWidth(for question: QuestionPromptItem) -> CGFloat {
+        usesRichOptionRows(for: question) ? 142 : 78
     }
 
     private func toggle(option: String, for question: QuestionPromptItem) {

@@ -26,6 +26,22 @@ final class TerminalTextSenderTests: XCTestCase {
         XCTAssertTrue(script.contains("key code 36"))
     }
 
+    func testGhosttyFocusScriptTargetsTerminalBeforeTyping() {
+        let script = TerminalTextSender.ghosttyFocusScript(
+            for: JumpTarget(
+                terminalApp: "Ghostty",
+                workspaceName: "Aisland",
+                paneTitle: "codex Aisland",
+                workingDirectory: "/Users/wander/Documents/code/apps/Aisland",
+                terminalSessionID: "session-123"
+            )
+        )
+
+        XCTAssertTrue(script.contains("(id of aTerminal as text) is \"session-123\""))
+        XCTAssertTrue(script.contains("select tab targetTab"))
+        XCTAssertTrue(script.contains("focus targetTerminal"))
+    }
+
     func testGhosttySendScriptAvoidsUnsupportedInputTextSyntax() {
         let script = TerminalTextSender.ghosttySendScript(
             text: "2",

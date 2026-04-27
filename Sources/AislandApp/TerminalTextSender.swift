@@ -71,6 +71,9 @@ struct TerminalTextSender {
     // MARK: - Ghostty
 
     private static func sendViaGhostty(_ text: String, target: JumpTarget) -> Bool {
+        focusGhosttyTerminal(target)
+        Thread.sleep(forTimeInterval: 0.08)
+
         // Build an AppleScript that:
         //   1. Activates Ghostty
         //   2. Sends the reply text + newline via System Events
@@ -80,6 +83,19 @@ struct TerminalTextSender {
         // such as `working directory of terminal`.
         let script = ghosttySendScript(text: text, target: target)
         return runAppleScript(script)
+    }
+
+    private static func focusGhosttyTerminal(_ target: JumpTarget) {
+        let result = runAppleScriptReturningString(ghosttyFocusScript(for: target))
+        if result != "matched" {
+            // Best effort only: the send script still activates Ghostty and types
+            // into the currently focused terminal if exact pane focus fails.
+            NSLog("[Aisland] TerminalTextSender Ghostty focus did not find an exact terminal")
+        }
+    }
+
+    static func ghosttyFocusScript(for target: JumpTarget) -> String {
+        TerminalJumpService().ghosttyJumpScript(for: target)
     }
 
     static func ghosttySendScript(text: String, target _: JumpTarget) -> String {
@@ -157,6 +173,20 @@ struct TerminalTextSender {
             return false
         }
         return result.stringValue == "ok"
+    }
+
+    private static func runAppleScriptReturningString(_ script: String) -> String? {
+        var error: NSDictionary?
+        guard let appleScript = NSAppleScript(source: script) else {
+            NSLog("[Aisland] TerminalTextSender: Ghostty focus AppleScript compilation failed")
+            return nil
+        }
+        let result = appleScript.executeAndReturnError(&error)
+        if let error {
+            NSLog("[Aisland] TerminalTextSender Ghostty focus AppleScript error: %@", String(describing: error))
+            return nil
+        }
+        return result.stringValue
     }
 
     private static func resolveTmuxPath() -> String? {
