@@ -138,6 +138,7 @@ struct UsageAnalyticsTests {
         let aprilFourth = ISO8601DateFormatter().date(from: "2026-04-04T12:00:00Z")!
         let aprilThirdProviderTotals = try store.providerTotals(on: aprilThird, calendar: utcCalendar)
         let aprilFourthProviderTotals = try store.providerTotals(on: aprilFourth, calendar: utcCalendar)
+        let aprilFourthHourlyUsage = try store.hourlyModelUsage(lastHours: 4, endingAt: aprilFourth, calendar: utcCalendar)
 
         #expect(report.scannedFileCount == 3)
         #expect(report.ingestedFileCount == 3)
@@ -169,6 +170,8 @@ struct UsageAnalyticsTests {
         #expect(aprilFourthProviderTotals.contains(where: { $0.provider == .openCode && $0.totalTokens == 980 && $0.costUSD == 0.42 }))
         #expect(dailyModelUsage.contains(where: { $0.dateKey == "2026-04-04" && $0.modelIdentifier == "gpt-5.3-codex" && $0.totalTokens == 310 }))
         #expect(dailyModelUsage.contains(where: { $0.dateKey == "2026-04-04" && $0.modelIdentifier == "glm-4.7" && $0.totalTokens == 980 }))
+        #expect(aprilFourthHourlyUsage.contains(where: { $0.modelIdentifier == "gpt-5.3-codex" && $0.totalTokens == 310 }))
+        #expect(aprilFourthHourlyUsage.contains(where: { $0.modelIdentifier == "unknown" && $0.totalTokens == 270 }))
     }
 
     @Test

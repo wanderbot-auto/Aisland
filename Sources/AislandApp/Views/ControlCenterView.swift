@@ -424,6 +424,8 @@ struct ControlCenterView: View {
             lang.t("debug.sessionListActionable")
         case .temporaryChat:
             lang.t("chat.title")
+        case .usage:
+            lang.t("usage.surface.title")
         case .whiteNoise:
             lang.t("island.surface.whiteNoise")
         }

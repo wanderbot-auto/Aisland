@@ -22,6 +22,7 @@ final class OverlayPanelController {
     private static let openedContentVerticalInsets: CGFloat = 52
     private static let openedEmptyStateHeight: CGFloat = 108
     private static let openedTemporaryChatHeight: CGFloat = 560
+    private static let openedUsageHeight: CGFloat = 316
     private static let openedWhiteNoiseHeight: CGFloat = 560
     // Approval card: header row (~72) + actionableBody padding (16*2 + 14 bottom) + body content (~186)
     // Bumped to 310 to ensure the estimated panel height is never smaller than the actual rendered card.
@@ -553,6 +554,10 @@ final class OverlayPanelController {
 
         if model.islandSurface == .temporaryChat {
             return Self.openedTemporaryChatHeight
+        }
+
+        if model.islandSurface == .usage {
+            return Self.openedUsageHeight
         }
 
         if model.islandSurface == .whiteNoise {

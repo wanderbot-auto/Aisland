@@ -4,6 +4,7 @@ import AislandCore
 enum IslandSurfaceTab: String, CaseIterable, Identifiable {
     case sessions
     case chat
+    case usage
     case whiteNoise
 
     var id: String { rawValue }
@@ -11,11 +12,13 @@ enum IslandSurfaceTab: String, CaseIterable, Identifiable {
     var systemImageName: String {
         switch self {
         case .sessions:
-            "terminal.fill"
+            "checklist.checked"
         case .chat:
-            "bubble.left.and.sparkles.fill"
+            "brain.head.profile"
+        case .usage:
+            "chart.bar.xaxis"
         case .whiteNoise:
-            "speaker.wave.3.fill"
+            "waveform"
         }
     }
 
@@ -25,6 +28,8 @@ enum IslandSurfaceTab: String, CaseIterable, Identifiable {
             "island.surface.sessions"
         case .chat:
             "island.surface.chat"
+        case .usage:
+            "island.surface.usage"
         case .whiteNoise:
             "island.surface.whiteNoise"
         }
@@ -36,6 +41,8 @@ enum IslandSurfaceTab: String, CaseIterable, Identifiable {
             .sessionList()
         case .chat:
             .temporaryChat
+        case .usage:
+            .usage
         case .whiteNoise:
             .whiteNoise
         }
@@ -46,6 +53,8 @@ enum IslandSurfaceTab: String, CaseIterable, Identifiable {
         case (.sessions, .sessionList):
             true
         case (.chat, .temporaryChat):
+            true
+        case (.usage, .usage):
             true
         case (.whiteNoise, .whiteNoise):
             true
@@ -58,6 +67,7 @@ enum IslandSurfaceTab: String, CaseIterable, Identifiable {
 enum IslandSurface: Equatable {
     case sessionList(actionableSessionID: String? = nil)
     case temporaryChat
+    case usage
     case whiteNoise
 
     static var switchableTabs: [IslandSurfaceTab] {
@@ -68,7 +78,7 @@ enum IslandSurface: Equatable {
         switch self {
         case let .sessionList(actionableSessionID):
             actionableSessionID
-        case .temporaryChat, .whiteNoise:
+        case .temporaryChat, .usage, .whiteNoise:
             nil
         }
     }
@@ -87,6 +97,8 @@ enum IslandSurface: Equatable {
             return IslandSurfaceTab.sessions
         case .temporaryChat:
             return IslandSurfaceTab.chat
+        case .usage:
+            return IslandSurfaceTab.usage
         case .whiteNoise:
             return IslandSurfaceTab.whiteNoise
         }

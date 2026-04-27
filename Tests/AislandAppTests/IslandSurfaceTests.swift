@@ -126,12 +126,14 @@ struct IslandSurfaceTests {
 
     @Test
     func switchableTabsCycleForwardAndBackward() {
-        #expect(IslandSurface.switchableTabs == [.sessions, .chat, .whiteNoise])
+        #expect(IslandSurface.switchableTabs == [.sessions, .chat, .usage, .whiteNoise])
         #expect(IslandSurface.sessionList().nextSwitchableSurface() == .temporaryChat)
-        #expect(IslandSurface.temporaryChat.nextSwitchableSurface() == .whiteNoise)
+        #expect(IslandSurface.temporaryChat.nextSwitchableSurface() == .usage)
+        #expect(IslandSurface.usage.nextSwitchableSurface() == .whiteNoise)
         #expect(IslandSurface.whiteNoise.nextSwitchableSurface() == .sessionList())
         #expect(IslandSurface.sessionList().nextSwitchableSurface(backwards: true) == .whiteNoise)
-        #expect(IslandSurface.whiteNoise.nextSwitchableSurface(backwards: true) == .temporaryChat)
+        #expect(IslandSurface.whiteNoise.nextSwitchableSurface(backwards: true) == .usage)
+        #expect(IslandSurface.usage.nextSwitchableSurface(backwards: true) == .temporaryChat)
     }
 
     @Test

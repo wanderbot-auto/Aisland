@@ -265,6 +265,7 @@
 "settings.ai.keychainHelp" = "API Key 只在需要时读取；开发时可通过环境变量提供，保存时仍按服务商写入 macOS Keychain。";
 "island.surface.sessions" = "任务";
 "island.surface.chat" = "提问";
+"island.surface.usage" = "用量";
 "chat.title" = "临时对话";
 "chat.clear" = "清空";
 "chat.waiting" = "等待回复…";
@@ -347,3 +348,16 @@
 "whiteNoise.category.noise" = "噪声";
 "whiteNoise.category.binaural" = "双耳节拍";
 "whiteNoise.category.utility" = "工具";
+
+/* Recent Usage */
+"usage.surface.title" = "近期模型用量";
+"usage.surface.subtitle" = "按小时聚合近 24 小时。";
+"usage.surface.legend" = "每小时 Tokens";
+"usage.surface.latest" = "最近";
+"usage.surface.model" = "模型";
+"usage.surface.cost" = "Cost";
+"usage.surface.last24h" = "近 24 小时";
+"usage.surface.noRecent" = "暂无近期用量";
+"usage.surface.noModel" = "暂无模型";
+"usage.surface.empty.title" = "还没有模型用量";
+"usage.surface.empty.subtitle" = "本地 agent 日志上报 token 后，Aisland 会自动填充热力图。";

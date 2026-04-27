@@ -265,6 +265,7 @@
 "settings.ai.keychainHelp" = "API keys load only when needed. Environment variables can provide development keys; saved keys use per-provider macOS Keychain storage.";
 "island.surface.sessions" = "Sessions";
 "island.surface.chat" = "Ask";
+"island.surface.usage" = "Usage";
 "chat.title" = "Temporary chat";
 "chat.clear" = "Clear";
 "chat.waiting" = "Waiting for reply…";
@@ -347,3 +348,16 @@
 "whiteNoise.category.noise" = "Noise";
 "whiteNoise.category.binaural" = "Binaural";
 "whiteNoise.category.utility" = "Utility";
+
+/* Recent Usage */
+"usage.surface.title" = "Recent model usage";
+"usage.surface.subtitle" = "Last 24 hours, grouped by hour.";
+"usage.surface.legend" = "Tokens by hour";
+"usage.surface.latest" = "Latest";
+"usage.surface.model" = "Model";
+"usage.surface.cost" = "Cost";
+"usage.surface.last24h" = "Last 24h";
+"usage.surface.noRecent" = "No recent usage";
+"usage.surface.noModel" = "No model yet";
+"usage.surface.empty.title" = "No model usage yet";
+"usage.surface.empty.subtitle" = "Aisland will fill this heatmap after local agent logs report token usage.";

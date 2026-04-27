@@ -287,6 +287,8 @@ enum HarnessArtifactRecorder {
             "sessionList:actionable(\(sessionID))"
         case .temporaryChat:
             "temporaryChat"
+        case .usage:
+            "usage"
         case .whiteNoise:
             "whiteNoise"
         }

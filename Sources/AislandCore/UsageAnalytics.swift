@@ -262,6 +262,60 @@ public struct UsageAnalyticsDailyModelBucket: Equatable, Codable, Sendable, Iden
     }
 }
 
+public struct UsageAnalyticsHourlyModelBucket: Equatable, Codable, Sendable, Identifiable {
+    public var id: String
+    public var hourStartAt: Date
+    public var modelIdentifier: String
+    public var modelDisplayName: String
+    public var provider: UsageLogProvider
+    public var providerIdentifier: String?
+    public var inputTokens: Int
+    public var outputTokens: Int
+    public var cacheReadTokens: Int
+    public var cacheWriteTokens: Int
+    public var reasoningTokens: Int
+    public var totalTokens: Int
+    public var costUSD: Double
+    public var entryCount: Int
+    public var firstSeenAt: Date?
+    public var lastSeenAt: Date?
+
+    public init(
+        hourStartAt: Date,
+        modelIdentifier: String,
+        modelDisplayName: String,
+        provider: UsageLogProvider,
+        providerIdentifier: String?,
+        inputTokens: Int,
+        outputTokens: Int,
+        cacheReadTokens: Int,
+        cacheWriteTokens: Int,
+        reasoningTokens: Int,
+        totalTokens: Int,
+        costUSD: Double,
+        entryCount: Int,
+        firstSeenAt: Date?,
+        lastSeenAt: Date?
+    ) {
+        self.id = "\(Int(hourStartAt.timeIntervalSince1970))|\(provider.rawValue)|\(modelIdentifier)"
+        self.hourStartAt = hourStartAt
+        self.modelIdentifier = modelIdentifier
+        self.modelDisplayName = modelDisplayName
+        self.provider = provider
+        self.providerIdentifier = providerIdentifier
+        self.inputTokens = inputTokens
+        self.outputTokens = outputTokens
+        self.cacheReadTokens = cacheReadTokens
+        self.cacheWriteTokens = cacheWriteTokens
+        self.reasoningTokens = reasoningTokens
+        self.totalTokens = totalTokens
+        self.costUSD = costUSD
+        self.entryCount = entryCount
+        self.firstSeenAt = firstSeenAt
+        self.lastSeenAt = lastSeenAt
+    }
+}
+
 public struct UsageAnalyticsRefreshReport: Equatable, Codable, Sendable {
     public var scannedFileCount: Int
     public var ingestedFileCount: Int
@@ -519,6 +573,19 @@ public final class UsageAnalyticsStore: @unchecked Sendable {
             try execute(db, sql: "PRAGMA synchronous=NORMAL;")
             try ensureSchema(db)
             return try loadDailyModelUsage(limitDays: limitDays, db: db)
+        }
+    }
+
+    public func hourlyModelUsage(
+        lastHours: Int = 24,
+        endingAt date: Date = Date.now,
+        calendar: Calendar = .current
+    ) throws -> [UsageAnalyticsHourlyModelBucket] {
+        try withDatabase { db in
+            try execute(db, sql: "PRAGMA journal_mode=WAL;")
+            try execute(db, sql: "PRAGMA synchronous=NORMAL;")
+            try ensureSchema(db)
+            return try loadHourlyModelUsage(lastHours: lastHours, endingAt: date, calendar: calendar, db: db)
         }
     }
 
@@ -1063,6 +1130,75 @@ public final class UsageAnalyticsStore: @unchecked Sendable {
                         totalTokens: Int(sqlite3_column_int64(stmt, 10)),
                         costUSD: sqlite3_column_double(stmt, 11),
                         entryCount: Int(sqlite3_column_int64(stmt, 12))
+                    )
+                )
+            }
+            return rows
+        }
+    }
+
+    private func loadHourlyModelUsage(
+        lastHours: Int,
+        endingAt date: Date,
+        calendar: Calendar,
+        db: OpaquePointer
+    ) throws -> [UsageAnalyticsHourlyModelBucket] {
+        let hourCount = max(1, lastHours)
+        let endHour = calendar.dateInterval(of: .hour, for: date)?.start ?? date
+        let startHour = calendar.date(byAdding: .hour, value: -(hourCount - 1), to: endHour) ?? endHour
+        let endExclusive = calendar.date(byAdding: .hour, value: 1, to: endHour) ?? date
+
+        let sql = """
+        SELECT
+            CAST(s.occurred_at / 3600 AS INTEGER) * 3600 AS hour_start_at,
+            s.model_identifier,
+            s.model_display_name,
+            s.provider,
+            s.provider_identifier,
+            COALESCE(SUM(s.input_tokens), 0) AS input_tokens,
+            COALESCE(SUM(s.output_tokens), 0) AS output_tokens,
+            COALESCE(SUM(s.cache_read_tokens), 0) AS cache_read_tokens,
+            COALESCE(SUM(s.cache_write_tokens), 0) AS cache_write_tokens,
+            COALESCE(SUM(s.reasoning_tokens), 0) AS reasoning_tokens,
+            COALESCE(SUM(s.total_tokens), 0) AS total_tokens,
+            COALESCE(SUM(s.cost_usd), 0) AS cost_usd,
+            COUNT(*) AS entry_count,
+            MIN(s.occurred_at) AS first_seen_at,
+            MAX(s.occurred_at) AS last_seen_at
+        FROM usage_samples s
+        WHERE s.occurred_at >= ? AND s.occurred_at < ?
+        GROUP BY hour_start_at, s.provider, s.provider_identifier, s.model_identifier, s.model_display_name
+        ORDER BY hour_start_at ASC, total_tokens DESC;
+        """
+
+        return try withPreparedStatement(db, sql: sql) { stmt in
+            sqlite3_bind_double(stmt, 1, startHour.timeIntervalSince1970)
+            sqlite3_bind_double(stmt, 2, endExclusive.timeIntervalSince1970)
+
+            var rows: [UsageAnalyticsHourlyModelBucket] = []
+            while sqlite3_step(stmt) == SQLITE_ROW {
+                guard let modelIdentifier = Self.string(fromSQLColumnAt: 1, in: stmt),
+                      let provider = Self.provider(fromSQLColumnAt: 3, in: stmt) else {
+                    continue
+                }
+
+                rows.append(
+                    UsageAnalyticsHourlyModelBucket(
+                        hourStartAt: Date(timeIntervalSince1970: sqlite3_column_double(stmt, 0)),
+                        modelIdentifier: modelIdentifier,
+                        modelDisplayName: Self.string(fromSQLColumnAt: 2, in: stmt) ?? modelIdentifier,
+                        provider: provider,
+                        providerIdentifier: Self.string(fromSQLColumnAt: 4, in: stmt),
+                        inputTokens: Int(sqlite3_column_int64(stmt, 5)),
+                        outputTokens: Int(sqlite3_column_int64(stmt, 6)),
+                        cacheReadTokens: Int(sqlite3_column_int64(stmt, 7)),
+                        cacheWriteTokens: Int(sqlite3_column_int64(stmt, 8)),
+                        reasoningTokens: Int(sqlite3_column_int64(stmt, 9)),
+                        totalTokens: Int(sqlite3_column_int64(stmt, 10)),
+                        costUSD: sqlite3_column_double(stmt, 11),
+                        entryCount: Int(sqlite3_column_int64(stmt, 12)),
+                        firstSeenAt: Self.date(fromSQLColumnAt: 13, in: stmt),
+                        lastSeenAt: Self.date(fromSQLColumnAt: 14, in: stmt)
                     )
                 )
             }

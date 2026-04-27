@@ -14,6 +14,7 @@ final class UsageAnalyticsCoordinator {
     var snapshots: [UsageAggregationPeriod: UsageAnalyticsSnapshot] = [:]
     var todayProviderTotals: [UsageAnalyticsProviderTotals] = []
     var dailyModelUsage: [UsageAnalyticsDailyModelBucket] = []
+    var hourlyModelUsage: [UsageAnalyticsHourlyModelBucket] = []
     var isRefreshing = false
     var lastRefreshError: String?
     var lastRefreshedAt: Date?
@@ -37,17 +38,19 @@ final class UsageAnalyticsCoordinator {
             defer { self.isRefreshing = false }
 
             do {
-                let (report, snapshots, todayProviderTotals, dailyModelUsage) = try await Task.detached(priority: .utility) { [store] in
+                let (report, snapshots, todayProviderTotals, dailyModelUsage, hourlyModelUsage) = try await Task.detached(priority: .utility) { [store] in
                     let report = try store.refresh()
                     let snapshots = try store.snapshots()
                     let todayProviderTotals = try store.providerTotals()
                     let dailyModelUsage = try store.dailyModelUsage()
-                    return (report, snapshots, todayProviderTotals, dailyModelUsage)
+                    let hourlyModelUsage = try store.hourlyModelUsage()
+                    return (report, snapshots, todayProviderTotals, dailyModelUsage, hourlyModelUsage)
                 }.value
 
                 self.snapshots = snapshots
                 self.todayProviderTotals = todayProviderTotals
                 self.dailyModelUsage = dailyModelUsage
+                self.hourlyModelUsage = hourlyModelUsage
                 self.lastRefreshReport = report
                 self.lastRefreshedAt = .now
                 self.lastRefreshError = nil

@@ -160,6 +160,9 @@ final class AppModel {
     var usageAnalyticsDailyModelUsage: [UsageAnalyticsDailyModelBucket] {
         usageAnalytics.dailyModelUsage
     }
+    var usageAnalyticsHourlyModelUsage: [UsageAnalyticsHourlyModelBucket] {
+        usageAnalytics.hourlyModelUsage
+    }
     func shouldDisplayTodayTokenUsage(for provider: UsageLogProvider) -> Bool {
         switch islandTokenUsageDisplayMode {
         case .claude:
