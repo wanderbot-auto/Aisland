@@ -153,9 +153,11 @@ final class OverlayUICoordinator {
 
         overlayTransitionGeneration &+= 1
 
-        // Reset measured notification height when the surface changes so stale
-        // measurements from a previous notification don't mis-size the new one.
-        if surface != islandSurface {
+        // Reset measured notification height when presentation context changes
+        // so stale measurements from a previous card don't mis-size this one.
+        if surface != islandSurface ||
+            reason != notchOpenReason ||
+            (status == .opened && reason == .notification) {
             appModel?.measuredNotificationContentHeight = 0
         }
 
@@ -214,6 +216,7 @@ final class OverlayUICoordinator {
         }
         // When not clearing, keep actionableSessionID so approval/question expansion persists
         notchOpenReason = .click
+        appModel?.measuredNotificationContentHeight = 0
         notificationAutoCollapseTask?.cancel()
         notificationAutoCollapseTask = nil
         refreshOverlayPlacementIfVisible()

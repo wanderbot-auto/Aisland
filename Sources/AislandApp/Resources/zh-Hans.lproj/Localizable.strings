@@ -33,6 +33,9 @@
 "settings.general.suppressFrontmostNotifications" = "前台会话不弹出通知";
 "settings.general.showCodexUsage" = "显示 Codex 用量";
 "settings.general.completionReply" = "在完成卡片中回复";
+"settings.general.questionOptionLayout" = "问题选项布局";
+"settings.general.questionOptionLayout.horizontal" = "横向";
+"settings.general.questionOptionLayout.vertical" = "纵向";
 "settings.general.cliHooks" = "CLI Hooks";
 "settings.general.activated" = "已激活";
 "settings.general.install" = "安装";

@@ -3,6 +3,7 @@ import AislandCore
 
 struct IslandQuestionCardView: View {
     let prompt: QuestionPrompt?
+    var optionLayout: QuestionOptionLayout = .horizontal
     var lang: LanguageManager = .shared
     let onAnswer: (QuestionPromptResponse) -> Void
 
@@ -19,7 +20,7 @@ struct IslandQuestionCardView: View {
             }
 
             VStack(alignment: .leading, spacing: 10) {
-                ForEach(structuredQuestions, id: \.question) { question in
+                ForEach(Array(structuredQuestions.enumerated()), id: \.offset) { _, question in
                     questionRow(question)
                 }
 
@@ -45,7 +46,7 @@ struct IslandQuestionCardView: View {
 
     // MARK: - Per-question row
 
-    /// Renders a single question with its header, text, and vertical option list.
+    /// Renders a single question with its header, text, and configured option layout.
     @ViewBuilder
     private func questionRow(_ question: QuestionPromptItem) -> some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -60,7 +61,27 @@ struct IslandQuestionCardView: View {
                 .foregroundStyle(.white.opacity(0.88))
                 .fixedSize(horizontal: false, vertical: true)
 
-            // Vertical option list
+            optionsView(for: question)
+        }
+    }
+
+    // MARK: - Options
+
+    @ViewBuilder
+    private func optionsView(for question: QuestionPromptItem) -> some View {
+        if optionLayout == .horizontal, !usesRichOptionRows(for: question) {
+            LazyVGrid(
+                columns: [
+                    GridItem(.adaptive(minimum: 78, maximum: 150), spacing: 6, alignment: .leading),
+                ],
+                alignment: .leading,
+                spacing: 6
+            ) {
+                ForEach(question.options) { option in
+                    optionChip(option, question: question)
+                }
+            }
+        } else {
             VStack(alignment: .leading, spacing: 4) {
                 ForEach(question.options) { option in
                     optionRow(option, question: question)
@@ -69,7 +90,39 @@ struct IslandQuestionCardView: View {
         }
     }
 
-    // MARK: - Option row (vertical, CLI-style)
+    @ViewBuilder
+    private func optionChip(_ option: QuestionOption, question: QuestionPromptItem) -> some View {
+        let isSelected = selectedLabels(for: question).contains(option.label)
+        Button {
+            toggle(option: option.label, for: question)
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 10.5, weight: .medium))
+                    .foregroundStyle(isSelected ? .yellow : .white.opacity(0.35))
+
+                Text(option.label)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.white.opacity(isSelected ? 1 : 0.78))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+
+                Spacer(minLength: 0)
+            }
+            .contentShape(Rectangle())
+            .padding(.vertical, 6)
+            .padding(.horizontal, 9)
+        }
+        .buttonStyle(.plain)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(isSelected ? Color.yellow.opacity(0.10) : Color.white.opacity(0.04))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(isSelected ? .yellow.opacity(0.25) : .clear)
+        )
+    }
 
     @ViewBuilder
     private func optionRow(_ option: QuestionOption, question: QuestionPromptItem) -> some View {
@@ -148,20 +201,17 @@ struct IslandQuestionCardView: View {
     }
 
     private var promptTitle: String {
-        prompt?.title.trimmedForNotificationCard ?? lang.t("question.answerNeeded")
+        QuestionCardPresentation.promptTitle(
+            for: prompt,
+            fallback: lang.t("question.answerNeeded")
+        )
     }
 
     private var showsPromptTitle: Bool {
-        guard !promptTitle.isEmpty else {
-            return false
-        }
-
-        guard structuredQuestions.count == 1,
-              let questionTitle = structuredQuestions.first?.question.trimmedForNotificationCard else {
-            return true
-        }
-
-        return questionTitle.caseInsensitiveCompare(promptTitle) != .orderedSame
+        QuestionCardPresentation.showsPromptTitle(
+            for: prompt,
+            fallback: lang.t("question.answerNeeded")
+        )
     }
 
     private var answerMap: [String: String] {
@@ -226,6 +276,12 @@ struct IslandQuestionCardView: View {
     private func trimmedFreeform(for question: QuestionPromptItem, option: QuestionOption) -> String {
         (freeformTexts[freeformKey(for: question, option: option)] ?? "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func usesRichOptionRows(for question: QuestionPromptItem) -> Bool {
+        question.options.contains { option in
+            option.allowsFreeform || !option.description.trimmedForNotificationCard.isEmpty
+        }
     }
 
     private func toggle(option: String, for question: QuestionPromptItem) {

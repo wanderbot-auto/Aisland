@@ -60,3 +60,10 @@ enum IslandTokenUsageDisplayMode: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 }
+
+enum QuestionOptionLayout: String, CaseIterable, Identifiable {
+    case horizontal
+    case vertical
+
+    var id: String { rawValue }
+}

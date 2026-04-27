@@ -20,6 +20,7 @@ struct IslandSessionRow: View {
     var isActionable: Bool = false
     var useDrawingGroup: Bool = true
     var isInteractive: Bool = true
+    var questionOptionLayout: QuestionOptionLayout = .horizontal
     var lang: LanguageManager = .shared
     var onApprove: ((ApprovalAction) -> Void)?
     var onAnswer: ((QuestionPromptResponse) -> Void)?
@@ -223,6 +224,7 @@ struct IslandSessionRow: View {
         case .waitingForAnswer:
             IslandQuestionCardView(
                 prompt: session.questionPrompt,
+                optionLayout: questionOptionLayout,
                 lang: lang,
                 onAnswer: { onAnswer?($0) }
             )

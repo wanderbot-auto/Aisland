@@ -34,6 +34,7 @@ final class AppModel {
     private static let islandTokenUsageDisplayModeDefaultsKey = "island.tokenUsage.displayMode"
     private static let completionReplyEnabledDefaultsKey = "feature.completionReply.enabled"
     private static let suppressFrontmostNotificationsDefaultsKey = "app.suppressFrontmostNotifications"
+    static let questionOptionLayoutDefaultsKey = "question.optionLayout"
     private static let legacyLLMProviderDefaultsKey = "llm.chat.provider"
     private static let legacyLLMModelDefaultsKey = "llm.chat.model"
     private static let legacyLLMBaseURLDefaultsKey = "llm.chat.baseURL"
@@ -242,6 +243,14 @@ final class AppModel {
         didSet {
             guard hasFinishedInit, completionReplyEnabled != oldValue else { return }
             UserDefaults.standard.set(completionReplyEnabled, forKey: Self.completionReplyEnabledDefaultsKey)
+            refreshOverlayPlacementIfVisible()
+        }
+    }
+    var questionOptionLayout: QuestionOptionLayout = .horizontal {
+        didSet {
+            guard hasFinishedInit, questionOptionLayout != oldValue else { return }
+            UserDefaults.standard.set(questionOptionLayout.rawValue, forKey: Self.questionOptionLayoutDefaultsKey)
+            measuredNotificationContentHeight = 0
             refreshOverlayPlacementIfVisible()
         }
     }
@@ -539,6 +548,7 @@ final class AppModel {
             Self.hapticFeedbackEnabledDefaultsKey: false,
             Self.completionReplyEnabledDefaultsKey: false,
             Self.suppressFrontmostNotificationsDefaultsKey: true,
+            Self.questionOptionLayoutDefaultsKey: QuestionOptionLayout.horizontal.rawValue,
         ])
         isSoundMuted = UserDefaults.standard.bool(forKey: Self.soundMutedDefaultsKey)
         selectedSoundName = NotificationSoundService.selectedSoundName
@@ -560,6 +570,9 @@ final class AppModel {
             rawValue: UserDefaults.standard.string(forKey: Self.islandTokenUsageDisplayModeDefaultsKey) ?? ""
         ) ?? migratedTokenUsageMode
         completionReplyEnabled = UserDefaults.standard.bool(forKey: Self.completionReplyEnabledDefaultsKey)
+        questionOptionLayout = QuestionOptionLayout(
+            rawValue: UserDefaults.standard.string(forKey: Self.questionOptionLayoutDefaultsKey) ?? ""
+        ) ?? .horizontal
         let storedChatConfiguration = Self.loadTemporaryChatConfiguration(
             store: temporaryChatConfigurationStore
         )

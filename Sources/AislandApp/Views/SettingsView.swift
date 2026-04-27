@@ -221,6 +221,13 @@ struct GeneralSettingsPane: View {
                     get: { model.completionReplyEnabled },
                     set: { model.completionReplyEnabled = $0 }
                 ))
+                Picker(lang.t("settings.general.questionOptionLayout"), selection: Binding(
+                    get: { model.questionOptionLayout },
+                    set: { model.questionOptionLayout = $0 }
+                )) {
+                    Text(lang.t("settings.general.questionOptionLayout.horizontal")).tag(QuestionOptionLayout.horizontal)
+                    Text(lang.t("settings.general.questionOptionLayout.vertical")).tag(QuestionOptionLayout.vertical)
+                }
                 Toggle(lang.t("settings.general.suppressFrontmostNotifications"), isOn: Binding(
                     get: { model.suppressFrontmostNotifications },
                     set: { model.suppressFrontmostNotifications = $0 }

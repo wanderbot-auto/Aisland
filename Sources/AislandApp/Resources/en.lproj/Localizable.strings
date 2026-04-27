@@ -33,6 +33,9 @@
 "settings.general.suppressFrontmostNotifications" = "Suppress notifications for focused sessions";
 "settings.general.showCodexUsage" = "Show Codex usage";
 "settings.general.completionReply" = "Reply from completion card";
+"settings.general.questionOptionLayout" = "Question option layout";
+"settings.general.questionOptionLayout.horizontal" = "Horizontal";
+"settings.general.questionOptionLayout.vertical" = "Vertical";
 "settings.general.cliHooks" = "CLI Hooks";
 "settings.general.activated" = "Activated";
 "settings.general.install" = "Install";
