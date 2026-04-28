@@ -3,20 +3,21 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Aisland Pixel Glyph Options</title>
+  <title>Aisland Cute Pet Pixel Glyph Options</title>
   <style>
     :root {
-      --bg: #07090d;
-      --panel: rgba(18, 22, 29, 0.82);
-      --panel-2: rgba(29, 35, 45, 0.72);
-      --line: rgba(189, 216, 255, 0.13);
-      --text: #edf6ff;
-      --muted: #93a5b8;
-      --cyan: #00d1ff;
-      --mint: #7ee787;
-      --amber: #ffcb6b;
-      --rose: #ff8a80;
-      --violet: #caa9ff;
+      --bg: #08070c;
+      --panel: rgba(28, 25, 34, 0.82);
+      --panel-2: rgba(255, 255, 255, 0.065);
+      --line: rgba(255, 226, 240, 0.18);
+      --text: #fff8fb;
+      --muted: #d3bcc8;
+      --cream: #fff0cf;
+      --pink: #ff9fc6;
+      --mint: #8ff0c5;
+      --sky: #8ddcff;
+      --lilac: #cdb4ff;
+      --peach: #ffbd88;
       --pixel-gap: 2px;
       color-scheme: dark;
       font-family: ui-rounded, "SF Pro Rounded", "Avenir Next", system-ui, sans-serif;
@@ -29,10 +30,10 @@
       min-height: 100vh;
       color: var(--text);
       background:
-        radial-gradient(circle at 12% 10%, rgba(0, 209, 255, 0.18), transparent 28%),
-        radial-gradient(circle at 82% 14%, rgba(126, 231, 135, 0.14), transparent 26%),
-        radial-gradient(circle at 54% 92%, rgba(255, 203, 107, 0.12), transparent 32%),
-        linear-gradient(145deg, #030406 0%, #0b1119 48%, #06080d 100%);
+        radial-gradient(circle at 16% 12%, rgba(255, 159, 198, 0.24), transparent 30%),
+        radial-gradient(circle at 84% 10%, rgba(141, 220, 255, 0.18), transparent 28%),
+        radial-gradient(circle at 48% 92%, rgba(143, 240, 197, 0.16), transparent 34%),
+        linear-gradient(145deg, #09070d 0%, #15101c 48%, #080a10 100%);
     }
 
     main {
@@ -51,16 +52,16 @@
 
     .eyebrow {
       margin: 0 0 10px;
-      color: var(--cyan);
+      color: var(--pink);
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 900;
       letter-spacing: 0.18em;
       text-transform: uppercase;
     }
 
     h1 {
       margin: 0;
-      max-width: 780px;
+      max-width: 800px;
       font-size: clamp(34px, 5vw, 62px);
       line-height: 0.94;
       letter-spacing: -0.06em;
@@ -68,7 +69,7 @@
 
     .intro {
       margin: 14px 0 0;
-      max-width: 760px;
+      max-width: 790px;
       color: var(--muted);
       font-size: 15px;
       line-height: 1.7;
@@ -79,17 +80,17 @@
       flex-wrap: wrap;
       gap: 8px;
       justify-content: flex-end;
-      max-width: 350px;
+      max-width: 360px;
     }
 
     .chip {
       border: 1px solid var(--line);
       border-radius: 999px;
       padding: 7px 10px;
-      color: #c8d7e8;
-      background: rgba(255, 255, 255, 0.045);
+      color: #ffe7f0;
+      background: rgba(255, 255, 255, 0.06);
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 800;
       white-space: nowrap;
     }
 
@@ -103,25 +104,40 @@
       position: relative;
       overflow: hidden;
       border: 1px solid var(--line);
-      border-radius: 24px;
-      min-height: 330px;
+      border-radius: 28px;
+      min-height: 346px;
       padding: 16px;
       background:
-        linear-gradient(180deg, rgba(255,255,255,0.075), rgba(255,255,255,0.02)),
+        linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.025)),
         var(--panel);
-      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.36);
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.35);
+    }
+
+    .card::before,
+    .card::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      pointer-events: none;
     }
 
     .card::before {
-      content: "";
-      position: absolute;
-      inset: -60px -80px auto auto;
-      width: 150px;
-      height: 150px;
-      border-radius: 50%;
+      inset: -56px -78px auto auto;
+      width: 160px;
+      height: 160px;
       background: var(--accent);
-      opacity: 0.18;
+      opacity: 0.22;
       filter: blur(24px);
+    }
+
+    .card::after {
+      left: 18px;
+      bottom: 16px;
+      width: 54px;
+      height: 14px;
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 76px -240px 0 rgba(255,255,255,0.06), 132px -38px 0 rgba(255,255,255,0.045);
+      transform: rotate(-7deg);
     }
 
     .card-head {
@@ -130,20 +146,21 @@
       align-items: flex-start;
       justify-content: space-between;
       gap: 10px;
-      min-height: 56px;
+      min-height: 58px;
+      z-index: 1;
     }
 
     .index {
       display: inline-grid;
       place-items: center;
-      width: 28px;
-      height: 28px;
-      border-radius: 10px;
-      color: #051018;
+      width: 30px;
+      height: 30px;
+      border-radius: 12px;
+      color: #140b12;
       background: var(--accent);
       font-size: 12px;
-      font-weight: 900;
-      box-shadow: 0 0 24px color-mix(in srgb, var(--accent), transparent 44%);
+      font-weight: 950;
+      box-shadow: 0 0 24px color-mix(in srgb, var(--accent), transparent 42%);
     }
 
     h2 {
@@ -157,37 +174,38 @@
       margin-top: 6px;
       color: var(--muted);
       font-size: 11px;
-      line-height: 1.3;
+      line-height: 1.35;
     }
 
     .stage {
       position: relative;
       display: grid;
       place-items: center;
-      height: 132px;
+      height: 138px;
       margin: 20px 0 14px;
-      border-radius: 22px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 25px;
+      border: 1px solid rgba(255, 255, 255, 0.095);
       background:
-        radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--accent), transparent 76%), transparent 48%),
-        linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.18)),
-        #0b0f14;
+        radial-gradient(circle at 50% 44%, color-mix(in srgb, var(--accent), transparent 72%), transparent 48%),
+        radial-gradient(circle at 28% 70%, rgba(255,255,255,0.08), transparent 22%),
+        linear-gradient(180deg, rgba(255,255,255,0.075), rgba(0,0,0,0.16)),
+        #111018;
     }
 
     .island-bar {
       display: flex;
       align-items: center;
-      gap: 9px;
-      min-width: 112px;
-      min-height: 40px;
-      padding: 9px 14px;
-      border-radius: 18px;
-      border: 1px solid rgba(255, 255, 255, 0.11);
-      background: rgba(11, 14, 18, 0.82);
+      gap: 10px;
+      min-width: 126px;
+      min-height: 44px;
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      background: rgba(12, 11, 17, 0.84);
       box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.10),
         0 14px 40px rgba(0, 0, 0, 0.42),
-        0 0 30px color-mix(in srgb, var(--accent), transparent 70%);
+        0 0 30px color-mix(in srgb, var(--accent), transparent 68%);
     }
 
     .pixel-art {
@@ -197,7 +215,7 @@
       grid-auto-rows: var(--cell);
       gap: var(--pixel-gap);
       image-rendering: pixelated;
-      filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent), transparent 46%));
+      filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent), transparent 42%));
       transform: scale(1.02);
       transform-origin: center;
     }
@@ -205,20 +223,21 @@
     .pixel {
       width: var(--cell);
       height: var(--cell);
-      border-radius: 1px;
+      border-radius: 1.4px;
       background: transparent;
     }
 
     .p1 { background: var(--accent); }
-    .p2 { background: color-mix(in srgb, var(--accent), white 34%); }
-    .p3 { background: color-mix(in srgb, var(--accent), black 34%); }
-    .p4 { background: #f7fbff; }
-    .p5 { background: var(--rose); }
-    .p6 { background: var(--amber); }
+    .p2 { background: color-mix(in srgb, var(--accent), white 38%); }
+    .p3 { background: color-mix(in srgb, var(--accent), black 28%); }
+    .p4 { background: #fffaf2; }
+    .p5 { background: #ff8fb8; }
+    .p6 { background: #ffc56f; }
+    .p7 { background: #19141d; }
 
     .state-dot {
-      width: 7px;
-      height: 7px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: var(--accent);
       box-shadow: 0 0 16px var(--accent);
@@ -228,6 +247,7 @@
       position: relative;
       display: grid;
       gap: 9px;
+      z-index: 1;
     }
 
     .line {
@@ -236,47 +256,48 @@
       justify-content: space-between;
       gap: 10px;
       padding: 9px 10px;
-      border-radius: 14px;
+      border-radius: 15px;
       background: var(--panel-2);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.065);
     }
 
     .line span:first-child {
       color: var(--muted);
       font-size: 11px;
-      font-weight: 800;
+      font-weight: 850;
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
 
     .line code {
-      color: #e9f5ff;
+      color: #fff6fb;
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 850;
       font-family: "SF Mono", ui-monospace, monospace;
     }
 
     .notes {
       min-height: 48px;
       margin: 0;
-      color: #b6c7d9;
+      color: #e2cbd7;
       font-size: 12px;
       line-height: 1.55;
     }
 
     .notice {
       margin-top: 18px;
-      color: #8fa2b6;
+      color: #c7aebe;
       font-size: 12px;
       line-height: 1.7;
     }
 
-    @keyframes idle-bob {
-      0%, 100% { transform: translateY(0) scale(1.02); }
-      50% { transform: translateY(-2px) scale(1.02); }
+    @keyframes pet-bounce {
+      0%, 100% { transform: translateY(0) scale(1.02) rotate(0deg); }
+      30% { transform: translateY(-3px) scale(1.04) rotate(-1deg); }
+      60% { transform: translateY(0) scale(1.02) rotate(1deg); }
     }
 
-    .card:hover .pixel-art { animation: idle-bob 0.72s steps(2, end) infinite; }
+    .card:hover .pixel-art { animation: pet-bounce 0.82s steps(3, end) infinite; }
 
     @media (max-width: 1050px) {
       .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -287,7 +308,7 @@
     @media (max-width: 680px) {
       main { width: min(100vw - 22px, 480px); padding-top: 24px; }
       .grid { grid-template-columns: 1fr; }
-      .card { min-height: 300px; }
+      .card { min-height: 314px; }
     }
   </style>
 </head>
@@ -295,202 +316,202 @@
   <main>
     <header>
       <section>
-        <p class="eyebrow">Aisland Pixel Glyph Lab</p>
-        <h1>10 个可加入个性化设置的像素图形备选</h1>
-        <p class="intro">这些方案适合映射到 <code>IslandPixelShapeStyle</code>，用矩阵像素绘制而不是图片资源。包含动物主题，也包含对知名网站/工具吉祥物的非官方像素化致敬。</p>
+        <p class="eyebrow">Aisland Pixel Pet Lab</p>
+        <h1>10 个更俏皮可爱的宠物像素图形备选</h1>
+        <p class="intro">这一版弱化“网站吉祥物致敬”，统一改成小宠物和陪伴感角色：圆脸、软色、短名字、低攻击性轮廓，更适合放在 Aisland 的刘海小胶囊里长期显示。</p>
       </section>
       <section class="legend" aria-label="Legend">
         <span class="chip">9x9 / 10x10 矩阵</span>
-        <span class="chip">适合刘海小尺寸</span>
-        <span class="chip">Hover 预览动效</span>
+        <span class="chip">圆脸宠物感</span>
+        <span class="chip">Hover 弹跳预览</span>
       </section>
     </header>
 
     <section class="grid" id="glyphGrid"></section>
 
-    <p class="notice">说明：GitHub、Docker、Reddit、Rust、Claude 等名称仅用于标注灵感来源；实际加入产品时建议使用“Octo Cat Inspired / Whale / Robot / Crab / Glow Moth”等非官方名称，避免误用商标或官方吉祥物资产。</p>
+    <p class="notice">建议：加入产品时可先挑 3-4 个作为内置款，例如猫、柴犬、兔子、鸭鸭；其余作为后续主题包。名称尽量用原创宠物名，避免直接绑定第三方品牌或官方吉祥物。</p>
   </main>
 
   <script>
     const glyphs = [
       {
-        title: "Scout Cat",
-        tag: "动物主题 · 当前猫咪方向的像素版",
-        enumCase: "scoutCat",
-        accent: "#00d1ff",
-        notes: "识别度高，和 Aisland 现有猫咪语义最连贯；适合作为默认内置图形。",
-        matrix: [
-          "030000030",
-          "330000333",
-          "322222223",
-          "324224423",
-          "322222223",
-          "022555220",
-          "002222000",
-          "032000230",
-          "330000033"
-        ]
-      },
-      {
-        title: "Orbit Fox",
-        tag: "动物主题 · 狐狸 / 搜索 / 敏捷",
-        enumCase: "orbitFox",
-        accent: "#ff9f43",
-        notes: "耳朵和尾巴在小尺寸下很明显；适合表达快速跳回和敏捷响应。",
-        matrix: [
-          "600000006",
-          "660000066",
-          "366666663",
-          "366464663",
-          "366666663",
-          "036555630",
-          "003666300",
-          "063000360",
-          "630000036"
-        ]
-      },
-      {
-        title: "Terminal Owl",
-        tag: "动物主题 · 夜间值守 / 观察者",
-        enumCase: "terminalOwl",
-        accent: "#caa9ff",
-        notes: "两只大眼睛适合状态监控；可以和等待审批、观察任务形成联想。",
+        title: "Pudding Cat",
+        tag: "奶油猫猫 · 默认候选",
+        enumCase: "puddingCat",
+        accent: "#ffd08a",
+        notes: "圆脸、猫耳、腮红都很清楚；比品牌标记更像一个陪伴型小宠物。",
         matrix: [
           "030000030",
           "333000333",
-          "322333223",
-          "324232423",
-          "322666223",
-          "332222233",
-          "033333330",
-          "003303300",
-          "000303000"
+          "322222223",
+          "324224423",
+          "322222223",
+          "025555520",
+          "002222200",
+          "030222030",
+          "300000003"
         ]
       },
       {
-        title: "Moon Rabbit",
-        tag: "动物主题 · 安静 / 轻盈 / 夜间",
-        enumCase: "moonRabbit",
-        accent: "#f2f7ff",
-        notes: "白色主题感强，适合浅色或石墨主题；轮廓干净，静止状态也好看。",
+        title: "Mochi Shiba",
+        tag: "糯米柴犬 · 活力提醒",
+        enumCase: "mochiShiba",
+        accent: "#ffb36b",
+        notes: "柴犬耳朵和小围脖很可爱，适合运行中、完成后的小奖励反馈。",
+        matrix: [
+          "060000060",
+          "666000666",
+          "633666336",
+          "632424236",
+          "633666336",
+          "066555660",
+          "006666600",
+          "060666060",
+          "600000006"
+        ]
+      },
+      {
+        title: "Bubble Bunny",
+        tag: "泡泡兔 · 轻盈安静",
+        enumCase: "bubbleBunny",
+        accent: "#fff5fb",
+        notes: "长耳朵和圆脸在小尺寸下很稳定；适合浅色主题或等待回答状态。",
         matrix: [
           "020020000",
           "022022000",
           "022222000",
           "024242000",
           "022222000",
-          "002225500",
+          "002555200",
           "022222200",
           "220000220",
           "200000020"
         ]
       },
       {
-        title: "Debug Duck",
-        tag: "动物主题 · Rubber duck debugging",
-        enumCase: "debugDuck",
-        accent: "#ffcb6b",
-        notes: "开发者心智很强，适合编码助手；黄色在深色岛屿上非常醒目。",
+        title: "Nap Panda",
+        tag: "午睡熊猫 · 慢节奏",
+        enumCase: "napPanda",
+        accent: "#e9f1ff",
+        notes: "黑眼圈用深色像素表现，情绪更软；适合低打扰、后台观察类状态。",
         matrix: [
-          "000666000",
-          "006664000",
-          "066666000",
-          "066466660",
-          "066666660",
-          "006666600",
-          "000666000",
-          "000330000",
-          "003003000"
+          "077000770",
+          "772222277",
+          "724722427",
+          "722222227",
+          "722666227",
+          "077222770",
+          "007777700",
+          "070222070",
+          "700000007"
         ]
       },
       {
-        title: "Pixel Whale",
-        tag: "Docker 吉祥物灵感 · 非官方",
-        enumCase: "pixelWhale",
-        accent: "#7bb7ff",
-        notes: "适合“搬运任务 / 容器 / 构建中”的语义；横向形状和刘海胶囊很搭。",
+        title: "Toast Hamster",
+        tag: "吐司仓鼠 · 软乎乎",
+        enumCase: "toastHamster",
+        accent: "#f6c785",
+        notes: "方圆轮廓像一片吐司，也像仓鼠脸；非常适合像素网格。",
         matrix: [
-          "0000200000",
-          "0002220000",
-          "0022222200",
-          "0222422220",
-          "2222222222",
-          "2222222266",
-          "0222226600",
-          "0022220000",
-          "0002200000"
-        ]
-      },
-      {
-        title: "Octo Cat",
-        tag: "GitHub Octocat 灵感 · 非官方",
-        enumCase: "octoCat",
-        accent: "#bbc9cf",
-        notes: "猫耳 + 触手的轮廓在 9x9 里很有记忆点；适合 Git/workspace 相关状态。",
-        matrix: [
-          "030000030",
-          "333000333",
+          "033333330",
           "322222223",
-          "324224423",
+          "322424223",
           "322222223",
-          "033555330",
-          "303222303",
-          "030202030",
-          "300020003"
+          "322666223",
+          "325555523",
+          "322222223",
+          "033333330",
+          "003000300"
         ]
       },
       {
-        title: "Snoo Bot",
-        tag: "Reddit Snoo 灵感 · 非官方",
-        enumCase: "snooBot",
-        accent: "#ff8a80",
-        notes: "小天线和机器人头很清楚；适合社区、消息、问答状态。",
+        title: "Jelly Axolotl",
+        tag: "果冻六角恐龙 · 奇妙宠物",
+        enumCase: "jellyAxolotl",
+        accent: "#ff9fc6",
+        notes: "外侧鳃羽有很强记忆点，俏皮但不吵；适合作为个性化亮点款。",
         matrix: [
-          "000020000",
-          "000222000",
-          "000020000",
-          "022222220",
-          "024222420",
-          "022262220",
+          "500000005",
+          "550222055",
+          "052222250",
+          "522424225",
+          "052222250",
+          "005555500",
           "002222200",
-          "020222020",
+          "020000020",
           "200000002"
         ]
       },
       {
-        title: "Glow Moth",
-        tag: "Claude 温暖光感灵感 · 非官方",
-        enumCase: "glowMoth",
-        accent: "#d7a86e",
-        notes: "不用复刻品牌标识，只取暖色、对称、思考光源的感觉；适合 Claude 相关会话。",
+        title: "Cloud Alpaca",
+        tag: "云朵羊驼 · 治愈陪伴",
+        enumCase: "cloudAlpaca",
+        accent: "#d8c7ff",
+        notes: "蓬松头顶和长脖子有辨识度；适合做温柔主题或休息提醒。",
         matrix: [
-          "300020003",
-          "330222033",
-          "333222333",
-          "033262330",
-          "003666300",
-          "033262330",
-          "333222333",
-          "330202033",
-          "300020003"
+          "002222000",
+          "022222200",
+          "222242220",
+          "222222220",
+          "022555200",
+          "002222000",
+          "002222000",
+          "002002000",
+          "020000200"
         ]
       },
       {
-        title: "Code Crab",
-        tag: "Rust Ferris 灵感 · 非官方",
-        enumCase: "codeCrab",
-        accent: "#ff6b4a",
-        notes: "横向钳子适合小胶囊；适合编译、构建、系统任务状态。",
+        title: "Sprout Turtle",
+        tag: "发芽小龟 · 稳定推进",
+        enumCase: "sproutTurtle",
+        accent: "#8ff0c5",
+        notes: "小龟代表稳步执行，头顶嫩芽增加萌点；适合长任务和构建任务。",
         matrix: [
-          "300000003",
-          "330000033",
-          "033333330",
-          "032424230",
-          "033666330",
-          "303333303",
-          "300303003",
-          "030000030",
-          "300000003"
+          "000020000",
+          "000222000",
+          "000020000",
+          "002222200",
+          "022424220",
+          "222222222",
+          "022666220",
+          "202222202",
+          "020000020"
+        ]
+      },
+      {
+        title: "Pocket Penguin",
+        tag: "口袋企鹅 · 冷静值守",
+        enumCase: "pocketPenguin",
+        accent: "#8ddcff",
+        notes: "深色外套、白肚皮、黄色小脚，很适合深色玻璃岛屿。",
+        matrix: [
+          "007777700",
+          "077222770",
+          "072424270",
+          "072222270",
+          "072666270",
+          "007222700",
+          "000777000",
+          "006000600",
+          "060000060"
+        ]
+      },
+      {
+        title: "Tiny Otter",
+        tag: "抱石小水獭 · 亲密感",
+        enumCase: "tinyOtter",
+        accent: "#c99a6b",
+        notes: "抱着小贝壳/石头的姿态很讨喜；适合表达“我在帮你守着任务”。",
+        matrix: [
+          "003333000",
+          "032222300",
+          "322424230",
+          "322222230",
+          "032666300",
+          "003222000",
+          "022444220",
+          "220333022",
+          "200000002"
         ]
       }
     ];
