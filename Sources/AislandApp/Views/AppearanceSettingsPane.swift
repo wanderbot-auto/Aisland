@@ -4,22 +4,11 @@ import AislandCore
 struct AppearanceSettingsPane: View {
     var model: AppModel
     @State private var previewPhase: SessionPhase = .running
-    @State private var showsAdvancedCustomization = false
     @Environment(\.islandTheme) private var theme
 
     private var lang: LanguageManager { model.lang }
-    private var isCustom: Bool { model.islandAppearanceMode == .custom }
     private var interfaceTransparencyPercent: Int {
         Int((model.interfaceTransparency * 100).rounded())
-    }
-    private var interfaceTransparencyPercentBinding: Binding<Double> {
-        Binding(
-            get: { model.interfaceTransparency * 100 },
-            set: { model.interfaceTransparency = $0 / 100 }
-        )
-    }
-    private var interfaceTransparencyPercentRange: ClosedRange<Double> {
-        (InterfaceTransparencySetting.range.lowerBound * 100)...(InterfaceTransparencySetting.range.upperBound * 100)
     }
     private var previewGlass: Color {
         IslandTheme.glassColor(
@@ -31,7 +20,7 @@ struct AppearanceSettingsPane: View {
 
     var body: some View {
         Form {
-            Section(lang.t("settings.appearance.theme")) {
+            Section(lang.t("settings.appearance.visual")) {
                 Picker(lang.t("settings.appearance.theme"), selection: Binding(
                     get: { model.interfaceTheme },
                     set: { model.interfaceTheme = $0 }
@@ -42,47 +31,7 @@ struct AppearanceSettingsPane: View {
                 }
                 .pickerStyle(.segmented)
 
-                Text(lang.t("settings.appearance.theme.help"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section(lang.t("settings.appearance.transparency")) {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 12) {
-                        Slider(
-                            value: interfaceTransparencyPercentBinding,
-                            in: interfaceTransparencyPercentRange,
-                            step: 1
-                        )
-
-                        Text("\(interfaceTransparencyPercent)%")
-                            .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                            .foregroundStyle(.secondary)
-                            .frame(width: 42, alignment: .trailing)
-                    }
-
-                    Text(lang.t("settings.appearance.transparency.help"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            Section(lang.t("settings.appearance.mode")) {
-                Picker(lang.t("settings.appearance.mode"), selection: Binding(
-                    get: { model.islandAppearanceMode },
-                    set: { model.islandAppearanceMode = $0 }
-                )) {
-                    Text(lang.t("settings.appearance.mode.default")).tag(IslandAppearanceMode.default)
-                    Text(lang.t("settings.appearance.mode.custom")).tag(IslandAppearanceMode.custom)
-                }
-                .pickerStyle(.segmented)
-
-                if !isCustom {
-                    Text(lang.t("settings.appearance.mode.defaultDesc"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                transparencyPresetGrid
             }
 
             Section(lang.t("settings.appearance.preview")) {
@@ -91,24 +40,8 @@ struct AppearanceSettingsPane: View {
                     .listRowBackground(Color.clear)
             }
 
-            if isCustom {
-                Section {
-                    DisclosureGroup(
-                        lang.t("settings.appearance.advanced"),
-                        isExpanded: $showsAdvancedCustomization
-                    ) {
-                        advancedCustomizationControls
-                            .padding(.top, 8)
-                    }
-                }
-            }
-
-            Section {
-                Text(lang.t("settings.appearance.communityNote"))
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .multilineTextAlignment(.center)
+            Section(lang.t("settings.appearance.advanced")) {
+                advancedCustomizationControls
             }
         }
         .formStyle(.grouped)
@@ -132,10 +65,6 @@ struct AppearanceSettingsPane: View {
                 get: { model.hideIdleIslandToEdge },
                 set: { model.hideIdleIslandToEdge = $0 }
             ))
-
-            Text(lang.t("settings.appearance.hideIdleToEdge.help"))
-                .font(.caption)
-                .foregroundStyle(.secondary)
 
             Divider()
 
@@ -163,8 +92,8 @@ struct AppearanceSettingsPane: View {
                 }
 
                 Text(lang.t("settings.appearance.avatar.help"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
             }
 
             Divider()
@@ -177,6 +106,46 @@ struct AppearanceSettingsPane: View {
                 statusColorRow(phase)
             }
         }
+    }
+
+    private var transparencyPresetGrid: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text(lang.t("settings.appearance.transparency"))
+                Spacer()
+                Text("\(interfaceTransparencyPercent)%")
+                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(.secondary)
+            }
+
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 5), spacing: 6) {
+                ForEach(InterfaceTransparencySetting.presetPercentages, id: \.self) { percent in
+                    transparencyPresetButton(percent)
+                }
+            }
+        }
+    }
+
+    private func transparencyPresetButton(_ percent: Int) -> some View {
+        let isSelected = interfaceTransparencyPercent == percent
+        return Button {
+            model.interfaceTransparency = Double(percent) / 100
+        } label: {
+            Text("\(percent)%")
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .foregroundStyle(isSelected ? theme.onPrimary : theme.textSecondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 7)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(isSelected ? theme.primary : theme.surfaceContainer.opacity(0.72))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(isSelected ? theme.primary.opacity(0.2) : theme.outline.opacity(0.12))
+                )
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Preview card

@@ -26,7 +26,6 @@ final class AppModel {
     private static let hapticFeedbackEnabledDefaultsKey = "app.hapticFeedbackEnabled"
     private static let interfaceThemeDefaultsKey = "appearance.interface.theme"
     private static let interfaceTransparencyDefaultsKey = "appearance.interface.transparency"
-    private static let islandAppearanceModeDefaultsKey = "appearance.island.mode"
     private static let islandClosedDisplayStyleDefaultsKey = "appearance.island.closedDisplayStyle"
     private static let islandHideIdleToEdgeDefaultsKey = "appearance.island.hideIdleToEdge"
     private static let islandPixelShapeStyleDefaultsKey = "appearance.island.pixelShapeStyle"
@@ -383,15 +382,7 @@ final class AppModel {
         }
     }
 
-    var islandAppearanceMode: IslandAppearanceMode = .default {
-        didSet {
-            guard islandAppearanceMode != oldValue else { return }
-            UserDefaults.standard.set(islandAppearanceMode.rawValue, forKey: Self.islandAppearanceModeDefaultsKey)
-            refreshOverlayPlacementIfVisible()
-        }
-    }
-
-    var isCustomAppearance: Bool { islandAppearanceMode == .custom }
+    var isCustomAppearance: Bool { true }
 
     var islandClosedDisplayStyle: IslandClosedDisplayStyle = .detailed {
         didSet {
@@ -610,9 +601,6 @@ final class AppModel {
         interfaceTransparency = InterfaceTransparencySetting.clamped(
             UserDefaults.standard.double(forKey: Self.interfaceTransparencyDefaultsKey)
         )
-        islandAppearanceMode = IslandAppearanceMode(
-            rawValue: UserDefaults.standard.string(forKey: Self.islandAppearanceModeDefaultsKey) ?? ""
-        ) ?? .default
         islandClosedDisplayStyle = IslandClosedDisplayStyle(
             rawValue: UserDefaults.standard.string(forKey: Self.islandClosedDisplayStyleDefaultsKey) ?? ""
         ) ?? .detailed

@@ -52,12 +52,13 @@
 
 /* Settings - Appearance */
 "settings.tab.appearance" = "Appearance";
+"settings.appearance.visual" = "Appearance";
 "settings.appearance.theme" = "Global Theme";
 "settings.appearance.theme.cyberMinimalist" = "Cyber-Minimalist";
 "settings.appearance.theme.graphiteClassic" = "Graphite";
 "settings.appearance.theme.help" = "Theme tokens drive the island, chat, white-noise, usage, and every settings pane so a global restyle stays low-cost.";
 "settings.appearance.transparency" = "Interface Transparency";
-"settings.appearance.transparency.help" = "Controls how much of the island surface lets the desktop show through. 0% is solid; 80% is very transparent.";
+"settings.appearance.transparency.help" = "Controls how much of the island surface lets the desktop show through. 0% is solid; 50% is the most transparent.";
 "settings.appearance.mode" = "Mode";
 "settings.appearance.mode.default" = "Default";
 "settings.appearance.mode.custom" = "Custom";

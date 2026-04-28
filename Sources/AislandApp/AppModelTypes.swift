@@ -23,13 +23,6 @@ enum TrackedEventIngress {
 
 // MARK: - Island appearance
 
-enum IslandAppearanceMode: String, CaseIterable, Identifiable {
-    case `default`
-    case custom
-
-    var id: String { rawValue }
-}
-
 enum IslandInterfaceTheme: String, CaseIterable, Identifiable {
     case cyberMinimalist
     case graphiteClassic
@@ -39,10 +32,15 @@ enum IslandInterfaceTheme: String, CaseIterable, Identifiable {
 
 enum InterfaceTransparencySetting {
     static let defaultValue = 0.10
-    static let range: ClosedRange<Double> = 0...0.80
+    static let presetPercentages = [0, 5, 10, 15, 20, 25, 30, 35, 40, 50]
+    static let range: ClosedRange<Double> = 0...0.50
 
     static func clamped(_ value: Double) -> Double {
-        min(max(value, range.lowerBound), range.upperBound)
+        let clampedValue = min(max(value, range.lowerBound), range.upperBound)
+        return presetPercentages
+            .map { Double($0) / 100 }
+            .min { abs($0 - clampedValue) < abs($1 - clampedValue) }
+            ?? defaultValue
     }
 }
 
