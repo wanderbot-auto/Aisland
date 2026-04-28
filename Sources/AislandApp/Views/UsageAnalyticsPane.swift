@@ -345,14 +345,15 @@ private struct UsageCalendarDayCard: View {
         .padding(8)
         .frame(height: 76, alignment: .topLeading)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(alignment: .bottom) {
+        .background {
             GeometryReader { proxy in
-                VStack(spacing: 0) {
-                    Spacer(minLength: 0)
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(fill)
-                        .frame(height: max(day.hasUsage ? 7 : 0, proxy.size.height * CGFloat(intensity)))
-                }
+                UsageCalendarWaveFill(
+                    progress: intensity,
+                    isActive: day.hasUsage,
+                    phase: wavePhase,
+                    theme: theme
+                )
+                .frame(width: proxy.size.width, height: proxy.size.height)
             }
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
@@ -368,19 +369,106 @@ private struct UsageCalendarDayCard: View {
         .help(day.helpText)
     }
 
-    private var fill: LinearGradient {
-        let hot = intensity >= 0.76
-        let base = hot ? theme.primaryContainer : theme.primary
-        return LinearGradient(
-            colors: [base.opacity(0.08), base.opacity(hot ? 0.68 : 0.56)],
-            startPoint: .top,
-            endPoint: .bottom
-        )
+    private var wavePhase: CGFloat {
+        CGFloat(Int(day.id) % 17) * .pi / 8
     }
 
     private var stroke: Color {
         if day.includesToday { return theme.primaryContainer.opacity(0.65) }
         return theme.text.opacity(day.hasUsage ? 0.10 : 0.055)
+    }
+}
+
+private struct UsageCalendarWaveFill: View {
+    var progress: Double
+    var isActive: Bool
+    var phase: CGFloat
+    var theme: IslandThemePalette
+
+    private var clampedProgress: Double {
+        min(max(progress, 0), 1)
+    }
+
+    var body: some View {
+        GeometryReader { proxy in
+            let amplitude = max(2.5, min(7.5, proxy.size.height * CGFloat(0.05 + clampedProgress * 0.06)))
+
+            ZStack(alignment: .bottom) {
+                if isActive {
+                    UsageCalendarWaveShape(progress: clampedProgress, phase: phase + .pi * 0.72, amplitude: amplitude * 0.7)
+                        .fill(theme.primaryContainer.opacity(0.14 + 0.20 * clampedProgress))
+
+                    UsageCalendarWaveShape(progress: clampedProgress, phase: phase, amplitude: amplitude)
+                        .fill(waveGradient)
+
+                    UsageCalendarWaveLine(progress: clampedProgress, phase: phase, amplitude: amplitude)
+                        .stroke(theme.primaryContainer.opacity(0.34 + 0.34 * clampedProgress), lineWidth: 1.1)
+                        .blur(radius: 0.15)
+                } else {
+                    LinearGradient(
+                        colors: [theme.surfaceContainer.opacity(0), theme.surfaceContainer.opacity(0.18)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                }
+            }
+        }
+    }
+
+    private var waveGradient: LinearGradient {
+        let hot = clampedProgress >= 0.76
+        let base = hot ? theme.primaryContainer : theme.primary
+        return LinearGradient(
+            colors: [
+                base.opacity(0.10),
+                base.opacity(hot ? 0.58 : 0.45),
+                base.opacity(hot ? 0.76 : 0.62),
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+}
+
+private struct UsageCalendarWaveShape: Shape {
+    var progress: Double
+    var phase: CGFloat
+    var amplitude: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        var path = UsageCalendarWaveLine(progress: progress, phase: phase, amplitude: amplitude).path(in: rect)
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.closeSubpath()
+        return path
+    }
+}
+
+private struct UsageCalendarWaveLine: Shape {
+    var progress: Double
+    var phase: CGFloat
+    var amplitude: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        let clamped = min(max(progress, 0), 1)
+        let minimumFill: CGFloat = 0.12
+        let fillRatio = max(minimumFill, CGFloat(clamped))
+        let baseline = rect.maxY - rect.height * fillRatio
+        let wavelength = max(34, rect.width * 0.92)
+        let step = max(2, rect.width / 28)
+
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: baseline))
+
+        var x = rect.minX
+        while x <= rect.maxX {
+            let y = baseline + sin((x / wavelength) * .pi * 2 + phase) * amplitude
+            path.addLine(to: CGPoint(x: x, y: y))
+            x += step
+        }
+        let endY = baseline + sin((rect.maxX / wavelength) * .pi * 2 + phase) * amplitude
+        path.addLine(to: CGPoint(x: rect.maxX, y: endY))
+        return path
     }
 }
 
