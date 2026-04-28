@@ -3,46 +3,54 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>用量监测 TAB 方案选择</title>
+  <title>Aisland 用量监测 TAB 方案</title>
   <style>
     :root {
-      --bg: #f3efe6;
-      --paper: #fffaf0;
-      --paper-2: #f8f0dc;
-      --ink: #17140f;
-      --muted: #716958;
-      --muted-2: #9a8f7a;
-      --line: rgba(30, 24, 14, 0.12);
-      --shadow: 0 30px 90px rgba(69, 53, 24, 0.16);
-      --red: #e65245;
-      --orange: #ef9f3b;
-      --yellow: #f2cf63;
-      --green: #2e8f6f;
-      --teal: #4ab2a8;
-      --blue: #3478f6;
-      --navy: #171f2a;
-      --cream: #fff5df;
-      --radius-xl: 34px;
-      --radius-lg: 24px;
-      --radius-md: 16px;
-      --mono: "SF Mono", "Cascadia Code", "Menlo", monospace;
-      --display: "Avenir Next", "Trebuchet MS", "Helvetica Neue", sans-serif;
-      --body: "Gill Sans", "Avenir Next", "Helvetica Neue", sans-serif;
+      --background: #000;
+      --surface: #131313;
+      --surface-lowest: #0e0e0e;
+      --surface-low: #1b1b1b;
+      --surface-mid: #1f1f1f;
+      --surface-high: #2a2a2a;
+      --surface-highest: #353535;
+      --text: #e2e2e2;
+      --text-strong: #fff;
+      --text-muted: #bbc9cf;
+      --text-dim: #75838a;
+      --outline: rgba(255, 255, 255, 0.10);
+      --outline-strong: rgba(164, 230, 255, 0.28);
+      --cyan: #00d1ff;
+      --cyan-soft: #a4e6ff;
+      --cyan-dark: #003543;
+      --green: #3ddc97;
+      --amber: #ffcc66;
+      --red: #ff7a70;
+      --violet: #9db2ff;
+      --glass: rgba(0, 0, 0, 0.68);
+      --card: rgba(26, 26, 26, 0.74);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --shadow-cyan: 0 0 34px rgba(0, 209, 255, 0.16);
+      --shadow-soft: 0 28px 80px rgba(0, 0, 0, 0.48);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+      color-scheme: dark;
     }
 
     * { box-sizing: border-box; }
-
     html { scroll-behavior: smooth; }
 
     body {
-      margin: 0;
-      color: var(--ink);
-      font-family: var(--body);
-      background:
-        radial-gradient(circle at 7% 8%, rgba(230, 82, 69, 0.20), transparent 25%),
-        radial-gradient(circle at 92% 2%, rgba(74, 178, 168, 0.18), transparent 28%),
-        linear-gradient(135deg, #fbf2de 0%, #ede3d0 48%, #e9efe8 100%);
       min-height: 100vh;
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 50% -10%, rgba(0, 209, 255, 0.14), transparent 32rem),
+        radial-gradient(circle at 88% 8%, rgba(164, 230, 255, 0.08), transparent 22rem),
+        radial-gradient(circle at 12% 24%, rgba(61, 220, 151, 0.07), transparent 24rem),
+        linear-gradient(180deg, #000 0%, #090909 100%);
+      overflow-x: hidden;
     }
 
     body::before {
@@ -50,168 +58,213 @@
       position: fixed;
       inset: 0;
       pointer-events: none;
-      opacity: 0.16;
+      opacity: 0.18;
       background-image:
-        linear-gradient(rgba(23, 20, 15, 0.12) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(23, 20, 15, 0.10) 1px, transparent 1px);
-      background-size: 42px 42px;
-      mask-image: linear-gradient(to bottom, #000 0%, transparent 78%);
+        linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(circle at top, black, transparent 74%);
     }
 
     .page {
-      width: min(1440px, calc(100vw - 36px));
+      position: relative;
+      z-index: 1;
+      width: min(1220px, calc(100vw - 32px));
       margin: 0 auto;
-      padding: 34px 0 72px;
+      padding: 18px 0 72px;
+    }
+
+    .top-island {
+      position: sticky;
+      top: 12px;
+      z-index: 20;
+      width: min(640px, 100%);
+      margin: 0 auto 42px;
+      padding: 10px 12px;
+      border: 1px solid var(--outline);
+      border-radius: 999px;
+      background: var(--glass);
+      box-shadow: var(--shadow-cyan), inset 0 1px rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(34px) saturate(1.15);
+    }
+
+    .island-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 22px;
+    }
+
+    .orb {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--cyan);
+      box-shadow: 0 0 22px var(--cyan);
+      flex: 0 0 auto;
+    }
+
+    .island-title {
+      color: var(--text-strong);
+      font-size: 13px;
+      font-weight: 760;
+      letter-spacing: -0.01em;
+    }
+
+    .island-meta {
+      margin-left: auto;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 720;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
     }
 
     .hero {
       display: grid;
-      grid-template-columns: minmax(0, 1.28fr) minmax(340px, 0.72fr);
-      gap: 22px;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 24px;
       align-items: stretch;
-      margin-bottom: 22px;
+      margin-bottom: 20px;
     }
 
-    .hero-main,
-    .brief-card,
+    .copy,
+    .thinking-card,
+    .nav,
     .option,
-    .decision-card {
+    .decision-card,
+    .mix-card {
+      border: 1px solid var(--outline);
+      background: rgba(19, 19, 19, 0.72);
+      backdrop-filter: blur(24px);
+      box-shadow: inset 0 1px rgba(255, 255, 255, 0.05), var(--shadow-soft);
+    }
+
+    .copy {
       position: relative;
       overflow: hidden;
-      border: 1px solid rgba(43, 34, 18, 0.12);
-      box-shadow: var(--shadow);
-      background: rgba(255, 250, 240, 0.86);
-      backdrop-filter: blur(16px);
-    }
-
-    .hero-main {
-      min-height: 310px;
+      min-height: 360px;
       padding: 34px;
       border-radius: var(--radius-xl);
     }
 
-    .hero-main::after {
+    .copy::after {
       content: "";
       position: absolute;
-      width: 360px;
-      height: 360px;
-      right: -100px;
-      top: -130px;
-      border-radius: 42% 58% 50% 50%;
-      background: linear-gradient(135deg, rgba(230, 82, 69, 0.22), rgba(239, 159, 59, 0.10));
-      transform: rotate(-18deg);
+      inset: -130px -80px auto auto;
+      width: 320px;
+      height: 320px;
+      border-radius: 999px;
+      background: rgba(0, 209, 255, 0.16);
+      filter: blur(34px);
     }
 
+    .kicker,
     .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(23, 20, 15, 0.88);
-      color: #fff5df;
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
+      position: relative;
+      z-index: 1;
+      color: var(--cyan-soft);
+      font-size: 11px;
+      font-weight: 760;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
     }
 
     h1 {
       position: relative;
       z-index: 1;
-      max-width: 840px;
-      margin: 18px 0 12px;
-      font-family: var(--display);
-      font-size: clamp(42px, 6vw, 92px);
-      line-height: 0.86;
-      letter-spacing: -0.07em;
+      max-width: 780px;
+      margin: 14px 0 14px;
+      color: var(--text-strong);
+      font-size: clamp(42px, 7vw, 82px);
+      line-height: 0.92;
+      letter-spacing: -0.065em;
     }
 
-    .intro {
+    .lead {
       position: relative;
       z-index: 1;
-      max-width: 790px;
+      max-width: 720px;
       margin: 0;
-      color: var(--muted);
-      font-size: 18px;
-      line-height: 1.72;
+      color: var(--text-muted);
+      font-size: 15px;
+      line-height: 1.68;
     }
 
-    .hero-actions {
+    .actions {
       position: relative;
       z-index: 1;
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin-top: 26px;
+      margin-top: 24px;
     }
 
-    .jump {
+    .button,
+    .chip,
+    .tab,
+    .pill {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 12px 15px;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.13);
       border-radius: 999px;
-      color: var(--ink);
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.035);
       text-decoration: none;
-      border: 1px solid rgba(23, 20, 15, 0.12);
-      background: rgba(255, 255, 255, 0.46);
-      font-size: 13px;
-      font-weight: 800;
+      white-space: nowrap;
     }
 
-    .jump.primary {
-      color: var(--cream);
-      background: var(--ink);
-      border-color: var(--ink);
+    .button {
+      min-height: 38px;
+      padding: 0 16px;
+      font-size: 12px;
+      font-weight: 760;
+      letter-spacing: 0.01em;
     }
 
-    .brief-card {
+    .button.primary {
+      border-color: transparent;
+      color: #001f28;
+      background: var(--cyan);
+      box-shadow: 0 0 24px rgba(0, 209, 255, 0.24);
+    }
+
+    .thinking-card {
+      position: relative;
+      overflow: hidden;
+      padding: 22px;
       border-radius: var(--radius-xl);
-      padding: 28px;
-      background: #17140f;
-      color: var(--cream);
+      background: rgba(10, 10, 10, 0.78);
     }
 
-    .brief-card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at 20% 10%, rgba(239, 159, 59, 0.28), transparent 30%),
-        linear-gradient(160deg, rgba(255, 245, 223, 0.08), transparent 42%);
-      pointer-events: none;
-    }
-
-    .brief-card h2,
-    .decision-card h2 {
-      position: relative;
+    .thinking-card h2,
+    .decision-card h2,
+    .mix-card h2 {
       margin: 0 0 14px;
-      font-family: var(--display);
-      font-size: 24px;
-      letter-spacing: -0.04em;
+      color: var(--text-strong);
+      font-size: 20px;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
     }
 
-    .brief-list {
-      position: relative;
+    .thinking-list {
       display: grid;
-      gap: 13px;
+      gap: 12px;
       margin: 0;
       padding: 0;
       list-style: none;
     }
 
-    .brief-list li {
+    .thinking-list li {
       display: grid;
       grid-template-columns: 30px 1fr;
       gap: 10px;
       align-items: start;
-      color: rgba(255, 245, 223, 0.78);
-      font-size: 14px;
-      line-height: 1.55;
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.54;
     }
-
-    .brief-list strong { color: var(--cream); }
 
     .num {
       display: inline-flex;
@@ -219,141 +272,122 @@
       justify-content: center;
       width: 30px;
       height: 30px;
-      border-radius: 10px;
-      background: rgba(255, 245, 223, 0.12);
-      color: var(--yellow);
-      font-family: var(--mono);
-      font-size: 12px;
+      border-radius: 999px;
+      color: var(--cyan-soft);
+      background: rgba(0, 209, 255, 0.09);
+      border: 1px solid rgba(164, 230, 255, 0.18);
+      font-size: 11px;
       font-weight: 800;
     }
 
-    .option-nav {
+    .thinking-list strong { color: var(--text-strong); }
+
+    .nav {
       position: sticky;
-      top: 0;
-      z-index: 20;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin: 0 0 22px;
-      padding: 14px;
-      border-radius: 24px;
-      border: 1px solid rgba(43, 34, 18, 0.12);
-      background: rgba(255, 250, 240, 0.78);
-      backdrop-filter: blur(18px);
-      box-shadow: 0 18px 40px rgba(69, 53, 24, 0.10);
-    }
-
-    .option-nav a {
-      flex: 1 1 160px;
-      min-width: 0;
-      padding: 12px 14px;
-      border-radius: 16px;
-      color: var(--ink);
-      text-decoration: none;
-      background: rgba(255, 255, 255, 0.54);
-      border: 1px solid rgba(43, 34, 18, 0.08);
-      font-size: 13px;
-      font-weight: 900;
-      text-align: center;
-    }
-
-    .choice-strip {
+      top: 74px;
+      z-index: 18;
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 20px;
+      padding: 8px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.62);
+    }
+
+    .nav a {
+      min-height: 36px;
+      padding: 0 12px;
+      border-radius: 999px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 720;
+      text-align: center;
+      border: 1px solid transparent;
+    }
+
+    .nav a:first-child {
+      color: #001f28;
+      background: var(--cyan);
+      box-shadow: 0 0 20px rgba(0, 209, 255, 0.18);
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
       gap: 12px;
-      margin: 0 0 22px;
+      margin-bottom: 20px;
     }
 
-    .choice-strip-card {
-      position: relative;
-      overflow: hidden;
-      min-height: 146px;
-      padding: 18px;
-      border-radius: 24px;
-      border: 1px solid rgba(43, 34, 18, 0.10);
-      background: rgba(255, 250, 240, 0.74);
-      box-shadow: 0 18px 46px rgba(69, 53, 24, 0.10);
+    .quick-card,
+    .insight,
+    .metric,
+    .mini-card,
+    .choice,
+    .list-item {
+      border: 1px solid var(--outline);
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.035);
+      box-shadow: inset 0 1px rgba(255, 255, 255, 0.04);
     }
 
-    .choice-strip-card::after {
-      content: "";
-      position: absolute;
-      width: 110px;
-      height: 110px;
-      right: -42px;
-      bottom: -46px;
-      border-radius: 40% 60% 56% 44%;
-      background: rgba(230, 82, 69, 0.12);
+    .quick-card {
+      min-height: 132px;
+      padding: 16px;
     }
 
-    .choice-strip-card:nth-child(2)::after { background: rgba(52, 120, 246, 0.12); }
-    .choice-strip-card:nth-child(3)::after { background: rgba(239, 159, 59, 0.14); }
-    .choice-strip-card:nth-child(4)::after { background: rgba(46, 143, 111, 0.13); }
-
-    .choice-strip-card small {
-      display: inline-flex;
-      margin-bottom: 10px;
-      color: var(--muted);
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: 0.04em;
+    .quick-card.recommended {
+      border-color: var(--outline-strong);
+      background: linear-gradient(135deg, rgba(0, 209, 255, 0.13), rgba(255, 255, 255, 0.035));
     }
 
-    .choice-strip-card h3 {
-      position: relative;
-      z-index: 1;
-      margin: 0 0 8px;
-      font-size: 18px;
-      letter-spacing: -0.04em;
+    .quick-card small,
+    .panel-kicker {
+      color: var(--text-dim);
+      font-size: 10px;
+      font-weight: 780;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
     }
 
-    .choice-strip-card p {
-      position: relative;
-      z-index: 1;
+    .quick-card h3,
+    .choice h3 {
+      margin: 9px 0 6px;
+      color: var(--text-strong);
+      font-size: 17px;
+      letter-spacing: -0.03em;
+    }
+
+    .quick-card p,
+    .choice p,
+    .decision-card p,
+    .mix-card p {
       margin: 0;
-      color: var(--muted);
+      color: var(--text-muted);
       font-size: 13px;
       line-height: 1.58;
     }
 
     .option {
-      margin: 22px 0;
-      border-radius: 38px;
+      overflow: hidden;
+      margin: 20px 0;
+      border-radius: 28px;
     }
 
     .option-head {
       display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 18px;
-      padding: 26px 28px 20px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .option-kicker {
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-      margin-bottom: 12px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--red);
-      box-shadow: 0 0 0 6px rgba(230, 82, 69, 0.12);
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 16px;
+      align-items: start;
+      padding: 22px 24px;
+      border-bottom: 1px solid var(--outline);
     }
 
     .option h2 {
-      margin: 0 0 8px;
-      font-family: var(--display);
-      font-size: clamp(28px, 3vw, 48px);
+      margin: 10px 0 8px;
+      color: var(--text-strong);
+      font-size: clamp(28px, 4vw, 46px);
       line-height: 0.98;
       letter-spacing: -0.055em;
     }
@@ -361,961 +395,719 @@
     .option-desc {
       max-width: 820px;
       margin: 0;
-      color: var(--muted);
-      font-size: 15px;
-      line-height: 1.68;
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.64;
     }
 
     .best-for {
-      min-width: 230px;
-      align-self: start;
-      padding: 14px 16px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.56);
-      border: 1px solid rgba(43, 34, 18, 0.10);
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.5;
+      padding: 14px;
+      border: 1px solid var(--outline);
+      border-radius: var(--radius-lg);
+      background: rgba(0, 0, 0, 0.28);
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.55;
     }
 
     .best-for strong {
       display: block;
-      color: var(--ink);
-      margin-bottom: 3px;
+      margin-bottom: 4px;
+      color: var(--text-strong);
     }
 
-    .mock {
-      padding: 20px;
-    }
+    .mock { padding: 18px; }
 
     .app-shell {
       overflow: hidden;
-      border-radius: 30px;
-      border: 1px solid rgba(23, 20, 15, 0.12);
-      background: #fffaf0;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 16px 50px rgba(37, 29, 16, 0.10);
+      border: 1px solid var(--outline);
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at 58% -18%, rgba(0, 209, 255, 0.16), transparent 25rem),
+        linear-gradient(180deg, rgba(22, 22, 22, 0.96), rgba(8, 8, 8, 0.98));
+      box-shadow: inset 0 1px rgba(255,255,255,0.07), 0 24px 70px rgba(0,0,0,0.42);
     }
 
     .app-topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      padding: 18px 22px;
-      border-bottom: 1px solid var(--line);
-      background:
-        linear-gradient(90deg, rgba(255,255,255,0.58), rgba(255,245,223,0.58)),
-        radial-gradient(circle at 0% 0%, rgba(230, 82, 69, 0.14), transparent 36%);
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--outline);
+      background: rgba(255, 255, 255, 0.025);
     }
+
+    .window-dots {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+    }
+
+    .window-dots span {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #ff5f57;
+    }
+
+    .window-dots span:nth-child(2) { background: #ffbd2e; }
+    .window-dots span:nth-child(3) { background: #28c840; }
 
     .crumbs {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       align-items: center;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 800;
     }
 
+    .chip,
     .pill {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      height: 34px;
-      padding: 0 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(23, 20, 15, 0.10);
-      background: rgba(255, 255, 255, 0.62);
-      color: var(--ink);
-      font-size: 12px;
-      font-weight: 900;
-      white-space: nowrap;
+      min-height: 26px;
+      padding: 0 10px;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 720;
     }
 
-    .pill.dark {
-      background: #17140f;
-      color: var(--cream);
-      border-color: #17140f;
+    .chip.active,
+    .pill.active {
+      color: #001f28;
+      border-color: transparent;
+      background: var(--cyan);
     }
 
-    .tabs {
-      display: flex;
-      gap: 8px;
-      padding: 14px 20px 0;
-      background: #fffaf0;
-    }
-
-    .tab {
-      padding: 10px 14px;
-      border-radius: 14px 14px 0 0;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 900;
-    }
-
-    .tab.active {
-      color: var(--ink);
-      background: #f1e7d2;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
-    }
-
-    .dashboard {
+    .settings-shell {
       display: grid;
-      gap: 16px;
+      grid-template-columns: 180px minmax(0, 1fr);
+      min-height: 720px;
+    }
+
+    .sidebar {
+      padding: 14px;
+      border-right: 1px solid var(--outline);
+      background: rgba(0, 0, 0, 0.22);
+    }
+
+    .side-title {
+      margin: 0 0 14px;
+      color: var(--text-dim);
+      font-size: 11px;
+      font-weight: 780;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+    }
+
+    .side-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 36px;
+      padding: 0 10px;
+      border-radius: 12px;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .side-item::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 99px;
+      background: rgba(255,255,255,0.16);
+    }
+
+    .side-item.active {
+      color: var(--text-strong);
+      background: rgba(0, 209, 255, 0.10);
+      outline: 1px solid rgba(164, 230, 255, 0.18);
+    }
+
+    .side-item.active::before {
+      background: var(--cyan);
+      box-shadow: 0 0 14px var(--cyan);
+    }
+
+    .content {
       padding: 18px;
-      background: #f1e7d2;
     }
 
-    .dashboard.wide {
-      grid-template-columns: 1.15fr 0.85fr;
+    .content-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 14px;
     }
 
-    .dashboard.single {
-      grid-template-columns: 1fr;
+    .content h3,
+    .panel h3 {
+      margin: 0;
+      color: var(--text-strong);
+      font-size: 20px;
+      line-height: 1.16;
+      letter-spacing: -0.03em;
     }
 
-    .dashboard.three {
-      grid-template-columns: 0.9fr 1.1fr 0.9fr;
+    .content-head p,
+    .panel-title p {
+      margin: 5px 0 0;
+      color: var(--text-dim);
+      font-size: 12px;
+      line-height: 1.45;
     }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .metric {
+      min-height: 82px;
+      padding: 13px;
+    }
+
+    .metric b {
+      display: block;
+      color: var(--text-strong);
+      font-size: 25px;
+      letter-spacing: -0.04em;
+    }
+
+    .metric span {
+      color: var(--text-dim);
+      font-size: 11px;
+      font-weight: 680;
+    }
+
+    .metric em {
+      display: inline-flex;
+      margin-top: 8px;
+      color: var(--green);
+      font-size: 11px;
+      font-style: normal;
+      font-weight: 760;
+    }
+
+    .metric.warn em { color: var(--amber); }
+    .metric.bad em { color: var(--red); }
 
     .panel {
-      min-width: 0;
-      border-radius: 22px;
-      padding: 18px;
-      border: 1px solid rgba(23, 20, 15, 0.10);
-      background: rgba(255, 250, 240, 0.88);
-      box-shadow: 0 14px 36px rgba(37, 29, 16, 0.08);
+      border: 1px solid var(--outline);
+      border-radius: var(--radius-xl);
+      background: var(--card);
+      box-shadow: inset 0 1px rgba(255,255,255,0.05);
     }
 
-    .panel.dark {
-      background: #171f2a;
-      color: #f8f1e4;
-      border-color: rgba(255,255,255,0.08);
-    }
+    .panel + .panel { margin-top: 12px; }
 
     .panel-title {
       display: flex;
-      align-items: start;
+      align-items: flex-start;
       justify-content: space-between;
       gap: 14px;
       margin-bottom: 14px;
     }
 
-    .panel-title h3 {
-      margin: 0;
-      font-family: var(--display);
-      font-size: 19px;
-      letter-spacing: -0.04em;
-    }
-
-    .panel-title p {
-      margin: 4px 0 0;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.4;
-    }
-
-    .panel.dark .panel-title p,
-    .panel.dark .mini-label,
-    .panel.dark .mini-value span { color: rgba(248, 241, 228, 0.58); }
-
-    .metric-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .metric {
-      padding: 16px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.58);
-      border: 1px solid rgba(23, 20, 15, 0.08);
-    }
-
-    .metric b {
-      display: block;
-      margin-bottom: 6px;
-      font-family: var(--display);
-      font-size: 29px;
-      letter-spacing: -0.055em;
-    }
-
-    .metric span {
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .span-2 { grid-column: span 2; }
-    .span-all { grid-column: 1 / -1; }
+    .heatmap-panel { padding: 16px; }
 
     .heatmap-shell {
-      padding: 14px;
-      border-radius: 20px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.52), rgba(255,255,255,0.22));
-      border: 1px solid rgba(23, 20, 15, 0.08);
+      overflow: hidden;
+      padding: 12px;
+      border: 1px solid rgba(164, 230, 255, 0.14);
+      border-radius: 18px;
+      background: rgba(0, 0, 0, 0.28);
     }
 
     .heatmap-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: center;
-      margin-bottom: 12px;
-      color: var(--muted);
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 800;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      margin-bottom: 8px;
+      color: var(--text-dim);
+      font-size: 10px;
+      font-weight: 760;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
 
     .calendar {
       display: grid;
       grid-template-columns: repeat(52, minmax(8px, 1fr));
+      grid-template-rows: repeat(7, 10px);
+      grid-auto-flow: column;
       gap: 4px;
-      min-height: 128px;
+      min-width: 760px;
     }
 
     .day {
-      aspect-ratio: 1;
-      min-width: 7px;
       border-radius: 3px;
-      background: #eadfc9;
-      box-shadow: inset 0 0 0 1px rgba(23, 20, 15, 0.04);
+      background: rgba(255,255,255,0.055);
+      outline: 1px solid rgba(255,255,255,0.035);
     }
 
-    .l1 { background: #cfe5c8; }
-    .l2 { background: #7dcf93; }
-    .l3 { background: #32a873; }
-    .l4 { background: #126c50; }
-    .l5 { background: #f0b347; }
-    .l6 { background: #e55d3d; }
+    .day.l1 { background: rgba(0, 209, 255, 0.16); }
+    .day.l2 { background: rgba(0, 209, 255, 0.28); }
+    .day.l3 { background: rgba(0, 209, 255, 0.48); }
+    .day.l4 { background: rgba(61, 220, 151, 0.58); }
+    .day.l5 { background: rgba(255, 204, 102, 0.72); }
+    .day.l6 { background: rgba(255, 122, 112, 0.86); box-shadow: 0 0 16px rgba(255, 122, 112, 0.22); }
 
     .legend {
       display: flex;
-      gap: 8px;
-      justify-content: flex-end;
       align-items: center;
-      margin-top: 12px;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 800;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-top: 10px;
+      color: var(--text-dim);
+      font-size: 10px;
+      font-weight: 700;
     }
 
-    .legend .day { width: 12px; min-width: 12px; }
+    .legend .day {
+      width: 12px;
+      height: 12px;
+    }
 
     .insight-row {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
+      gap: 10px;
       margin-top: 12px;
     }
 
     .insight {
+      min-height: 88px;
       padding: 13px;
-      border-radius: 16px;
-      background: rgba(23, 20, 15, 0.05);
-      color: var(--muted);
+      color: var(--text-muted);
       font-size: 12px;
-      line-height: 1.45;
+      line-height: 1.52;
     }
 
     .insight strong {
       display: block;
-      color: var(--ink);
-      margin-bottom: 3px;
+      margin-bottom: 5px;
+      color: var(--text-strong);
       font-size: 13px;
     }
 
-    .sparkline {
+    .lower-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .spark-bars {
       display: flex;
       align-items: end;
-      gap: 5px;
-      height: 146px;
-      padding: 12px;
-      border-radius: 18px;
-      background: rgba(255,255,255,0.42);
-      border: 1px solid rgba(23, 20, 15, 0.08);
+      gap: 7px;
+      height: 178px;
+      padding: 14px 4px 0;
     }
 
     .bar {
       flex: 1;
-      min-width: 6px;
-      border-radius: 999px 999px 4px 4px;
-      background: linear-gradient(180deg, var(--red), var(--orange));
-      box-shadow: 0 8px 18px rgba(230, 82, 69, 0.18);
+      min-width: 8px;
+      border-radius: 999px 999px 3px 3px;
+      background: linear-gradient(180deg, var(--cyan), rgba(0, 209, 255, 0.20));
     }
 
-    .bar.cool { background: linear-gradient(180deg, var(--teal), var(--green)); }
-    .bar.blue { background: linear-gradient(180deg, #75a5ff, var(--blue)); }
+    .bar.green { background: linear-gradient(180deg, var(--green), rgba(61, 220, 151, 0.18)); }
+    .bar.amber { background: linear-gradient(180deg, var(--amber), rgba(255, 204, 102, 0.18)); }
 
     .list {
       display: grid;
-      gap: 10px;
-      margin-top: 12px;
+      gap: 8px;
     }
 
     .list-item {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
+      display: flex;
       align-items: center;
-      padding: 10px 12px;
-      border-radius: 14px;
-      background: rgba(255,255,255,0.48);
-      border: 1px solid rgba(23, 20, 15, 0.07);
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .list-item span { color: var(--muted); font-family: var(--mono); font-size: 12px; }
-
-    .stream {
-      position: relative;
-      height: 260px;
-      overflow: hidden;
-      border-radius: 20px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.52), rgba(255,255,255,0.20));
-      border: 1px solid rgba(23, 20, 15, 0.08);
-    }
-
-    .stream svg,
-    .sankey svg,
-    .waterfall svg,
-    .radar svg,
-    .scatter svg { display: block; width: 100%; height: 100%; }
-
-    .note-card {
-      display: grid;
+      justify-content: space-between;
       gap: 10px;
-    }
-
-    .note {
-      padding: 14px;
-      border-radius: 18px;
-      background: rgba(255,255,255,0.52);
-      border: 1px solid rgba(23, 20, 15, 0.08);
-      font-size: 13px;
-      line-height: 1.5;
-      color: var(--muted);
-    }
-
-    .note strong { color: var(--ink); }
-
-    .sankey {
-      height: 340px;
-      border-radius: 20px;
-      background:
-        radial-gradient(circle at 80% 20%, rgba(52, 120, 246, 0.11), transparent 26%),
-        rgba(255,255,255,0.44);
-      border: 1px solid rgba(23, 20, 15, 0.08);
-    }
-
-    .timeline {
-      display: grid;
-      gap: 12px;
-    }
-
-    .event {
-      display: grid;
-      grid-template-columns: 82px 1fr;
-      gap: 12px;
-      align-items: start;
-      color: var(--muted);
+      min-height: 40px;
+      padding: 0 11px;
+      color: var(--text-muted);
       font-size: 12px;
-      line-height: 1.45;
+      font-weight: 680;
     }
 
-    .event time {
-      color: var(--ink);
-      font-family: var(--mono);
-      font-weight: 900;
-    }
+    .list-item span { color: var(--text-strong); }
 
-    .event div {
-      padding: 12px;
-      border-radius: 15px;
-      background: rgba(255,255,255,0.50);
-      border: 1px solid rgba(23, 20, 15, 0.08);
-    }
-
-    .event strong { display: block; color: var(--ink); margin-bottom: 3px; }
-
-    .waterfall {
-      height: 260px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.48);
-      border: 1px solid rgba(23, 20, 15, 0.08);
-    }
-
-    .cards-2 {
+    .mini-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 10px;
     }
 
-    .mini-value {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      padding: 14px;
-      border-radius: 18px;
-      background: rgba(255,255,255,0.52);
-      border: 1px solid rgba(23, 20, 15, 0.08);
+    .mini-card {
+      min-height: 96px;
+      padding: 13px;
     }
 
-    .mini-value b {
-      font-family: var(--display);
-      font-size: 28px;
-      letter-spacing: -0.05em;
+    .mini-card b {
+      display: block;
+      color: var(--text-strong);
+      font-size: 23px;
+      letter-spacing: -0.035em;
     }
 
-    .mini-value span,
-    .mini-label { color: var(--muted); font-size: 12px; font-weight: 800; }
+    .mini-card span {
+      color: var(--text-dim);
+      font-size: 11px;
+      font-weight: 680;
+    }
 
+    .sankey,
+    .stream,
+    .waterfall,
+    .scatter,
     .radar {
-      height: 248px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.52);
-      border: 1px solid rgba(23, 20, 15, 0.08);
+      overflow: hidden;
+      border: 1px solid var(--outline);
+      border-radius: 18px;
+      background: rgba(0,0,0,0.25);
+    }
+
+    .two-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 12px;
     }
 
     .matrix {
       display: grid;
-      grid-template-columns: 150px repeat(7, minmax(36px, 1fr));
+      grid-template-columns: 132px repeat(7, minmax(72px, 1fr));
       gap: 6px;
-      align-items: stretch;
       overflow-x: auto;
       padding-bottom: 2px;
     }
 
     .matrix-cell {
-      min-height: 42px;
-      border-radius: 12px;
-      padding: 8px;
-      background: rgba(255,255,255,0.52);
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 900;
       display: flex;
       align-items: center;
       justify-content: center;
-      white-space: nowrap;
+      min-height: 42px;
+      padding: 0 10px;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      color: var(--text-muted);
+      background: rgba(255,255,255,0.035);
+      font-size: 11px;
+      font-weight: 760;
     }
 
     .matrix-cell.name {
       justify-content: flex-start;
-      color: var(--ink);
-      background: rgba(23,20,15,0.06);
+      color: var(--text-strong);
+      background: rgba(255,255,255,0.055);
     }
 
-    .matrix-cell.hot1 { background: #d9efce; color: #276843; }
-    .matrix-cell.hot2 { background: #93d99f; color: #185536; }
-    .matrix-cell.hot3 { background: #38aa76; color: #fffaf0; }
-    .matrix-cell.hot4 { background: #e65b43; color: #fffaf0; }
-    .matrix-cell.hot5 { background: #f2a849; color: #382719; }
-
-    .scatter {
-      height: 280px;
-      border-radius: 20px;
-      background: #171f2a;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
+    .hot1 { background: rgba(0,209,255,.12); color: var(--cyan-soft); }
+    .hot2 { background: rgba(0,209,255,.24); color: var(--cyan-soft); }
+    .hot3 { background: rgba(61,220,151,.32); color: #e8fff6; }
+    .hot4 { background: rgba(255,204,102,.48); color: #fff6df; }
+    .hot5 { background: rgba(255,122,112,.58); color: #fff0ef; box-shadow: 0 0 18px rgba(255,122,112,.14); }
 
     .choice-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 14px;
+      gap: 10px;
     }
 
     .choice {
-      padding: 16px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.58);
-      border: 1px solid rgba(23, 20, 15, 0.09);
+      min-height: 132px;
+      padding: 14px;
     }
 
-    .choice h3 {
-      margin: 0 0 8px;
-      font-size: 17px;
-      letter-spacing: -0.03em;
-    }
-
-    .choice p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.55;
-    }
-
-    .decision-card {
-      margin-top: 22px;
-      padding: 26px;
+    .decision-card,
+    .mix-card {
+      margin-top: 20px;
+      padding: 22px;
       border-radius: var(--radius-xl);
-    }
-
-    .decision-card p {
-      max-width: 920px;
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.7;
     }
 
     .checklist {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 18px;
+      gap: 10px;
+      margin-top: 16px;
     }
 
     .check {
-      padding: 15px;
-      border-radius: 18px;
-      background: rgba(255,255,255,0.56);
-      border: 1px solid rgba(23, 20, 15, 0.08);
-      color: var(--muted);
-      font-size: 13px;
+      min-height: 86px;
+      padding: 13px;
+      border: 1px solid var(--outline);
+      border-radius: var(--radius-lg);
+      background: rgba(255,255,255,0.035);
+      color: var(--text-muted);
+      font-size: 12px;
       line-height: 1.5;
     }
 
-    .check strong { display: block; color: var(--ink); margin-bottom: 4px; }
-
-    @media (max-width: 1180px) {
-      .hero,
-      .dashboard.wide,
-      .dashboard.three { grid-template-columns: 1fr; }
-      .metric-grid,
-      .choice-strip,
-      .choice-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .span-2 { grid-column: auto; }
+    .check strong {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--text-strong);
+      font-size: 13px;
     }
 
-    @media (max-width: 760px) {
-      .page { width: min(100% - 20px, 1440px); padding-top: 16px; }
-      .hero-main, .brief-card, .option-head, .mock, .decision-card { padding: 18px; }
-      .option { border-radius: 26px; }
+    .accent-line {
+      height: 2px;
+      width: 84px;
+      margin-top: 16px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--cyan), transparent);
+    }
+
+    @media (max-width: 1060px) {
+      .hero,
+      .quick-grid,
+      .settings-shell,
+      .lower-grid,
+      .two-grid,
       .option-head { grid-template-columns: 1fr; }
-      .best-for { min-width: 0; }
-      .metric-grid,
+      .sidebar { display: none; }
+      .choice-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .nav { border-radius: 22px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 720px) {
+      .page { width: min(100% - 20px, 1220px); }
+      .copy, .thinking-card, .decision-card, .mix-card { padding: 18px; }
+      .content { padding: 12px; }
+      .content-head,
+      .app-topbar { align-items: flex-start; grid-template-columns: 1fr; flex-direction: column; }
+      .filters { justify-content: flex-start; }
+      .metric-row,
       .insight-row,
-      .cards-2,
-      .choice-strip,
+      .mini-grid,
       .choice-grid,
       .checklist { grid-template-columns: 1fr; }
-      .calendar { grid-template-columns: repeat(26, minmax(8px, 1fr)); }
-      .app-topbar { align-items: flex-start; flex-direction: column; }
-      .tabs { overflow-x: auto; }
-      .tab { white-space: nowrap; }
-      .option-nav { position: static; }
-      .hero-main h1 { font-size: 48px; }
+      h1 { font-size: 44px; }
+      .nav { position: static; grid-template-columns: 1fr; border-radius: 18px; }
+      .calendar { grid-template-columns: repeat(26, minmax(8px, 1fr)); min-width: 0; }
+      .heatmap-head { grid-template-columns: repeat(4, 1fr); }
     }
   </style>
 </head>
 <body>
   <main class="page">
+    <div class="top-island" aria-label="Aisland status island">
+      <div class="island-row"><span class="orb"></span><span class="island-title">Aisland · Usage tab design review</span><span class="island-meta">local-first</span></div>
+    </div>
+
     <section class="hero">
-      <div class="hero-main">
-        <span class="eyebrow">Usage Monitor TAB / Content Options</span>
-        <h1>用量监测不再像字段清单，改成可决策的能耗驾驶舱。</h1>
-        <p class="intro">本页给出 4 种 HTML 方案。共同前提：移除右侧字段面板，把空间还给核心图表；贡献热力图采用横向大画布；内容从“有哪些字段”转向“哪里异常、谁贡献、成本为什么变化、下一步做什么”。</p>
-        <div class="hero-actions">
-          <a class="jump primary" href="#option-a">先看推荐方案 A</a>
-          <a class="jump" href="#option-b">链路分析</a>
-          <a class="jump" href="#option-c">成本解释</a>
-          <a class="jump" href="#option-d">团队矩阵</a>
+      <div class="copy">
+        <div class="kicker">Aisland Cyber-Minimalist / Usage Monitoring</div>
+        <h1>把用量监测收成一块安静、可信、能行动的仪表板。</h1>
+        <p class="lead">这版不再做泛化 BI 页面，而是贴合 Aisland 的黑色玻璃、细描边、青色状态光和紧凑 macOS 工具感。核心判断：用量页不是“字段浏览器”，而是帮用户在几秒内回答三件事——今天有没有异常、异常从哪里来、下一步怎么处理。</p>
+        <div class="actions">
+          <a class="button primary" href="#option-a">看推荐主方案</a>
+          <a class="button" href="#thinking">设计思考</a>
+          <a class="button" href="#mix">可混搭模块</a>
         </div>
       </div>
-      <aside class="brief-card">
-        <h2>调整原则</h2>
-        <ul class="brief-list">
-          <li><span class="num">01</span><span><strong>去掉右侧字段面板</strong>：字段配置移入筛选器或抽屉，默认不占用监测视野。</span></li>
-          <li><span class="num">02</span><span><strong>贡献热力图变宽</strong>：作为首屏主图，覆盖 52 周或 24 小时 x 7 天。</span></li>
-          <li><span class="num">03</span><span><strong>加解释层</strong>：不仅显示 token、请求、成本，还要显示峰值原因、异常责任归因。</span></li>
-          <li><span class="num">04</span><span><strong>保留可行动入口</strong>：预算预警、限流建议、导出报表、查看明细放在顶部或卡片内。</span></li>
+      <aside class="thinking-card" id="thinking">
+        <h2>这版的取舍</h2>
+        <ul class="thinking-list">
+          <li><span class="num">01</span><span><strong>移除右侧字段面板</strong>默认视野只保留监测、解释、行动。字段选择放到顶部筛选和“保存视图”。</span></li>
+          <li><span class="num">02</span><span><strong>贡献热力图变成主画布</strong>横向 52 周宽图占据首屏，保持 Aisland 的轻密度信息风格。</span></li>
+          <li><span class="num">03</span><span><strong>解释少而准</strong>用 3 个 insight 卡回答峰值、来源、建议，而不是堆更多图。</span></li>
+          <li><span class="num">04</span><span><strong>延续主题语言</strong>黑底、玻璃卡、单一青色主强调，异常只用小面积琥珀/红色。</span></li>
         </ul>
       </aside>
     </section>
 
-    <nav class="option-nav" aria-label="方案导航">
-      <a href="#option-a">A / 宽热力图总览</a>
-      <a href="#option-b">B / 流向与事件</a>
-      <a href="#option-c">C / 成本瀑布</a>
-      <a href="#option-d">D / 团队贡献矩阵</a>
+    <nav class="nav" aria-label="方案导航">
+      <a href="#option-a">A 推荐：Focus Board</a>
+      <a href="#option-b">B 归因：Flow</a>
+      <a href="#option-c">C 预算：Burn</a>
+      <a href="#option-d">D 团队：Matrix</a>
     </nav>
 
-    <section class="choice-strip" aria-label="快速选择建议">
-      <article class="choice-strip-card">
-        <small>DEFAULT</small>
-        <h3>先落 A 做主 TAB</h3>
-        <p>保留现有“贡献热力图 + 日趋势”的理解方式，直接移除右侧字段面板，风险最低。</p>
-      </article>
-      <article class="choice-strip-card">
-        <small>RCA</small>
-        <h3>B 作为归因抽屉</h3>
-        <p>当用户点击异常峰值时展开流向、事件线和用量流形图，解释峰值链路。</p>
-      </article>
-      <article class="choice-strip-card">
-        <small>BUDGET</small>
-        <h3>C 放预算视角</h3>
-        <p>给负责人看超支原因、燃尽预测和节省动作，不占用默认监控空间。</p>
-      </article>
-      <article class="choice-strip-card">
-        <small>TEAM</small>
-        <h3>D 做维度切换</h3>
-        <p>面向治理场景，把热力图切到贡献者矩阵，找出低效任务和培训机会。</p>
-      </article>
+    <section class="quick-grid" aria-label="快速选择">
+      <article class="quick-card recommended"><small>Recommended default</small><h3>A / Focus Board</h3><p>最贴合当前 Aisland：首屏一个宽热力图、四个关键指标、三条解释。简洁、低学习成本，适合先落地。</p></article>
+      <article class="quick-card"><small>Secondary drawer</small><h3>B / Flow RCA</h3><p>点击异常热力格后打开，用流向图 + 事件线解释峰值链路，不干扰默认页。</p></article>
+      <article class="quick-card"><small>Management view</small><h3>C / Budget Burn</h3><p>给 owner 看预算燃尽、超支日期和节省动作，适合作为顶部风险卡或二级视图。</p></article>
     </section>
 
     <section class="option" id="option-a">
       <header class="option-head">
         <div>
-          <div class="option-kicker"><span class="dot"></span> 推荐 / Daily Ops</div>
-          <h2>A. 宽热力图 + 指标总览</h2>
-          <p class="option-desc">最适合作为默认 TAB：贡献热力图占据整行，右侧字段面板被移除，顶部用轻量筛选器替代；下方用 KPI、模型排行、异常摘要解释为什么今天用量变化。</p>
+          <div class="eyebrow">A / 推荐主方案</div>
+          <h2>Focus Board：宽热力图 + 少量高信号解释</h2>
+          <p class="option-desc">默认 TAB 只保留“监测必需品”：顶部筛选、KPI、52 周贡献热力图、异常解释、模型排行。它最大化热力图宽度，同时把右侧字段面板完全移出默认视野。</p>
         </div>
-        <div class="best-for"><strong>适合选择</strong>如果你希望用户 5 秒内看到趋势、峰值、贡献来源，并且保留现有监控产品的学习成本。</div>
+        <div class="best-for"><strong>为什么推荐</strong>它和当前 `UsageAnalyticsPane` 的贡献热力图 / 日趋势结构最接近，改造成本低；视觉上也最像 Aisland：黑色玻璃、单一青色、紧凑指标。</div>
       </header>
       <div class="mock">
         <div class="app-shell">
           <div class="app-topbar">
-            <div class="crumbs"><span class="pill dark">用量监测</span><span>近 90 天</span><span>全项目</span><span>按贡献者</span></div>
-            <div class="crumbs"><span class="pill">预算 72%</span><span class="pill">导出 CSV</span><span class="pill">配置预警</span></div>
+            <div class="window-dots"><span></span><span></span><span></span></div>
+            <div class="crumbs"><span class="chip active">Usage</span><span class="chip">Last 90 days</span><span class="chip">All agents</span><span class="chip">Saved view</span></div>
+            <div class="crumbs"><span class="chip">Export</span><span class="chip">Alert rules</span></div>
           </div>
-          <div class="tabs">
-            <div class="tab">概览</div><div class="tab active">用量监测</div><div class="tab">质量</div><div class="tab">审计</div>
-          </div>
-          <div class="dashboard single">
-            <div class="panel span-all">
-              <div class="panel-title">
-                <div><h3>贡献热力图</h3><p>按天聚合 token 与调用贡献；红色表示异常峰值，绿色表示稳定贡献。</p></div>
-                <span class="pill">52 周宽画布</span>
+          <div class="settings-shell">
+            <aside class="sidebar">
+              <p class="side-title">Settings</p>
+              <div class="side-item">General</div>
+              <div class="side-item">AI Chat</div>
+              <div class="side-item">Setup</div>
+              <div class="side-item active">Usage</div>
+              <div class="side-item">Display</div>
+              <div class="side-item">Shortcuts</div>
+            </aside>
+            <section class="content">
+              <div class="content-head">
+                <div><h3>Usage Monitoring</h3><p>Local logs only · Codex / Claude / OpenCode aggregated · field panel hidden by default</p></div>
+                <div class="filters"><span class="pill active">90D</span><span class="pill">Project</span><span class="pill">Model</span><span class="pill">Fields</span></div>
               </div>
-              <div class="heatmap-shell">
-                <div class="heatmap-head"><span>Apr</span><span>Jun</span><span>Aug</span><span>Oct</span><span>Dec</span><span>Feb</span><span>Apr</span></div>
-                <div class="calendar" aria-label="贡献热力图">
-                  <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                  <span class="day l1"></span><span class="day l3"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span><span class="day l2"></span>
-                  <span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l5"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
-                  <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l1"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                  <span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
-                  <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l1"></span><span class="day l2"></span><span class="day l4"></span><span class="day l5"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
-                  <span class="day"></span><span class="day l1"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l3"></span><span class="day l1"></span>
-                  <span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l2"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
-                  <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l5"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l4"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                  <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                  <span class="day l1"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
-                  <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l2"></span><span class="day l3"></span><span class="day l5"></span><span class="day l6"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                  <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l5"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                  <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l3"></span><span class="day l1"></span>
-                  <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l4"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                  <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l5"></span><span class="day l4"></span><span class="day l2"></span><span class="day"></span>
-                  <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l3"></span><span class="day l1"></span>
-                  <span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
-                  <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l5"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l4"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                  <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l3"></span><span class="day l1"></span>
-                  <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
-                  <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l2"></span><span class="day l3"></span><span class="day l5"></span><span class="day l6"></span><span class="day l4"></span><span class="day l2"></span><span class="day"></span>
-                  <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l5"></span><span class="day l4"></span><span class="day l1"></span><span class="day"></span>
-                  <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l6"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l4"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                  <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l5"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l4"></span><span class="day l2"></span><span class="day"></span>
-                  <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                  <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                  <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l5"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
+
+              <div class="metric-row">
+                <div class="metric"><b>18.6M</b><span>tokens this week</span><em>+12% vs last week</em></div>
+                <div class="metric"><b>$742</b><span>estimated cost</span><em>within budget</em></div>
+                <div class="metric bad"><b>3</b><span>abnormal windows</span><em>needs review</em></div>
+                <div class="metric warn"><b>94.2%</b><span>success rate</span><em>-1.8%</em></div>
+              </div>
+
+              <div class="panel heatmap-panel">
+                <div class="panel-title"><div><h3>Contribution heatmap</h3><p>52-week wide canvas. Cyan = stable usage, amber/red = anomaly pressure.</p></div><span class="pill active">wide</span></div>
+                <div class="heatmap-shell">
+                  <div class="heatmap-head"><span>Apr</span><span>Jun</span><span>Aug</span><span>Oct</span><span>Dec</span><span>Feb</span><span>Apr</span></div>
+                  <div class="calendar" aria-label="52 周贡献热力图">
+                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
+                    <span class="day l1"></span><span class="day l3"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span><span class="day l2"></span>
+                    <span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l5"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
+                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l1"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
+                    <span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
+                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l1"></span><span class="day l2"></span><span class="day l4"></span><span class="day l5"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
+                    <span class="day"></span><span class="day l1"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l3"></span><span class="day l1"></span>
+                    <span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l2"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
+                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l5"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l4"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
+                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
+                    <span class="day l1"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
+                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l2"></span><span class="day l3"></span><span class="day l5"></span><span class="day l6"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
+                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l5"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
+                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l3"></span><span class="day l1"></span>
+                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l4"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
+                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l5"></span><span class="day l4"></span><span class="day l2"></span><span class="day"></span>
+                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l3"></span><span class="day l1"></span>
+                    <span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
+                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l5"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l4"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
+                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l3"></span><span class="day l1"></span>
+                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
+                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l2"></span><span class="day l3"></span><span class="day l5"></span><span class="day l6"></span><span class="day l4"></span><span class="day l2"></span><span class="day"></span>
+                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l5"></span><span class="day l4"></span><span class="day l1"></span><span class="day"></span>
+                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l6"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l4"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
+                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l5"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l4"></span><span class="day l2"></span><span class="day"></span>
+                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
+                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
+                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l5"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
+                  </div>
+                  <div class="legend">less <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span> more</div>
                 </div>
-                <div class="legend">低 <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span> 异常</div>
-              </div>
-              <div class="insight-row">
-                <div class="insight"><strong>峰值解释</strong>周四 14:00 批量导入导致 token +38%，主要来自 Data Sync。</div>
-                <div class="insight"><strong>贡献来源</strong>Top 3 用户贡献 61%，但异常消耗集中在单一自动化任务。</div>
-                <div class="insight"><strong>建议动作</strong>给 nightly job 设置 25k token 软阈值，并拆分重试队列。</div>
-              </div>
-            </div>
-            <div class="metric-grid span-all">
-              <div class="metric"><b>18.6M</b><span>总 tokens / 周</span></div>
-              <div class="metric"><b>$742</b><span>预计成本</span></div>
-              <div class="metric"><b>94.2%</b><span>成功率</span></div>
-              <div class="metric"><b>+12%</b><span>环比变化</span></div>
-            </div>
-            <div class="dashboard wide" style="padding:0;background:transparent;">
-              <div class="panel">
-                <div class="panel-title"><div><h3>每日趋势</h3><p>请求数、输入 token、输出 token 叠加。</p></div><span class="pill">7D</span></div>
-                <div class="sparkline">
-                  <span class="bar" style="height:42%"></span><span class="bar cool" style="height:54%"></span><span class="bar" style="height:60%"></span><span class="bar blue" style="height:47%"></span><span class="bar cool" style="height:78%"></span><span class="bar" style="height:94%"></span><span class="bar blue" style="height:62%"></span><span class="bar cool" style="height:68%"></span><span class="bar" style="height:88%"></span><span class="bar blue" style="height:72%"></span><span class="bar cool" style="height:56%"></span><span class="bar" style="height:82%"></span>
-                </div>
-              </div>
-              <div class="panel">
-                <div class="panel-title"><div><h3>模型与场景排行</h3><p>不再需要字段面板，直接呈现关键归因。</p></div></div>
-                <div class="list">
-                  <div class="list-item">代码生成 / gpt-5.4 <span>42%</span></div>
-                  <div class="list-item">设计解析 / vision <span>26%</span></div>
-                  <div class="list-item">批量修复 / gpt-5.3-codex <span>19%</span></div>
-                  <div class="list-item">文档总结 / mini <span>13%</span></div>
+                <div class="insight-row">
+                  <div class="insight"><strong>峰值解释</strong>周四 14:00 的红格来自批处理重试，输出 token 比同窗口均值高 38%。</div>
+                  <div class="insight"><strong>贡献来源</strong>61% 消耗来自 3 个自动化任务；人工会话保持稳定，不需要扩大治理范围。</div>
+                  <div class="insight"><strong>建议动作</strong>给 nightly job 设置 25k token 软阈值，并把重试间隔从 30s 拉到 120s。</div>
                 </div>
               </div>
-            </div>
+
+              <div class="lower-grid">
+                <div class="panel">
+                  <div class="panel-title"><div><h3>Daily token trend</h3><p>保留现有日趋势，但缩成解释热力图的辅助视图。</p></div><span class="pill">30D</span></div>
+                  <div class="spark-bars"><span class="bar" style="height:46%"></span><span class="bar green" style="height:55%"></span><span class="bar" style="height:61%"></span><span class="bar" style="height:48%"></span><span class="bar green" style="height:74%"></span><span class="bar amber" style="height:92%"></span><span class="bar" style="height:62%"></span><span class="bar green" style="height:70%"></span><span class="bar" style="height:86%"></span><span class="bar amber" style="height:78%"></span><span class="bar green" style="height:58%"></span><span class="bar" style="height:82%"></span></div>
+                </div>
+                <div class="panel">
+                  <div class="panel-title"><div><h3>Top drivers</h3><p>替代右侧字段面板的默认信息。</p></div></div>
+                  <div class="list">
+                    <div class="list-item">Code generation / gpt-5.4 <span>42%</span></div>
+                    <div class="list-item">Design parsing / vision <span>26%</span></div>
+                    <div class="list-item">Batch fix / codex <span>19%</span></div>
+                    <div class="list-item">Docs summary / mini <span>13%</span></div>
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
       </div>
     </section>
 
     <section class="option" id="option-b">
-      <header class="option-head">
-        <div>
-          <div class="option-kicker"><span class="dot" style="background:var(--blue);box-shadow:0 0 0 6px rgba(52,120,246,.12)"></span> Exploratory / RCA</div>
-          <h2>B. 用量流向 + 事件时间线</h2>
-          <p class="option-desc">把用量当成“从团队到场景再到模型”的流动关系来看。适合排查：谁触发了峰值、成本流向哪个模型、异常事件发生前后有哪些配置变化。</p>
-        </div>
-        <div class="best-for"><strong>适合选择</strong>如果用量监测的核心是归因和排障，而不是每天看报表。</div>
-      </header>
-      <div class="mock">
-        <div class="app-shell">
-          <div class="app-topbar">
-            <div class="crumbs"><span class="pill dark">用量监测</span><span>流向分析</span><span>峰值窗口 13:00-16:00</span></div>
-            <div class="crumbs"><span class="pill">只看异常</span><span class="pill">对比上周</span></div>
-          </div>
-          <div class="dashboard wide">
-            <div class="panel span-2">
-              <div class="panel-title"><div><h3>团队 / 场景 / 模型流向</h3><p>用 Sankey 替代字段列表，一眼识别消耗链路。</p></div><span class="pill">按成本加权</span></div>
-              <div class="sankey">
-                <svg viewBox="0 0 860 340" role="img" aria-label="用量流向图">
-                  <defs>
-                    <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#e65245" stop-opacity=".75"/><stop offset="1" stop-color="#3478f6" stop-opacity=".38"/></linearGradient>
-                    <linearGradient id="g2" x1="0" x2="1"><stop offset="0" stop-color="#2e8f6f" stop-opacity=".72"/><stop offset="1" stop-color="#ef9f3b" stop-opacity=".38"/></linearGradient>
-                    <linearGradient id="g3" x1="0" x2="1"><stop offset="0" stop-color="#ef9f3b" stop-opacity=".72"/><stop offset="1" stop-color="#e65245" stop-opacity=".45"/></linearGradient>
-                  </defs>
-                  <path d="M110 80 C270 60 330 80 460 118 S650 178 760 96" fill="none" stroke="url(#g1)" stroke-width="46" stroke-linecap="round"/>
-                  <path d="M110 170 C280 190 330 148 460 158 S650 130 760 176" fill="none" stroke="url(#g2)" stroke-width="34" stroke-linecap="round"/>
-                  <path d="M110 256 C270 230 350 244 464 222 S640 246 760 256" fill="none" stroke="url(#g3)" stroke-width="28" stroke-linecap="round"/>
-                  <g font-family="Avenir Next, sans-serif" font-size="15" font-weight="800" fill="#17140f">
-                    <rect x="38" y="52" width="140" height="56" rx="16" fill="#fffaf0" stroke="rgba(23,20,15,.12)"/><text x="62" y="86">研发平台</text>
-                    <rect x="38" y="146" width="140" height="56" rx="16" fill="#fffaf0" stroke="rgba(23,20,15,.12)"/><text x="62" y="180">设计自动化</text>
-                    <rect x="38" y="232" width="140" height="56" rx="16" fill="#fffaf0" stroke="rgba(23,20,15,.12)"/><text x="62" y="266">数据任务</text>
-                    <rect x="380" y="96" width="160" height="56" rx="16" fill="#fffaf0" stroke="rgba(23,20,15,.12)"/><text x="414" y="130">代码生成</text>
-                    <rect x="380" y="184" width="160" height="56" rx="16" fill="#fffaf0" stroke="rgba(23,20,15,.12)"/><text x="414" y="218">批量解析</text>
-                    <rect x="704" y="66" width="120" height="56" rx="16" fill="#fffaf0" stroke="rgba(23,20,15,.12)"/><text x="736" y="100">5.4</text>
-                    <rect x="704" y="150" width="120" height="56" rx="16" fill="#fffaf0" stroke="rgba(23,20,15,.12)"/><text x="736" y="184">Codex</text>
-                    <rect x="704" y="232" width="120" height="56" rx="16" fill="#fffaf0" stroke="rgba(23,20,15,.12)"/><text x="736" y="266">Mini</text>
-                  </g>
-                </svg>
-              </div>
-            </div>
-            <div class="panel">
-              <div class="panel-title"><div><h3>异常事件线</h3><p>把峰值附近的配置、任务、用户行为串起来。</p></div></div>
-              <div class="timeline">
-                <div class="event"><time>13:04</time><div><strong>批量任务启动</strong>Data Sync 触发 4,208 次请求。</div></div>
-                <div class="event"><time>13:27</time><div><strong>重试率上升</strong>模型超时重试 +19%，成本被放大。</div></div>
-                <div class="event"><time>14:12</time><div><strong>预算告警</strong>项目预算达到 70%，建议限流。</div></div>
-                <div class="event"><time>15:30</time><div><strong>峰值回落</strong>队列清空，输出 token 恢复均值。</div></div>
-              </div>
-            </div>
-            <div class="panel span-all">
-              <div class="panel-title"><div><h3>用量流形图</h3><p>按场景堆叠时间趋势，比普通折线更容易看出结构变化。</p></div></div>
-              <div class="stream">
-                <svg viewBox="0 0 1000 260" preserveAspectRatio="none" aria-label="堆叠用量流形图">
-                  <path d="M0,168 C80,118 136,150 210,104 C286,56 360,88 430,114 C520,148 590,66 670,86 C760,112 820,66 1000,98 L1000,260 L0,260 Z" fill="#e65245" opacity="0.74"/>
-                  <path d="M0,190 C100,170 148,174 230,148 C320,118 378,150 470,156 C572,164 632,124 710,138 C805,156 870,128 1000,132 L1000,260 L0,260 Z" fill="#ef9f3b" opacity="0.70"/>
-                  <path d="M0,210 C120,204 168,198 260,188 C360,176 430,202 520,194 C630,184 700,198 780,184 C870,168 920,178 1000,164 L1000,260 L0,260 Z" fill="#2e8f6f" opacity="0.72"/>
-                  <path d="M0,230 C110,220 190,232 280,220 C370,210 430,226 540,214 C650,204 720,224 828,208 C900,196 950,202 1000,194 L1000,260 L0,260 Z" fill="#3478f6" opacity="0.68"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <header class="option-head"><div><div class="eyebrow">B / 异常归因</div><h2>Flow RCA：点击热力格后的解释抽屉</h2><p class="option-desc">B 不建议做默认页。它更适合从 A 的异常红格进入：看团队、场景、模型之间的用量流向，再用事件时间线解释峰值前后的动作。</p></div><div class="best-for"><strong>实用点</strong>当用户问“为什么这里红了”，B 能给链路证据，而不是让用户自己翻字段。</div></header>
+      <div class="mock"><div class="app-shell" style="padding:18px;"><div class="two-grid"><div class="panel"><div class="panel-title"><div><h3>Usage flow</h3><p>从 agent / 场景 / 模型看消耗流向。</p></div><span class="pill active">cost weighted</span></div><div class="sankey"><svg viewBox="0 0 860 320" role="img" aria-label="用量流向图"><defs><linearGradient id="flowA" x1="0" x2="1"><stop offset="0" stop-color="#00d1ff" stop-opacity=".78"/><stop offset="1" stop-color="#ff7a70" stop-opacity=".48"/></linearGradient><linearGradient id="flowB" x1="0" x2="1"><stop offset="0" stop-color="#3ddc97" stop-opacity=".72"/><stop offset="1" stop-color="#00d1ff" stop-opacity=".38"/></linearGradient><linearGradient id="flowC" x1="0" x2="1"><stop offset="0" stop-color="#ffcc66" stop-opacity=".68"/><stop offset="1" stop-color="#9db2ff" stop-opacity=".36"/></linearGradient></defs><path d="M110 80 C270 58 330 82 460 118 S650 178 760 92" fill="none" stroke="url(#flowA)" stroke-width="42" stroke-linecap="round"/><path d="M110 162 C280 192 330 146 460 158 S650 130 760 176" fill="none" stroke="url(#flowB)" stroke-width="32" stroke-linecap="round"/><path d="M110 246 C270 226 350 244 464 218 S640 242 760 250" fill="none" stroke="url(#flowC)" stroke-width="26" stroke-linecap="round"/><g font-family="Inter, sans-serif" font-size="14" font-weight="760" fill="#e2e2e2"><rect x="32" y="52" width="148" height="52" rx="14" fill="#1b1b1b" stroke="rgba(255,255,255,.12)"/><text x="58" y="84">Codex</text><rect x="32" y="136" width="148" height="52" rx="14" fill="#1b1b1b" stroke="rgba(255,255,255,.12)"/><text x="58" y="168">Claude Code</text><rect x="32" y="220" width="148" height="52" rx="14" fill="#1b1b1b" stroke="rgba(255,255,255,.12)"/><text x="58" y="252">OpenCode</text><rect x="382" y="96" width="158" height="52" rx="14" fill="#1b1b1b" stroke="rgba(255,255,255,.12)"/><text x="414" y="128">Batch fix</text><rect x="382" y="180" width="158" height="52" rx="14" fill="#1b1b1b" stroke="rgba(255,255,255,.12)"/><text x="414" y="212">Design parse</text><rect x="700" y="64" width="126" height="52" rx="14" fill="#1b1b1b" stroke="rgba(255,255,255,.12)"/><text x="737" y="96">5.4</text><rect x="700" y="148" width="126" height="52" rx="14" fill="#1b1b1b" stroke="rgba(255,255,255,.12)"/><text x="730" y="180">Codex</text><rect x="700" y="232" width="126" height="52" rx="14" fill="#1b1b1b" stroke="rgba(255,255,255,.12)"/><text x="738" y="264">Mini</text></g></svg></div></div><div class="panel"><div class="panel-title"><div><h3>Event line</h3><p>把异常窗口附近的事件串起来。</p></div></div><div class="list"><div class="list-item">13:04 Batch job started <span>4,208 req</span></div><div class="list-item">13:27 Retry rate jumped <span>+19%</span></div><div class="list-item">14:12 Budget alert fired <span>70%</span></div><div class="list-item">15:30 Queue drained <span>normal</span></div></div></div></div></div></div>
     </section>
 
     <section class="option" id="option-c">
-      <header class="option-head">
-        <div>
-          <div class="option-kicker"><span class="dot" style="background:var(--orange);box-shadow:0 0 0 6px rgba(239,159,59,.14)"></span> Finance / Explainability</div>
-          <h2>C. 成本瀑布 + 预算风险</h2>
-          <p class="option-desc">适合管理视角：核心问题不是“用了多少”，而是“为什么多花、还能花多久、该在哪里节省”。瀑布图解释成本增减，风险卡片给出阈值和动作。</p>
-        </div>
-        <div class="best-for"><strong>适合选择</strong>如果目标用户是负责人、财务或平台 owner，需要月度控制和预算预测。</div>
-      </header>
-      <div class="mock">
-        <div class="app-shell">
-          <div class="app-topbar">
-            <div class="crumbs"><span class="pill dark">用量监测</span><span>预算周期：4 月</span><span>按项目汇总</span></div>
-            <div class="crumbs"><span class="pill">预测到月底</span><span class="pill">生成报告</span></div>
-          </div>
-          <div class="dashboard wide">
-            <div class="panel span-2">
-              <div class="panel-title"><div><h3>成本变化瀑布</h3><p>把成本变动拆成请求量、输出长度、重试、模型切换、缓存命中。</p></div><span class="pill">较上月 +$186</span></div>
-              <div class="waterfall">
-                <svg viewBox="0 0 920 260" aria-label="成本瀑布图">
-                  <line x1="58" y1="212" x2="870" y2="212" stroke="rgba(23,20,15,.18)" stroke-width="2"/>
-                  <g font-family="Avenir Next, sans-serif" font-size="13" font-weight="800">
-                    <rect x="80" y="134" width="78" height="78" rx="12" fill="#17140f"/><text x="91" y="235" fill="#716958">上月</text><text x="98" y="178" fill="#fff5df">$556</text>
-                    <rect x="200" y="92" width="78" height="42" rx="12" fill="#e65245"/><text x="198" y="235" fill="#716958">请求量</text><text x="218" y="119" fill="#fff5df">+94</text>
-                    <rect x="320" y="70" width="78" height="22" rx="10" fill="#e65245"/><text x="318" y="235" fill="#716958">输出长</text><text x="338" y="86" fill="#fff5df">+51</text>
-                    <rect x="440" y="52" width="78" height="18" rx="9" fill="#e65245"/><text x="450" y="235" fill="#716958">重试</text><text x="460" y="66" fill="#fff5df">+33</text>
-                    <rect x="560" y="52" width="78" height="38" rx="12" fill="#2e8f6f"/><text x="548" y="235" fill="#716958">缓存</text><text x="578" y="76" fill="#fff5df">-28</text>
-                    <rect x="680" y="34" width="78" height="18" rx="9" fill="#e65245"/><text x="672" y="235" fill="#716958">模型切换</text><text x="702" y="48" fill="#fff5df">+36</text>
-                    <rect x="800" y="34" width="78" height="178" rx="12" fill="#ef9f3b"/><text x="808" y="235" fill="#716958">本月</text><text x="818" y="128" fill="#382719">$742</text>
-                  </g>
-                </svg>
-              </div>
-            </div>
-            <div class="panel dark">
-              <div class="panel-title"><div><h3>预算风险</h3><p>当前速度将在 4 月 26 日触达预算。</p></div></div>
-              <div class="cards-2">
-                <div class="mini-value"><b>72%</b><span>预算消耗</span></div>
-                <div class="mini-value"><b>8d</b><span>剩余安全窗口</span></div>
-                <div class="mini-value"><b>$118</b><span>预计超支</span></div>
-                <div class="mini-value"><b>21%</b><span>可节省空间</span></div>
-              </div>
-              <div class="note-card" style="margin-top:12px;">
-                <div class="note" style="background:rgba(255,245,223,.08);border-color:rgba(255,245,223,.10);"><strong style="color:#fff5df">建议 1</strong>将低优先级批处理切到 mini，可省 $64 / 月。</div>
-                <div class="note" style="background:rgba(255,245,223,.08);border-color:rgba(255,245,223,.10);"><strong style="color:#fff5df">建议 2</strong>开启相似请求缓存，预计降低 9% 输出 token。</div>
-              </div>
-            </div>
-            <div class="panel span-all">
-              <div class="panel-title"><div><h3>其他可选呈现</h3><p>成本场景下建议搭配这些图表。</p></div></div>
-              <div class="choice-grid">
-                <div class="choice"><h3>预算燃尽图</h3><p>用实际消耗线 + 预测线显示何时撞线。</p></div>
-                <div class="choice"><h3>缓存收益卡</h3><p>显示因缓存减少的 token、请求和成本。</p></div>
-                <div class="choice"><h3>模型切换模拟器</h3><p>让 owner 预估不同模型组合的成本影响。</p></div>
-                <div class="choice"><h3>Top 异常账单</h3><p>列出造成超支的具体任务、用户和时间段。</p></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <header class="option-head"><div><div class="eyebrow">C / 预算与管理</div><h2>Budget Burn：少数 owner 需要的成本解释</h2><p class="option-desc">把“用了多少”翻译成“还能花多久、为什么变贵、哪里能省”。它适合二级视图或风险告警卡，不适合占据默认监控首屏。</p></div><div class="best-for"><strong>实用点</strong>给预算 owner 直接动作：限制批处理、切模型、开缓存，而不是只看账单。</div></header>
+      <div class="mock"><div class="app-shell" style="padding:18px;"><div class="two-grid"><div class="panel"><div class="panel-title"><div><h3>Cost waterfall</h3><p>解释本月较上月多花在哪。</p></div><span class="pill">+$186</span></div><div class="waterfall"><svg viewBox="0 0 900 260" aria-label="成本瀑布图"><line x1="58" y1="212" x2="850" y2="212" stroke="rgba(255,255,255,.16)"/><g font-family="Inter, sans-serif" font-size="13" font-weight="760"><rect x="74" y="134" width="78" height="78" rx="12" fill="#353535"/><text x="89" y="236" fill="#75838a">Last</text><text x="95" y="178" fill="#fff">$556</text><rect x="194" y="92" width="78" height="42" rx="12" fill="#ff7a70"/><text x="194" y="236" fill="#75838a">Req</text><text x="212" y="119" fill="#fff">+94</text><rect x="314" y="70" width="78" height="22" rx="10" fill="#ff7a70"/><text x="310" y="236" fill="#75838a">Output</text><text x="332" y="86" fill="#fff">+51</text><rect x="434" y="52" width="78" height="18" rx="9" fill="#ff7a70"/><text x="438" y="236" fill="#75838a">Retry</text><text x="454" y="66" fill="#fff">+33</text><rect x="554" y="52" width="78" height="38" rx="12" fill="#3ddc97"/><text x="548" y="236" fill="#75838a">Cache</text><text x="572" y="76" fill="#001f28">-28</text><rect x="674" y="34" width="78" height="18" rx="9" fill="#ffcc66"/><text x="664" y="236" fill="#75838a">Model</text><text x="696" y="48" fill="#001f28">+36</text><rect x="794" y="34" width="78" height="178" rx="12" fill="#00d1ff"/><text x="804" y="236" fill="#75838a">Now</text><text x="814" y="128" fill="#001f28">$742</text></g></svg></div></div><div class="panel"><div class="panel-title"><div><h3>Risk</h3><p>当前速度将在 8 天后撞线。</p></div></div><div class="mini-grid"><div class="mini-card"><b>72%</b><span>budget used</span></div><div class="mini-card"><b>8d</b><span>safe window</span></div><div class="mini-card"><b>$118</b><span>projected overrun</span></div><div class="mini-card"><b>21%</b><span>save potential</span></div></div></div></div></div></div>
     </section>
 
     <section class="option" id="option-d">
-      <header class="option-head">
-        <div>
-          <div class="option-kicker"><span class="dot" style="background:var(--green);box-shadow:0 0 0 6px rgba(46,143,111,.14)"></span> Collaboration / Governance</div>
-          <h2>D. 团队贡献矩阵 + 异常散点</h2>
-          <p class="option-desc">把“谁在用、在哪天用、是否高效”放到同一个视图里。贡献热力图从日历变成团队矩阵，并搭配异常散点用于定位高成本低成功率的调用。</p>
-        </div>
-        <div class="best-for"><strong>适合选择</strong>如果需要治理团队用量、公平分摊成本、发现滥用或培训机会。</div>
-      </header>
-      <div class="mock">
-        <div class="app-shell">
-          <div class="app-topbar">
-            <div class="crumbs"><span class="pill dark">用量监测</span><span>团队视角</span><span>按用户 / 应用聚合</span></div>
-            <div class="crumbs"><span class="pill">隐藏字段面板</span><span class="pill">显示低效调用</span></div>
-          </div>
-          <div class="dashboard wide">
-            <div class="panel span-2">
-              <div class="panel-title"><div><h3>团队贡献矩阵</h3><p>横向展示一周热力，行内同时可以切换用户、应用、项目。</p></div><span class="pill">热力更宽</span></div>
-              <div class="matrix" aria-label="团队贡献矩阵">
-                <div class="matrix-cell name">贡献者</div><div class="matrix-cell">Mon</div><div class="matrix-cell">Tue</div><div class="matrix-cell">Wed</div><div class="matrix-cell">Thu</div><div class="matrix-cell">Fri</div><div class="matrix-cell">Sat</div><div class="matrix-cell">Sun</div>
-                <div class="matrix-cell name">Design Bot</div><div class="matrix-cell hot2">18k</div><div class="matrix-cell hot3">24k</div><div class="matrix-cell hot2">19k</div><div class="matrix-cell hot4">48k</div><div class="matrix-cell hot3">31k</div><div class="matrix-cell hot1">6k</div><div class="matrix-cell">2k</div>
-                <div class="matrix-cell name">Code Review</div><div class="matrix-cell hot1">9k</div><div class="matrix-cell hot2">16k</div><div class="matrix-cell hot3">28k</div><div class="matrix-cell hot3">29k</div><div class="matrix-cell hot2">15k</div><div class="matrix-cell hot1">4k</div><div class="matrix-cell">1k</div>
-                <div class="matrix-cell name">Data Sync</div><div class="matrix-cell hot2">14k</div><div class="matrix-cell hot2">17k</div><div class="matrix-cell hot3">32k</div><div class="matrix-cell hot5">55k</div><div class="matrix-cell hot4">42k</div><div class="matrix-cell hot1">8k</div><div class="matrix-cell hot1">7k</div>
-                <div class="matrix-cell name">Docs Agent</div><div class="matrix-cell">3k</div><div class="matrix-cell hot1">7k</div><div class="matrix-cell hot1">8k</div><div class="matrix-cell hot2">13k</div><div class="matrix-cell hot2">12k</div><div class="matrix-cell">2k</div><div class="matrix-cell">1k</div>
-                <div class="matrix-cell name">QA Runner</div><div class="matrix-cell hot1">6k</div><div class="matrix-cell hot2">18k</div><div class="matrix-cell hot2">16k</div><div class="matrix-cell hot3">27k</div><div class="matrix-cell hot3">30k</div><div class="matrix-cell hot1">5k</div><div class="matrix-cell">2k</div>
-              </div>
-            </div>
-            <div class="panel dark">
-              <div class="panel-title"><div><h3>效率雷达</h3><p>成功率、成本、响应时间、重试率、缓存命中。</p></div></div>
-              <div class="radar">
-                <svg viewBox="0 0 260 248" aria-label="效率雷达图">
-                  <g transform="translate(130 124)" fill="none" stroke="rgba(255,245,223,.18)">
-                    <polygon points="0,-86 82,-27 51,70 -51,70 -82,-27"/>
-                    <polygon points="0,-58 55,-18 34,47 -34,47 -55,-18"/>
-                    <polygon points="0,-30 29,-9 18,24 -18,24 -29,-9"/>
-                    <polygon points="0,-78 66,-22 34,58 -44,60 -68,-18" fill="rgba(74,178,168,.32)" stroke="#4ab2a8" stroke-width="3"/>
-                  </g>
-                  <g font-family="Avenir Next, sans-serif" font-size="11" font-weight="800" fill="rgba(255,245,223,.72)">
-                    <text x="116" y="20">成功率</text><text x="204" y="94">成本</text><text x="178" y="216">延迟</text><text x="36" y="216">重试</text><text x="18" y="94">缓存</text>
-                  </g>
-                </svg>
-              </div>
-            </div>
-            <div class="panel span-all dark">
-              <div class="panel-title"><div><h3>异常散点：高成本 / 低成功率</h3><p>每个点代表一个任务或用户，越靠右成本越高，越靠下成功率越低。</p></div><span class="pill">点击点位看明细</span></div>
-              <div class="scatter">
-                <svg viewBox="0 0 980 280" preserveAspectRatio="none" aria-label="异常散点图">
-                  <line x1="70" y1="230" x2="930" y2="230" stroke="rgba(255,245,223,.22)"/>
-                  <line x1="70" y1="34" x2="70" y2="230" stroke="rgba(255,245,223,.22)"/>
-                  <g fill="rgba(74,178,168,.78)">
-                    <circle cx="150" cy="80" r="9"/><circle cx="240" cy="102" r="12"/><circle cx="326" cy="70" r="8"/><circle cx="420" cy="122" r="14"/><circle cx="520" cy="94" r="10"/>
-                  </g>
-                  <g fill="rgba(239,159,59,.82)">
-                    <circle cx="610" cy="154" r="16"/><circle cx="690" cy="136" r="11"/><circle cx="760" cy="170" r="18"/>
-                  </g>
-                  <g fill="rgba(230,82,69,.9)">
-                    <circle cx="830" cy="204" r="21"/><circle cx="895" cy="190" r="15"/>
-                  </g>
-                  <g font-family="Avenir Next, sans-serif" font-size="12" font-weight="800" fill="rgba(255,245,223,.68)">
-                    <text x="70" y="258">低成本</text><text x="870" y="258">高成本</text><text x="18" y="42">高成功率</text><text x="18" y="232">低成功率</text><text x="790" y="188" fill="#fff5df">Data Sync</text>
-                  </g>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <header class="option-head"><div><div class="eyebrow">D / 团队治理</div><h2>Team Matrix：贡献者维度，不做默认入口</h2><p class="option-desc">当用户需要分摊成本或培训团队时，把宽热力图切成贡献者矩阵。它信息密度高，但默认展示会让页面变重，所以建议作为维度切换。</p></div><div class="best-for"><strong>实用点</strong>发现“高成本低成功率”的自动化任务，以及哪个团队需要优化 prompt / 缓存 / 模型选择。</div></header>
+      <div class="mock"><div class="app-shell" style="padding:18px;"><div class="two-grid"><div class="panel"><div class="panel-title"><div><h3>Contributor matrix</h3><p>行是贡献者或项目，列是最近 7 天。</p></div><span class="pill active">wide</span></div><div class="matrix"><div class="matrix-cell name">Contributor</div><div class="matrix-cell">Mon</div><div class="matrix-cell">Tue</div><div class="matrix-cell">Wed</div><div class="matrix-cell">Thu</div><div class="matrix-cell">Fri</div><div class="matrix-cell">Sat</div><div class="matrix-cell">Sun</div><div class="matrix-cell name">Design Bot</div><div class="matrix-cell hot2">18k</div><div class="matrix-cell hot3">24k</div><div class="matrix-cell hot2">19k</div><div class="matrix-cell hot4">48k</div><div class="matrix-cell hot3">31k</div><div class="matrix-cell hot1">6k</div><div class="matrix-cell">2k</div><div class="matrix-cell name">Code Review</div><div class="matrix-cell hot1">9k</div><div class="matrix-cell hot2">16k</div><div class="matrix-cell hot3">28k</div><div class="matrix-cell hot3">29k</div><div class="matrix-cell hot2">15k</div><div class="matrix-cell hot1">4k</div><div class="matrix-cell">1k</div><div class="matrix-cell name">Data Sync</div><div class="matrix-cell hot2">14k</div><div class="matrix-cell hot2">17k</div><div class="matrix-cell hot3">32k</div><div class="matrix-cell hot5">55k</div><div class="matrix-cell hot4">42k</div><div class="matrix-cell hot1">8k</div><div class="matrix-cell hot1">7k</div><div class="matrix-cell name">Docs Agent</div><div class="matrix-cell">3k</div><div class="matrix-cell hot1">7k</div><div class="matrix-cell hot1">8k</div><div class="matrix-cell hot2">13k</div><div class="matrix-cell hot2">12k</div><div class="matrix-cell">2k</div><div class="matrix-cell">1k</div></div></div><div class="panel"><div class="panel-title"><div><h3>Efficiency radar</h3><p>治理视角只保留聚合评分。</p></div></div><div class="radar"><svg viewBox="0 0 260 248" aria-label="效率雷达图"><g transform="translate(130 124)" fill="none" stroke="rgba(255,255,255,.16)"><polygon points="0,-86 82,-27 51,70 -51,70 -82,-27"/><polygon points="0,-58 55,-18 34,47 -34,47 -55,-18"/><polygon points="0,-30 29,-9 18,24 -18,24 -29,-9"/><polygon points="0,-78 66,-22 34,58 -44,60 -68,-18" fill="rgba(0,209,255,.22)" stroke="#00d1ff" stroke-width="3"/></g><g font-family="Inter, sans-serif" font-size="11" font-weight="760" fill="#bbc9cf"><text x="114" y="20">success</text><text x="204" y="94">cost</text><text x="178" y="216">latency</text><text x="36" y="216">retry</text><text x="18" y="94">cache</text></g></svg></div></div></div></div></div>
     </section>
 
-    <section class="option" id="pattern-library">
-      <header class="option-head">
-        <div>
-          <div class="option-kicker"><span class="dot" style="background:var(--teal);box-shadow:0 0 0 6px rgba(74,178,168,.14)"></span> Mix & Match / More Forms</div>
-          <h2>可混搭的其他呈现形式</h2>
-          <p class="option-desc">如果不想一次押注单一大图，可以把这些模块作为 A 的二级切换或点击热力格后的详情层。它们都不需要右侧字段面板，字段筛选统一放到顶部筛选器、保存视图或按需抽屉中。</p>
-        </div>
-        <div class="best-for"><strong>使用方式</strong>首版只选 1-2 个补充模块，避免监测 TAB 重新变成数据堆叠页。</div>
-      </header>
-      <div class="mock">
-        <div class="app-shell" style="padding:20px;">
-          <div class="choice-grid">
-            <div class="choice"><h3>小时 x 星期热力图</h3><p>展示 7 天 24 小时峰值，适合发现夜间批处理和工作时段拥堵。</p></div>
-            <div class="choice"><h3>模型占比环带</h3><p>用同心环显示输入、输出、缓存、重试占比，快速看成本结构。</p></div>
-            <div class="choice"><h3>预算燃尽 + 预测</h3><p>显示实际消耗、理想消耗和月底预测线，给出撞线日期。</p></div>
-            <div class="choice"><h3>异常任务排行榜</h3><p>按成本突增、失败重试、长输出、低缓存命中排序，直接进入明细。</p></div>
-            <div class="choice"><h3>贡献者小倍图</h3><p>每个用户或项目一张小趋势图，便于比较“谁在持续增长”。</p></div>
-            <div class="choice"><h3>请求漏斗</h3><p>从请求、成功、重试、失败到人工介入，适合观察浪费发生在哪一层。</p></div>
-            <div class="choice"><h3>模型切换模拟器</h3><p>拖动场景占比，预估从高阶模型切到 mini 后的成本和质量风险。</p></div>
-            <div class="choice"><h3>日历注释层</h3><p>在宽热力图上叠加发布、配置变更、批处理事件，解释峰值原因。</p></div>
-          </div>
-        </div>
+    <section class="mix-card" id="mix">
+      <div class="eyebrow">Mix / 只加高信号模块</div>
+      <h2>如果要再加，不要加字段面板，加这些轻量模块</h2>
+      <p>这些模块都可以作为 A 的点击态、抽屉或顶部风险卡；每次只加 1-2 个，保持 Aisland 简洁。</p>
+      <div class="choice-grid" style="margin-top:16px;">
+        <div class="choice"><h3>小时 x 星期热力图</h3><p>适合识别夜间批处理和固定时段拥堵。</p></div>
+        <div class="choice"><h3>异常任务榜</h3><p>按重试、长输出、低缓存命中排序，直接给处理入口。</p></div>
+        <div class="choice"><h3>预算风险条</h3><p>一条细进度线显示预算燃尽和撞线日期。</p></div>
+        <div class="choice"><h3>日历注释层</h3><p>在热力图上叠加发布、配置变更、批处理事件。</p></div>
       </div>
     </section>
 
     <section class="decision-card">
-      <h2>选择建议</h2>
-      <p>如果只能落一个版本，建议先选 A：它符合“移除右侧字段面板、贡献热力图更宽”的明确诉求，同时不会改变用户对监控 TAB 的认知。B/C/D 可以作为二级视图或后续迭代。</p>
+      <h2>建议落地顺序</h2>
+      <p>选择 A 作为实现目标：它贴合 Aisland 的主题和当前代码结构，也最符合“美观、实用、简洁”。B/C/D 不丢弃，但降级为从 A 进入的二级解释视图。</p>
       <div class="checklist">
-        <div class="check"><strong>首版主线</strong>A 的大热力图 + KPI + 异常摘要，最稳妥。</div>
-        <div class="check"><strong>增强分析</strong>把 B 的流向图放进“查看归因”抽屉。</div>
-        <div class="check"><strong>管理视角</strong>将 C 的预算风险作为顶部告警卡常驻。</div>
-        <div class="check"><strong>团队治理</strong>D 适合作为“贡献者”维度的切换模式。</div>
-        <div class="check"><strong>字段面板替代</strong>字段选择改为顶部筛选器 + 保存视图。</div>
-        <div class="check"><strong>可行动指标</strong>每个异常都给出责任归因、影响范围、建议动作。</div>
+        <div class="check"><strong>第一步</strong>SwiftUI 中移除字段侧栏心智：用顶部筛选、保存视图、详情抽屉替代。</div>
+        <div class="check"><strong>第二步</strong>把贡献热力图放在首屏最宽区域，保留现有日趋势作为下方辅助。</div>
+        <div class="check"><strong>第三步</strong>新增三条解释卡：峰值原因、贡献来源、建议动作，避免用户只看到图。</div>
+        <div class="check"><strong>第四步</strong>异常格点击后再进入 B 的归因抽屉；预算风险只在接近阈值时显示。</div>
+        <div class="check"><strong>第五步</strong>颜色严格收敛：青色为主，绿色稳定，琥珀预警，红色只用于异常峰值。</div>
+        <div class="check"><strong>结论</strong>先做 A，不做大而全；让用量页像 Aisland 的监控面板，而不是后台报表。</div>
       </div>
     </section>
   </main>
