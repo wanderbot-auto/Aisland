@@ -7,10 +7,9 @@ import UniformTypeIdentifiers
 
 extension Notification.Name {
     /// Posted by `AppModel.showOnboarding()` to ask `SettingsView` to
-    /// switch to the Setup tab. Lets the empty-state CTAs deliver the
-    /// user to the right place without `SettingsView`'s `@State` having
-    /// to leak into `AppModel`.
-    static let openIslandSelectSetupTab = Notification.Name("openIslandSelectSetupTab")
+    /// switch to General. Lets empty-state CTAs deliver the user to the
+    /// right place without `SettingsView`'s `@State` leaking into `AppModel`.
+    static let openIslandSelectGeneralTab = Notification.Name("openIslandSelectGeneralTab")
 }
 
 typealias TemporaryChatStreamFactory = @Sendable (
@@ -1634,13 +1633,11 @@ final class AppModel {
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    /// Opens Settings on the Setup tab so the user can install hooks.
-    /// Used by every "Set up agents" CTA in the empty-state UI. A
-    /// dedicated first-run onboarding window will replace this in a
-    /// later PR; until then this is the canonical entry point.
+    /// Opens Settings on General so users can review app behavior and
+    /// macOS authorization shortcuts after the install guide was removed.
     func showOnboarding() {
         showSettings()
-        NotificationCenter.default.post(name: .openIslandSelectSetupTab, object: nil)
+        NotificationCenter.default.post(name: .openIslandSelectGeneralTab, object: nil)
     }
 
     func showControlCenter() {

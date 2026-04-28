@@ -6,7 +6,6 @@ import AislandCore
 
 enum SettingsTab: String, CaseIterable, Identifiable {
     case general
-    case setup
     case ai
     case skills
     case usage
@@ -18,7 +17,6 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     func label(_ lang: LanguageManager) -> String {
         switch self {
         case .general:    lang.t("settings.tab.general")
-        case .setup:      lang.t("settings.tab.setup")
         case .ai:         lang.t("settings.tab.ai")
         case .skills:     lang.t("settings.tab.skills")
         case .appearance: lang.t("settings.tab.appearance")
@@ -30,7 +28,6 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .general:    "gearshape.fill"
-        case .setup:      "arrow.down.circle.fill"
         case .ai:         "sparkles"
         case .skills:     "wand.and.stars"
         case .appearance: "paintbrush.fill"
@@ -42,7 +39,6 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     func iconColor(theme: IslandThemePalette) -> Color {
         switch self {
         case .general:    theme.textTertiary
-        case .setup:      theme.warning
         case .ai:         theme.primary
         case .skills:     theme.secondary
         case .appearance: theme.primary
@@ -53,7 +49,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
 
     var section: SettingsSection {
         switch self {
-        case .setup, .usage:
+        case .usage:
             .agentTasks
         case .ai, .skills:
             .aiChat
@@ -101,8 +97,8 @@ struct SettingsView: View {
         .preferredColorScheme(.dark)
         .islandTheme(model.interfaceTheme)
         .background(theme.background.ignoresSafeArea())
-        .onReceive(NotificationCenter.default.publisher(for: .openIslandSelectSetupTab)) { _ in
-            selectedTab = .setup
+        .onReceive(NotificationCenter.default.publisher(for: .openIslandSelectGeneralTab)) { _ in
+            selectedTab = .general
         }
     }
 
@@ -140,8 +136,6 @@ struct SettingsView: View {
             switch selectedTab {
             case .general:
                 GeneralSettingsPane(model: model)
-            case .setup:
-                SetupSettingsPane(model: model)
             case .ai:
                 LLMSettingsPane(model: model)
             case .skills:
@@ -236,6 +230,22 @@ struct GeneralSettingsPane: View {
                 ))
             }
 
+            Section(lang.t("settings.general.authorization")) {
+                authorizationRow(
+                    titleKey: "settings.general.authorization.accessibility",
+                    descriptionKey: "settings.general.authorization.accessibilityDesc",
+                    systemImage: "figure.child.circle",
+                    pane: .accessibility
+                )
+
+                authorizationRow(
+                    titleKey: "settings.general.authorization.automation",
+                    descriptionKey: "settings.general.authorization.automationDesc",
+                    systemImage: "applescript",
+                    pane: .automation
+                )
+            }
+
             Section(lang.t("settings.sound.notifications")) {
                 Toggle(lang.t("settings.sound.enabled"), isOn: Binding(
                     get: { !model.isSoundMuted },
@@ -261,6 +271,54 @@ struct GeneralSettingsPane: View {
         .formStyle(.grouped)
         .islandSettingsPaneBackground()
         .navigationTitle(lang.t("settings.tab.general"))
+    }
+
+    private func authorizationRow(
+        titleKey: String,
+        descriptionKey: String,
+        systemImage: String,
+        pane: MacOSPrivacyPane
+    ) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            Label {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(lang.t(titleKey))
+                    Text(lang.t(descriptionKey))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            } icon: {
+                Image(systemName: systemImage)
+            }
+
+            Spacer()
+
+            Button(lang.t("settings.general.authorization.open")) {
+                openSystemSettings(pane)
+            }
+        }
+    }
+
+    private func openSystemSettings(_ pane: MacOSPrivacyPane) {
+        guard let url = URL(string: pane.urlString) else { return }
+        if NSWorkspace.shared.open(url) { return }
+        if let fallbackURL = URL(string: "x-apple.systempreferences:com.apple.preference.security") {
+            NSWorkspace.shared.open(fallbackURL)
+        }
+    }
+}
+
+private enum MacOSPrivacyPane {
+    case accessibility
+    case automation
+
+    var urlString: String {
+        switch self {
+        case .accessibility:
+            "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+        case .automation:
+            "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation"
+        }
     }
 }
 
@@ -946,283 +1004,6 @@ private struct ShortcutCaptureView: NSViewRepresentable {
         override func performKeyEquivalent(with event: NSEvent) -> Bool {
             onCapture?(event)
             return true
-        }
-    }
-}
-
-// MARK: - Setup
-
-struct SetupSettingsPane: View {
-    var model: AppModel
-
-    private var lang: LanguageManager { model.lang }
-
-    var body: some View {
-        Form {
-            if !model.hasAnyInstalledAgent {
-                emptyStateBanner
-            }
-
-            Section {
-                automaticHookRow(
-                    name: "Claude Code",
-                    installed: model.claudeHooksInstalled,
-                    busy: model.isClaudeHookSetupBusy,
-                    configLocationURL: model.claudeHookStatus?.settingsURL
-                )
-
-                automaticHookRow(
-                    name: "Codex",
-                    installed: model.codexHooksInstalled,
-                    busy: model.isCodexSetupBusy,
-                    configLocationURL: codexHookConfigURL
-                )
-
-                automaticHookRow(
-                    name: "OpenCode",
-                    installed: model.openCodePluginInstalled,
-                    busy: model.isOpenCodeSetupBusy,
-                    configLocationURL: model.openCodePluginStatus?.configURL
-                )
-            } header: {
-                Text(lang.t("setup.section.hooks"))
-            } footer: {
-                Text(lang.t("setup.hooks.autoManagedFooter"))
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
-
-            Section(lang.t("setup.section.permissions")) {
-                HStack(alignment: .top) {
-                    Label {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(lang.t("setup.permissionsTitle"))
-                            Text(lang.t("setup.permissionsDesc"))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    } icon: {
-                        Image(systemName: "lock.shield")
-                    }
-                    Spacer()
-                }
-            }
-
-            hookDiagnosticsSection
-        }
-        .formStyle(.grouped)
-        .islandSettingsPaneBackground()
-        .navigationTitle(lang.t("settings.tab.setup"))
-    }
-
-    @ViewBuilder
-    private var emptyStateBanner: some View {
-        Section {
-            HStack(alignment: .top, spacing: 12) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.tint)
-                    .frame(width: 28)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(lang.t("setup.banner.noHooks.title"))
-                        .font(.system(size: 13, weight: .semibold))
-                    Text(lang.t("setup.banner.noHooks.message"))
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                Spacer()
-            }
-            .padding(.vertical, 4)
-        }
-    }
-
-    private var codexHookConfigURL: URL? {
-        if let hooksURL = model.codexHookStatus?.hooksURL, FileManager.default.fileExists(atPath: hooksURL.path) {
-            return hooksURL
-        }
-        return model.codexHookStatus?.configURL ?? model.codexHookStatus?.hooksURL
-    }
-
-    private var hasErrors: Bool {
-        let claudeErrors = model.claudeHealthReport?.errors.count ?? 0
-        let codexErrors = model.codexHealthReport?.errors.count ?? 0
-        let openCodeErrors = model.openCodeHealthReport?.errors.count ?? 0
-        return claudeErrors + codexErrors + openCodeErrors > 0
-    }
-
-    private var hasRepairableIssues: Bool {
-        let claude = model.claudeHealthReport?.repairableIssues.isEmpty == false
-        let codex = model.codexHealthReport?.repairableIssues.isEmpty == false
-        let openCode = model.openCodeHealthReport?.repairableIssues.isEmpty == false
-        return claude || codex || openCode
-    }
-
-    @ViewBuilder
-    private var hookDiagnosticsSection: some View {
-        Section {
-            if let claudeReport = model.claudeHealthReport, !claudeReport.errors.isEmpty {
-                issueList(report: claudeReport)
-            }
-            if let codexReport = model.codexHealthReport, !codexReport.errors.isEmpty {
-                issueList(report: codexReport)
-            }
-            if let openCodeReport = model.openCodeHealthReport, !openCodeReport.errors.isEmpty {
-                issueList(report: openCodeReport)
-            }
-
-            if model.claudeHealthReport == nil && model.codexHealthReport == nil && model.openCodeHealthReport == nil {
-                HStack {
-                    Text(lang.t("setup.diagnostics.notRun"))
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Button(lang.t("setup.diagnostics.runCheck")) {
-                        model.runHealthChecks()
-                    }
-                }
-            } else if !hasErrors {
-                HStack(spacing: 6) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                    Text(lang.t("setup.diagnostics.allHealthy"))
-                    Spacer()
-                    Button(lang.t("setup.diagnostics.recheck")) {
-                        model.runHealthChecks()
-                    }
-                    .font(.caption)
-                }
-            } else {
-                HStack(spacing: 10) {
-                    Button(lang.t("setup.diagnostics.recheck")) {
-                        model.runHealthChecks()
-                    }
-
-                    if hasRepairableIssues {
-                        Button(lang.t("setup.diagnostics.repair")) {
-                            model.repairHooks()
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
-                }
-            }
-        } header: {
-            HStack(spacing: 4) {
-                Text(lang.t("setup.section.diagnostics"))
-                if hasErrors {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.orange)
-                        .font(.caption2)
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func issueList(report: HookHealthReport) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(agentName(for: report.agent))
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundStyle(.secondary)
-
-            ForEach(Array(report.errors.enumerated()), id: \.offset) { _, issue in
-                HStack(alignment: .top, spacing: 6) {
-                    Image(systemName: issueIcon(for: issue))
-                        .font(.caption2)
-                        .foregroundStyle(issueColor(for: issue))
-                        .frame(width: 14)
-
-                    Text(issue.description)
-                        .font(.caption)
-                        .foregroundStyle(issue.severity == .info ? .secondary : .primary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-
-            if let binaryPath = report.binaryPath {
-                Text("Binary: \(binaryPath)")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
-        }
-    }
-
-    private func agentName(for agent: String) -> String {
-        switch agent {
-        case "claude":
-            return "Claude Code"
-        case "codex":
-            return "Codex"
-        case "opencode":
-            return "OpenCode"
-        default:
-            return agent
-        }
-    }
-
-    private func issueIcon(for issue: HookHealthReport.Issue) -> String {
-        switch issue.severity {
-        case .info: "info.circle.fill"
-        case .error: issue.isAutoRepairable ? "wrench.fill" : "exclamationmark.triangle.fill"
-        }
-    }
-
-    private func issueColor(for issue: HookHealthReport.Issue) -> Color {
-        switch issue.severity {
-        case .info: .blue
-        case .error: issue.isAutoRepairable ? .orange : .red
-        }
-    }
-
-    @ViewBuilder
-    private func automaticHookRow(
-        name: String,
-        installed: Bool,
-        busy: Bool,
-        configLocationURL: URL? = nil
-    ) -> some View {
-        HStack {
-            Label(name, systemImage: "terminal")
-            Spacer()
-            if busy {
-                ProgressView().controlSize(.small)
-            } else {
-                HStack(spacing: 8) {
-                    if installed, let configLocationURL {
-                        Button {
-                            revealInFinder(configLocationURL)
-                        } label: {
-                            Image(systemName: "arrow.up.forward.square")
-                                .foregroundStyle(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                        .help(lang.t("setup.revealConfigLocation"))
-                    }
-                    HStack(spacing: 4) {
-                        Image(systemName: installed ? "checkmark.circle.fill" : "clock.arrow.circlepath")
-                            .foregroundStyle(installed ? .green : .secondary)
-                        Text(installed ? lang.t("settings.general.activated") : lang.t("setup.hookAutomaticPending"))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-        }
-    }
-
-    private func revealInFinder(_ url: URL) {
-        let fileManager = FileManager.default
-        let standardizedURL = url.standardizedFileURL
-
-        if fileManager.fileExists(atPath: standardizedURL.path) {
-            NSWorkspace.shared.activateFileViewerSelecting([standardizedURL])
-            return
-        }
-
-        let directoryURL = standardizedURL.deletingLastPathComponent()
-        if fileManager.fileExists(atPath: directoryURL.path) {
-            NSWorkspace.shared.open(directoryURL)
         }
     }
 }

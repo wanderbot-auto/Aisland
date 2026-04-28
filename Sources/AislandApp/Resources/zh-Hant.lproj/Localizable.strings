@@ -34,6 +34,12 @@
 "settings.general.questionOptionLayout" = "問題選項版面";
 "settings.general.questionOptionLayout.horizontal" = "橫向";
 "settings.general.questionOptionLayout.vertical" = "縱向";
+"settings.general.authorization" = "授權管理";
+"settings.general.authorization.accessibility" = "輔助使用";
+"settings.general.authorization.accessibilityDesc" = "允許 Aisland 偵測終端機視窗，並執行更精準的跳回操作。";
+"settings.general.authorization.automation" = "自動化";
+"settings.general.authorization.automationDesc" = "允許 Aisland 在需要時透過 System Events 聚焦支援的終端機窗格。";
+"settings.general.authorization.open" = "開啟";
 "settings.general.cliHooks" = "CLI Hooks";
 "settings.general.activated" = "已啟用";
 "settings.general.install" = "安裝";

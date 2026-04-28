@@ -34,6 +34,12 @@
 "settings.general.questionOptionLayout" = "Question option layout";
 "settings.general.questionOptionLayout.horizontal" = "Horizontal";
 "settings.general.questionOptionLayout.vertical" = "Vertical";
+"settings.general.authorization" = "Authorization";
+"settings.general.authorization.accessibility" = "Accessibility";
+"settings.general.authorization.accessibilityDesc" = "Allows Aisland to detect terminal windows and perform precise jump-back actions.";
+"settings.general.authorization.automation" = "Automation";
+"settings.general.authorization.automationDesc" = "Allows Aisland to ask System Events to focus supported terminal panes when needed.";
+"settings.general.authorization.open" = "Open";
 "settings.general.cliHooks" = "CLI Hooks";
 "settings.general.activated" = "Activated";
 "settings.general.install" = "Install";
