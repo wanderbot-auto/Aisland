@@ -64,6 +64,22 @@ enum IslandPixelShapeStyle: String, CaseIterable, Identifiable {
     case custom
 
     var id: String { rawValue }
+
+    static let settingsOptions: [Self] = [
+        .kitten,
+        .corgi,
+        .puppy,
+        .hamster,
+        .bunny,
+        .panda,
+        .custom,
+    ]
+
+    static let defaultSettingsOption: Self = .kitten
+
+    var isSettingsOption: Bool {
+        Self.settingsOptions.contains(self)
+    }
 }
 
 enum IslandTokenUsageDisplayMode: String, CaseIterable, Identifiable {

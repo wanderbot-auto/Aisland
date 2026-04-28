@@ -427,7 +427,7 @@ final class AppModel {
             refreshOverlayPlacementIfVisible()
         }
     }
-    var islandPixelShapeStyle: IslandPixelShapeStyle = .bars {
+    var islandPixelShapeStyle: IslandPixelShapeStyle = .defaultSettingsOption {
         didSet {
             guard islandPixelShapeStyle != oldValue else { return }
             UserDefaults.standard.set(islandPixelShapeStyle.rawValue, forKey: Self.islandPixelShapeStyleDefaultsKey)
@@ -482,7 +482,7 @@ final class AppModel {
             try AvatarImageStore.removeCurrentImage()
             customAvatarImage = nil
             if islandPixelShapeStyle == .custom {
-                islandPixelShapeStyle = .bars
+                islandPixelShapeStyle = .defaultSettingsOption
             }
         } catch {
             lastActionMessage = error.localizedDescription
@@ -634,9 +634,12 @@ final class AppModel {
             rawValue: UserDefaults.standard.string(forKey: Self.islandClosedDisplayStyleDefaultsKey) ?? ""
         ) ?? .detailed
         hideIdleIslandToEdge = UserDefaults.standard.bool(forKey: Self.islandHideIdleToEdgeDefaultsKey)
-        islandPixelShapeStyle = IslandPixelShapeStyle(
+        let savedPixelShapeStyle = IslandPixelShapeStyle(
             rawValue: UserDefaults.standard.string(forKey: Self.islandPixelShapeStyleDefaultsKey) ?? ""
-        ) ?? .bars
+        ) ?? .defaultSettingsOption
+        islandPixelShapeStyle = savedPixelShapeStyle.isSettingsOption
+            ? savedPixelShapeStyle
+            : .defaultSettingsOption
         customAvatarImage = AvatarImageStore.currentImage()
         if let saved = UserDefaults.standard.dictionary(forKey: Self.islandStatusColorsDefaultsKey) as? [String: String] {
             var colors = Self.themeDefaultStatusColors(for: interfaceTheme)

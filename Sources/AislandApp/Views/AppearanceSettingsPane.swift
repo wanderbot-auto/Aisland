@@ -73,7 +73,7 @@ struct AppearanceSettingsPane: View {
                 .foregroundStyle(.secondary)
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 76), spacing: 10)], spacing: 10) {
-                ForEach(IslandPixelShapeStyle.allCases) { style in
+                ForEach(IslandPixelShapeStyle.settingsOptions) { style in
                     pixelShapeCard(style)
                 }
             }
