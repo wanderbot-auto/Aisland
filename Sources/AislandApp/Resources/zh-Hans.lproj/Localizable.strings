@@ -10,14 +10,12 @@
 "settings.tab.sound" = "声音";
 "settings.tab.shortcuts" = "快捷键";
 "settings.tab.skills" = "Skills";
-"settings.tab.whiteNoise" = "白噪音";
 
 /* Settings - Section Headers */
 "settings.section.system" = "系统";
 "settings.section.advanced" = "高级";
 "settings.section.agentTasks" = "Agent 任务";
 "settings.section.aiChat" = "AI 对话";
-"settings.section.whiteNoise" = "白噪音";
 "settings.section.appSettings" = "应用设置";
 
 /* Settings - General */
@@ -121,7 +119,6 @@
 "usage.files" = "文件数";
 "usage.groups" = "分组数";
 "usage.empty.title" = "暂无用量数据";
-"usage.empty.subtitle" = "打开 Claude Code、Codex 或 OpenCode，Aisland 会在后台导入本地用量日志。";
 "usage.today.title" = "今日按来源统计";
 "usage.today.subtitle" = "这些总量可显示在岛屿中。";
 "usage.today.islandDisplay" = "岛屿显示";
@@ -132,7 +129,6 @@
 "usage.chart.tokensPerDay.subtitle" = "按模型堆叠显示每日 token，并在每日上方标识预估或记录的 Cost。";
 "usage.chart.tokensPerDay" = "Tokens Per Day";
 "usage.heatmap.title" = "7 天 x 24 小时热力图";
-"usage.heatmap.subtitle" = "按小时捕捉最近峰值，沿用 Aisland 主题色相，仅用饱和度区分强度。";
 "usage.heatmap.total" = "总量";
 "usage.heatmap.peak" = "峰值";
 "usage.heatmap.activeHours" = "活跃小时";
@@ -142,7 +138,6 @@
 "usage.heatmap.more" = "峰值";
 "usage.heatmap.selectedHour" = "选中小时";
 "usage.heatmap.modelBreakdown" = "高频模型";
-"usage.heatmap.modelBreakdown.subtitle" = "按同一个 7 天热力图区间内的 token 总量排序。";
 "usage.heatmap.noHour" = "这个小时暂无用量";
 "usage.heatmap.entries" = "%d 条";
 "usage.heatmap.tokenBreakdown" = "%@ 输入 · %@ 输出";
@@ -340,10 +335,6 @@
 "settings.skills.source.repository" = "仓库";
 "settings.skills.source.project" = "项目";
 "settings.skills.source.user" = "用户";
-
-/* White Noise Settings */
-"settings.whiteNoise.title" = "白噪音组合";
-"settings.whiteNoise.subtitle" = "选择专注用的环境声音层。通知音效仍可在「声音」页面设置。";
 
 /* White Noise */
 "island.surface.whiteNoise" = "白噪音";

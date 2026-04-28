@@ -10,8 +10,12 @@ struct UsageAnalyticsPane: View {
 
     private var lang: LanguageManager { model.lang }
     private var hourlyUsage: [UsageAnalyticsHourlyModelBucket] { model.usageAnalyticsHourlyModelUsage }
-    private var heatmapDays: [UsageHeatmapDay] { UsageHeatmapDay.completeRecentDays(from: hourlyUsage, dayCount: 7) }
+    private var completeHeatmapDays: [UsageHeatmapDay] { UsageHeatmapDay.completeRecentDays(from: hourlyUsage, dayCount: 7) }
+    private var heatmapDays: [UsageHeatmapDay] {
+        UsageHeatmapDay.trimmedToMeaningfulHours(days: completeHeatmapDays)
+    }
     private var heatmapCells: [UsageHeatmapHourCell] { heatmapDays.flatMap(\.cells) }
+    private var heatmapHourCount: Int { heatmapDays.first?.cells.count ?? 24 }
 
     private var totalTokens: Int { heatmapCells.reduce(0) { $0 + $1.totalTokens } }
     private var totalCostUSD: Double { heatmapCells.reduce(0) { $0 + $1.costUSD } }
@@ -47,22 +51,29 @@ struct UsageAnalyticsPane: View {
             if hourlyUsage.isEmpty {
                 model.refreshUsageAnalytics()
             }
-            selectedHourID = selectedHourID ?? peakCell?.id
+            normalizeSelectedHour()
         }
         .onChange(of: hourlyUsage) { _, _ in
-            selectedHourID = selectedHourID ?? peakCell?.id
+            normalizeSelectedHour()
         }
+    }
+
+    private func normalizeSelectedHour() {
+        if let selectedHourID, heatmapCells.contains(where: { $0.id == selectedHourID }) {
+            return
+        }
+        selectedHourID = peakCell?.id
     }
 
     private var usageToolbar: some View {
         HStack(alignment: .center, spacing: 10) {
             if model.usageAnalyticsIsRefreshing {
                 Label(lang.t("usage.refreshing"), systemImage: "arrow.triangle.2.circlepath")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(IslandTheme.labelFont(size: 11))
                     .foregroundStyle(theme.textSecondary)
             } else if let refreshedAt = model.usageAnalyticsLastRefreshedAt {
                 Text(refreshedAt.formatted(date: .abbreviated, time: .shortened))
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(IslandTheme.labelFont(size: 11))
                     .foregroundStyle(theme.textSecondary)
             }
 
@@ -80,8 +91,7 @@ struct UsageAnalyticsPane: View {
         usagePanel {
             VStack(alignment: .leading, spacing: 16) {
                 sectionHeading(
-                    title: lang.t("usage.heatmap.title"),
-                    subtitle: lang.t("usage.heatmap.subtitle")
+                    title: lang.t("usage.heatmap.title")
                 )
 
                 if hourlyUsage.isEmpty {
@@ -91,6 +101,7 @@ struct UsageAnalyticsPane: View {
                         totalTokens: totalTokens,
                         totalCostUSD: totalCostUSD,
                         activeHourCount: activeHourCount,
+                        hourColumnCount: heatmapHourCount,
                         peakCell: peakCell,
                         lang: lang,
                         theme: theme
@@ -119,8 +130,7 @@ struct UsageAnalyticsPane: View {
             usagePanel {
                 VStack(alignment: .leading, spacing: 14) {
                     sectionHeading(
-                        title: lang.t("usage.heatmap.modelBreakdown"),
-                        subtitle: lang.t("usage.heatmap.modelBreakdown.subtitle")
+                        title: lang.t("usage.heatmap.modelBreakdown")
                     )
                     RecentModelBreakdown(rows: hourlyUsage, theme: theme)
                 }
@@ -131,11 +141,8 @@ struct UsageAnalyticsPane: View {
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(lang.t("usage.empty.title"))
-                .font(.system(size: 14, weight: .semibold))
+                .font(IslandTheme.bodyFont(size: 14, weight: .semibold))
                 .foregroundStyle(theme.text)
-            Text(lang.t("usage.empty.subtitle"))
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(theme.textSecondary)
             if model.usageAnalyticsIsRefreshing {
                 ProgressView()
                     .controlSize(.small)
@@ -158,15 +165,10 @@ struct UsageAnalyticsPane: View {
             )
     }
 
-    private func sectionHeading(title: String, subtitle: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.system(size: 20, weight: .semibold, design: .rounded))
-                .foregroundStyle(theme.text)
-            Text(subtitle)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(theme.textSecondary)
-        }
+    private func sectionHeading(title: String) -> some View {
+        Text(title)
+            .font(IslandTheme.titleFont(size: 20))
+            .foregroundStyle(theme.text)
     }
 }
 
@@ -174,6 +176,7 @@ private struct HeatmapSummaryStrip: View {
     var totalTokens: Int
     var totalCostUSD: Double
     var activeHourCount: Int
+    var hourColumnCount: Int
     var peakCell: UsageHeatmapHourCell?
     var lang: LanguageManager
     var theme: IslandThemePalette
@@ -193,7 +196,7 @@ private struct HeatmapSummaryStrip: View {
             metricCard(
                 title: lang.t("usage.heatmap.activeHours"),
                 value: "\(activeHourCount)",
-                detail: "7 x 24"
+                detail: "7 x \(hourColumnCount)"
             )
             metricCard(
                 title: lang.t("usage.heatmap.cost"),
@@ -206,16 +209,16 @@ private struct HeatmapSummaryStrip: View {
     private func metricCard(title: String, value: String, detail: String) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(title.uppercased())
-                .font(.system(size: 10, weight: .bold))
+                .font(IslandTheme.labelFont(size: 10))
                 .foregroundStyle(theme.textSecondary.opacity(0.82))
             Text(value)
-                .font(.system(size: 18, weight: .black, design: .rounded))
+                .font(IslandTheme.bodyFont(size: 18, weight: .black))
                 .foregroundStyle(theme.text)
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             Text(detail)
-                .font(.system(size: 11, weight: .semibold))
+                .font(IslandTheme.labelFont(size: 11))
                 .foregroundStyle(theme.textSecondary)
                 .lineLimit(1)
         }
@@ -249,12 +252,17 @@ private struct SevenDayHourlyHeatmap: View {
         max(days.flatMap(\.cells).map(\.totalTokens).max() ?? 1, 1)
     }
 
+    private var hourValues: [Int] {
+        days.first?.cells.map(\.hourOfDay) ?? Array(0..<24)
+    }
+
     var body: some View {
         GeometryReader { proxy in
             let labelWidth: CGFloat = 64
             let cellSpacing: CGFloat = 4
-            let availableCellWidth = proxy.size.width - labelWidth - CGFloat(23) * cellSpacing
-            let cellSize = min(22, max(10, availableCellWidth / 24))
+            let columnCount = max(hourValues.count, 1)
+            let availableCellWidth = proxy.size.width - labelWidth - CGFloat(max(0, columnCount - 1)) * cellSpacing
+            let cellSize = min(22, max(10, availableCellWidth / CGFloat(columnCount)))
 
             VStack(alignment: .leading, spacing: 12) {
                 hourHeader(labelWidth: labelWidth, cellSize: cellSize, spacing: cellSpacing)
@@ -264,10 +272,10 @@ private struct SevenDayHourlyHeatmap: View {
                         HStack(spacing: cellSpacing) {
                             VStack(alignment: .trailing, spacing: 1) {
                                 Text(day.shortLabel)
-                                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                                    .font(IslandTheme.labelFont(size: 10))
                                     .foregroundStyle(theme.textSecondary.opacity(day.isToday ? 0.96 : 0.68))
                                 Text(day.dateLabel)
-                                    .font(.system(size: 8.5, weight: .semibold, design: .rounded))
+                                    .font(IslandTheme.labelFont(size: 8.5))
                                     .foregroundStyle(theme.textTertiary.opacity(day.isToday ? 0.9 : 0.58))
                             }
                             .frame(width: labelWidth, alignment: .trailing)
@@ -309,7 +317,7 @@ private struct SevenDayHourlyHeatmap: View {
                     }
                     Text(moreLabel)
                 }
-                .font(.system(size: 10.5, weight: .semibold))
+                .font(IslandTheme.labelFont(size: 10.5))
                 .foregroundStyle(theme.textSecondary)
             }
         }
@@ -319,13 +327,17 @@ private struct SevenDayHourlyHeatmap: View {
     private func hourHeader(labelWidth: CGFloat, cellSize: CGFloat, spacing: CGFloat) -> some View {
         HStack(spacing: spacing) {
             Color.clear.frame(width: labelWidth, height: 1)
-            ForEach(0..<24, id: \.self) { hour in
-                Text(hour % 3 == 0 ? String(format: "%02d", hour) : "")
-                    .font(.system(size: 8.5, weight: .bold, design: .rounded))
+            ForEach(hourValues, id: \.self) { hour in
+                Text(shouldShowHourLabel(hour) ? String(format: "%02d", hour) : "")
+                    .font(IslandTheme.labelFont(size: 8.5))
                     .foregroundStyle(theme.textSecondary.opacity(0.58))
                     .frame(width: cellSize)
             }
         }
+    }
+
+    private func shouldShowHourLabel(_ hour: Int) -> Bool {
+        hour == hourValues.first || hour == hourValues.last || hour % 3 == 0
     }
 
     private func fill(for cell: UsageHeatmapHourCell) -> Color {
@@ -367,27 +379,27 @@ private struct UsageHourDetail: View {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(lang.t("usage.heatmap.selectedHour"))
-                        .font(.system(size: 10, weight: .bold))
+                        .font(IslandTheme.labelFont(size: 10))
                         .foregroundStyle(theme.textSecondary.opacity(0.82))
                     Text(UsageHeatmapFormatters.detailHourLabel.string(from: cell.hourStartAt))
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .font(IslandTheme.bodyFont(size: 14, weight: .semibold))
                         .foregroundStyle(theme.text)
                 }
                 Spacer(minLength: 12)
                 VStack(alignment: .trailing, spacing: 3) {
                     Text(cell.totalTokens.abbreviatedTokenString)
-                        .font(.system(size: 16, weight: .black, design: .rounded))
+                        .font(IslandTheme.bodyFont(size: 16, weight: .black))
                         .foregroundStyle(theme.text)
                         .monospacedDigit()
                     Text(cell.costUSD.currencyString)
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .font(IslandTheme.labelFont(size: 11))
                         .foregroundStyle(theme.textSecondary)
                 }
             }
 
             if cell.rows.isEmpty {
                 Text(lang.t("usage.heatmap.noHour"))
-                    .font(.system(size: 12, weight: .medium))
+                    .font(IslandTheme.bodyFont(size: 12, weight: .medium))
                     .foregroundStyle(theme.textSecondary)
             } else {
                 VStack(spacing: 7) {
@@ -398,21 +410,21 @@ private struct UsageHourDetail: View {
                                 .frame(width: 8, height: 8)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(row.modelDisplayName)
-                                    .font(.system(size: 12, weight: .semibold))
+                                    .font(IslandTheme.bodyFont(size: 12, weight: .semibold))
                                     .foregroundStyle(theme.text)
                                     .lineLimit(1)
                                 Text(lang.t("usage.heatmap.tokenBreakdown", row.inputTokens.abbreviatedTokenString, row.outputTokens.abbreviatedTokenString))
-                                    .font(.system(size: 10.5, weight: .medium))
+                                    .font(IslandTheme.bodyFont(size: 10.5, weight: .medium))
                                     .foregroundStyle(theme.textSecondary)
                                     .lineLimit(1)
                             }
                             Spacer(minLength: 10)
                             Text(row.totalTokens.abbreviatedTokenString)
-                                .font(.system(size: 12, weight: .bold, design: .rounded))
+                                .font(IslandTheme.bodyFont(size: 12, weight: .bold))
                                 .foregroundStyle(theme.text)
                                 .monospacedDigit()
                             Text(lang.t("usage.heatmap.entries", row.entryCount))
-                                .font(.system(size: 10.5, weight: .semibold, design: .rounded))
+                                .font(IslandTheme.labelFont(size: 10.5))
                                 .foregroundStyle(theme.textSecondary)
                         }
                     }
@@ -458,22 +470,22 @@ private struct RecentModelBreakdown: View {
                         .frame(width: 10, height: 24)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(model.modelDisplayName)
-                            .font(.system(size: 11.5, weight: .semibold))
+                            .font(IslandTheme.bodyFont(size: 11.5, weight: .semibold))
                             .foregroundStyle(theme.text)
                             .lineLimit(1)
                         Text(model.provider?.displayName ?? "")
-                            .font(.system(size: 10, weight: .medium))
+                            .font(IslandTheme.bodyFont(size: 10, weight: .medium))
                             .foregroundStyle(theme.textSecondary)
                             .lineLimit(1)
                     }
                     Spacer(minLength: 6)
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(model.totalTokens.abbreviatedTokenString)
-                            .font(.system(size: 11.5, weight: .bold, design: .rounded))
+                            .font(IslandTheme.bodyFont(size: 11.5, weight: .bold))
                             .foregroundStyle(theme.text)
                             .monospacedDigit()
                         Text(model.costUSD.currencyString)
-                            .font(.system(size: 10.5, weight: .bold, design: .rounded))
+                            .font(IslandTheme.bodyFont(size: 10.5, weight: .bold))
                             .foregroundStyle(theme.textSecondary)
                     }
                 }
@@ -527,6 +539,24 @@ private struct UsageHeatmapDay: Identifiable {
             return UsageHeatmapDay(dayStartAt: day, cells: cells)
         }
     }
+
+    static func trimmedToMeaningfulHours(days: [UsageHeatmapDay]) -> [UsageHeatmapDay] {
+        let activeHours = days
+            .flatMap(\.cells)
+            .filter { $0.hasUsage && !$0.isFuture }
+            .map(\.hourOfDay)
+
+        guard let firstHour = activeHours.min(), let lastHour = activeHours.max() else {
+            return days
+        }
+
+        return days.map { day in
+            UsageHeatmapDay(
+                dayStartAt: day.dayStartAt,
+                cells: day.cells.filter { (firstHour...lastHour).contains($0.hourOfDay) }
+            )
+        }
+    }
 }
 
 private struct UsageHeatmapHourCell: Identifiable {
@@ -541,6 +571,7 @@ private struct UsageHeatmapHourCell: Identifiable {
     var costUSD: Double { rows.reduce(0) { $0 + $1.costUSD } }
     var hasUsage: Bool { totalTokens > 0 || costUSD > 0 }
     var isFuture: Bool { hourStartAt > .now }
+    var hourOfDay: Int { Calendar.current.component(.hour, from: hourStartAt) }
 
     var helpText: String {
         let modelText = rows.prefix(4)

@@ -9,7 +9,6 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     case setup
     case ai
     case skills
-    case whiteNoise
     case usage
     case appearance
     case shortcuts
@@ -22,7 +21,6 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .setup:      lang.t("settings.tab.setup")
         case .ai:         lang.t("settings.tab.ai")
         case .skills:     lang.t("settings.tab.skills")
-        case .whiteNoise: lang.t("settings.tab.whiteNoise")
         case .appearance: lang.t("settings.tab.appearance")
         case .usage:      lang.t("settings.tab.usage")
         case .shortcuts:  lang.t("settings.tab.shortcuts")
@@ -35,7 +33,6 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .setup:      "arrow.down.circle.fill"
         case .ai:         "sparkles"
         case .skills:     "wand.and.stars"
-        case .whiteNoise: "waveform"
         case .appearance: "paintbrush.fill"
         case .usage:      "chart.bar.xaxis"
         case .shortcuts:  "keyboard.fill"
@@ -48,7 +45,6 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .setup:      .orange
         case .ai:         IslandTheme.cyber.primary
         case .skills:     IslandTheme.cyber.secondary
-        case .whiteNoise: IslandTheme.cyber.success
         case .appearance: IslandTheme.cyber.primary
         case .usage:      IslandTheme.cyber.success
         case .shortcuts:  .gray
@@ -61,8 +57,6 @@ enum SettingsTab: String, CaseIterable, Identifiable {
             .agentTasks
         case .ai, .skills:
             .aiChat
-        case .whiteNoise:
-            .whiteNoise
         case .general, .appearance, .shortcuts:
             .appSettings
         }
@@ -72,14 +66,12 @@ enum SettingsTab: String, CaseIterable, Identifiable {
 enum SettingsSection: String, CaseIterable {
     case agentTasks
     case aiChat
-    case whiteNoise
     case appSettings
 
     func header(_ lang: LanguageManager) -> String {
         switch self {
         case .agentTasks:  lang.t("settings.section.agentTasks")
         case .aiChat:      lang.t("settings.section.aiChat")
-        case .whiteNoise:  lang.t("settings.section.whiteNoise")
         case .appSettings: lang.t("settings.section.appSettings")
         }
     }
@@ -154,8 +146,6 @@ struct SettingsView: View {
                 LLMSettingsPane(model: model)
             case .skills:
                 SkillsSettingsPane(model: model)
-            case .whiteNoise:
-                WhiteNoiseSettingsPane(model: model)
             case .appearance:
                 AppearanceSettingsPane(model: model)
             case .usage:
@@ -546,34 +536,6 @@ struct SkillsSettingsPane: View {
         case .user:
             lang.t("settings.skills.source.user")
         }
-    }
-}
-
-// MARK: - White Noise
-
-struct WhiteNoiseSettingsPane: View {
-    var model: AppModel
-
-    private var lang: LanguageManager { model.lang }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(lang.t("settings.whiteNoise.title"))
-                    .font(.title2.weight(.semibold))
-                Text(lang.t("settings.whiteNoise.subtitle"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 22)
-            .padding(.top, 18)
-
-            WhiteNoiseView(model: model)
-                .padding(.horizontal, 22)
-                .padding(.bottom, 18)
-        }
-        .islandSettingsPaneBackground()
-        .navigationTitle(lang.t("settings.tab.whiteNoise"))
     }
 }
 

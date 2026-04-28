@@ -10,14 +10,12 @@
 "settings.tab.sound" = "Sound";
 "settings.tab.shortcuts" = "Shortcuts";
 "settings.tab.skills" = "Skills";
-"settings.tab.whiteNoise" = "White Noise";
 
 /* Settings - Section Headers */
 "settings.section.system" = "System";
 "settings.section.advanced" = "Advanced";
 "settings.section.agentTasks" = "Agent Tasks";
 "settings.section.aiChat" = "AI Chat";
-"settings.section.whiteNoise" = "White Noise";
 "settings.section.appSettings" = "App Settings";
 
 /* Settings - General */
@@ -121,7 +119,6 @@
 "usage.files" = "Files";
 "usage.groups" = "Groups";
 "usage.empty.title" = "No usage data yet";
-"usage.empty.subtitle" = "Open Claude Code, Codex, or OpenCode and let Aisland import local usage logs in the background.";
 "usage.today.title" = "Today by provider";
 "usage.today.subtitle" = "These totals can be shown on the island.";
 "usage.today.islandDisplay" = "Island display";
@@ -132,7 +129,6 @@
 "usage.chart.tokensPerDay.subtitle" = "Stacked by model with estimated or reported cost shown above each day.";
 "usage.chart.tokensPerDay" = "Tokens Per Day";
 "usage.heatmap.title" = "7-day x 24-hour heatmap";
-"usage.heatmap.subtitle" = "Find recent hourly peaks with Aisland's accent hue; saturation marks intensity.";
 "usage.heatmap.total" = "Total";
 "usage.heatmap.peak" = "Peak";
 "usage.heatmap.activeHours" = "Active hours";
@@ -142,7 +138,6 @@
 "usage.heatmap.more" = "Peak";
 "usage.heatmap.selectedHour" = "Selected hour";
 "usage.heatmap.modelBreakdown" = "Top models";
-"usage.heatmap.modelBreakdown.subtitle" = "Ranked by token volume across the same 7-day heatmap window.";
 "usage.heatmap.noHour" = "No usage in this hour";
 "usage.heatmap.entries" = "%d entries";
 "usage.heatmap.tokenBreakdown" = "%@ in · %@ out";
@@ -340,10 +335,6 @@
 "settings.skills.source.repository" = "Repository";
 "settings.skills.source.project" = "Project";
 "settings.skills.source.user" = "User";
-
-/* White Noise Settings */
-"settings.whiteNoise.title" = "White noise mix";
-"settings.whiteNoise.subtitle" = "Choose ambient layers for focus. Notification sounds stay available in the Sound page.";
 
 /* White Noise */
 "island.surface.whiteNoise" = "White Noise";
