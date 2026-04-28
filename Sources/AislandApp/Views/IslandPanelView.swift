@@ -155,7 +155,9 @@ struct IslandPanelView: View {
     }
 
     private var closedPixelPetGlyphSize: CGSize {
-        CGSize(width: min(34, max(28, closedNotchHeight + 7)), height: min(34, max(28, closedNotchHeight + 7)))
+        let verticalMargin: CGFloat = 3
+        let size = max(22, closedNotchHeight - (verticalMargin * 2))
+        return CGSize(width: size, height: size)
     }
 
     private var targetOverlayScreen: NSScreen? {

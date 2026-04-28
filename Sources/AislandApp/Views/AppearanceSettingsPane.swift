@@ -182,8 +182,8 @@ struct AppearanceSettingsPane: View {
                 tint: tint,
                 style: model.islandPixelShapeStyle,
                 isAnimating: previewPhase != .completed,
-                width: model.islandPixelShapeStyle.isPixelPet ? 36 : 26,
-                height: model.islandPixelShapeStyle.isPixelPet ? 36 : 14,
+                width: model.islandPixelShapeStyle.isPixelPet ? 30 : 26,
+                height: model.islandPixelShapeStyle.isPixelPet ? 30 : 14,
                 customAvatarImage: model.customAvatarImage
             )
 
@@ -325,8 +325,8 @@ struct AppearanceSettingsPane: View {
                                 tint: model.statusColor(for: previewPhase),
                                 style: style,
                                 isAnimating: previewPhase != .completed,
-                                width: style.isPixelPet ? 34 : 30,
-                                height: style.isPixelPet ? 34 : 18
+                                width: style.isPixelPet ? 30 : 30,
+                                height: style.isPixelPet ? 30 : 18
                             )
                         }
                     }

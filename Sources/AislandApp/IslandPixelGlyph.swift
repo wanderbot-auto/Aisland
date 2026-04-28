@@ -18,14 +18,8 @@ struct IslandPixelGlyph: View {
                 .scaledToFill()
                 .frame(width: min(width, height), height: min(width, height))
                 .clipShape(Circle())
-        } else if let petImage = style.pixelPetImage {
-            petImage
-                .resizable()
-                .interpolation(.none)
-                .antialiased(false)
-                .scaledToFit()
-                .frame(width: width, height: height)
-                .shadow(color: tint.opacity(0.36), radius: 2.2, x: 0, y: 0)
+        } else if style.isPixelPet {
+            pixelPetGlyph
         } else if style == .bars || style == .custom {
             AislandBrandMark(
                 size: min(width, height),
@@ -60,6 +54,26 @@ struct IslandPixelGlyph: View {
         let ticks = Int(date.timeIntervalSinceReferenceDate / 0.18)
         return ticks % max(frameCount, 1)
     }
+
+    @ViewBuilder
+    private var pixelPetGlyph: some View {
+        let petSize = min(width, height)
+        let contentInset = max(2, petSize * 0.10)
+
+        ZStack {
+            if let petImage = style.pixelPetImage {
+                petImage
+                    .resizable()
+                    .interpolation(.none)
+                    .antialiased(false)
+                    .scaledToFit()
+                    .padding(contentInset)
+                    .modifier(PixelPetIdleMotion(isAnimating: isAnimating, phaseOffset: style.petMotionPhaseOffset))
+                    .shadow(color: tint.opacity(0.28), radius: 1.8, x: 0, y: 0)
+            }
+        }
+        .frame(width: petSize, height: petSize)
+    }
 }
 
 extension IslandPixelShapeStyle {
@@ -89,6 +103,18 @@ extension IslandPixelShapeStyle {
         }
     }
 
+    fileprivate var petMotionPhaseOffset: Double {
+        switch self {
+        case .kitten: 0.0
+        case .corgi: 0.1
+        case .puppy: 0.2
+        case .hamster: 0.35
+        case .bunny: 0.5
+        case .panda: 0.7
+        case .bars, .steps, .blocks, .custom: 0
+        }
+    }
+
     fileprivate var chartFrames: [([Int], [Int])] {
         switch self {
         case .bars:
@@ -110,6 +136,29 @@ extension IslandPixelShapeStyle {
             []
         case .custom:
             [([1, 3, 2, 1], [2, 3, 1])]
+        }
+    }
+}
+
+private struct PixelPetIdleMotion: ViewModifier {
+    var isAnimating: Bool
+    var phaseOffset: Double
+
+    func body(content: Content) -> some View {
+        if isAnimating {
+            TimelineView(.animation(minimumInterval: 0.24)) { context in
+                let phase = context.date.timeIntervalSinceReferenceDate + phaseOffset
+                let tick = Int(phase / 0.24) % 4
+                let yOffset: CGFloat = tick == 1 ? -1 : 0
+                let xScale: CGFloat = tick == 2 ? 1.035 : 1
+                let yScale: CGFloat = tick == 2 ? 0.965 : 1
+
+                content
+                    .offset(y: yOffset)
+                    .scaleEffect(x: xScale, y: yScale, anchor: .bottom)
+            }
+        } else {
+            content
         }
     }
 }
