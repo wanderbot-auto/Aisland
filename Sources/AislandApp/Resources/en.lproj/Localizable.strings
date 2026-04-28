@@ -365,8 +365,8 @@
 "whiteNoise.category.utility" = "Utility";
 
 /* Recent Usage */
-"usage.surface.title" = "7-day hourly heatmap";
-"usage.surface.legend" = "Hourly contribution";
+"usage.surface.title" = "Today's hourly heatmap";
+"usage.surface.legend" = "Today by hour";
 "usage.surface.latest" = "Latest";
 "usage.surface.model" = "Model";
 "usage.surface.cost" = "Cost";

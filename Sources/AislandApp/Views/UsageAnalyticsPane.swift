@@ -6,13 +6,10 @@ struct UsageAnalyticsPane: View {
     var model: AppModel
 
     @Environment(\.islandTheme) private var theme
-    @State private var selectedRangeDays = 7.0
 
     private var lang: LanguageManager { model.lang }
     private var hourlyUsage: [UsageAnalyticsHourlyModelBucket] { model.usageAnalyticsHourlyModelUsage }
-    private var selectedDayCount: Int {
-        min(30, max(1, Int(selectedRangeDays.rounded())))
-    }
+    private var selectedDayCount: Int { 30 }
     private var rangedHourlyUsage: [UsageAnalyticsHourlyModelBucket] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: .now)
@@ -51,7 +48,7 @@ struct UsageAnalyticsPane: View {
                         theme: theme
                     )
 
-                    rangeControl
+                    refreshStatusRow
 
                     usageCharts
                         .padding(.top, 6)
@@ -98,22 +95,19 @@ struct UsageAnalyticsPane: View {
     }
 
     private var rangeLabel: String {
-        if selectedDayCount == 1 {
-            return lang.t("usage.range.oneDay")
-        }
         return lang.t("usage.range.days", selectedDayCount)
     }
 
-    private var rangeControl: some View {
-        VStack(alignment: .leading, spacing: 8) {
+    @ViewBuilder
+    private var refreshStatusRow: some View {
+        if model.usageAnalyticsLastRefreshedAt != nil || model.usageAnalyticsLastRefreshError != nil {
             HStack(spacing: 12) {
-                Slider(value: $selectedRangeDays, in: 1...30, step: 1)
                 Text(rangeLabel)
-                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 72, alignment: .trailing)
-            }
-            HStack(spacing: 12) {
+                    .font(IslandTheme.labelFont(size: 11))
+                    .foregroundStyle(theme.primary.opacity(0.86))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(theme.primary.opacity(0.10), in: Capsule())
                 if let refreshedAt = model.usageAnalyticsLastRefreshedAt {
                     Text(refreshedAt.formatted(date: .abbreviated, time: .shortened))
                 }
@@ -124,7 +118,7 @@ struct UsageAnalyticsPane: View {
                 }
             }
             .font(.caption)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(theme.textSecondary)
         }
     }
 
@@ -208,12 +202,16 @@ private struct UsageCalendarPanel: View {
     var theme: IslandThemePalette
 
     @State private var hoveredDayID: TimeInterval?
+    @State private var hoverLocation: CGPoint?
 
     private var hoveredDay: UsageCalendarDay? {
         guard let hoveredDayID else { return nil }
         return days.first { $0.id == hoveredDayID }
     }
     private var maxTokens: Int { max(days.map(\.totalTokens).max() ?? 1, 1) }
+    private static let coordinateSpaceName = "usage-calendar-grid"
+    private static let hoverPanelSize = CGSize(width: 280, height: 226)
+    private static let hoverPanelGap: CGFloat = 14
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -227,34 +225,51 @@ private struct UsageCalendarPanel: View {
                     .foregroundStyle(theme.textSecondary)
             }
 
-            ZStack(alignment: .topTrailing) {
-                LazyVGrid(
-                    columns: [GridItem(.adaptive(minimum: 72, maximum: 98), spacing: 8)],
-                    alignment: .leading,
-                    spacing: 8
-                ) {
-                    ForEach(days) { day in
-                        UsageCalendarDayCard(
-                            day: day,
-                            maxTokens: maxTokens,
-                            theme: theme
-                        )
-                        .onHover { isHovering in
-                            if isHovering {
-                                hoveredDayID = day.id
-                            } else if hoveredDayID == day.id {
-                                hoveredDayID = nil
-                            }
+            LazyVGrid(
+                columns: [GridItem(.adaptive(minimum: 72, maximum: 98), spacing: 8)],
+                alignment: .leading,
+                spacing: 8
+            ) {
+                ForEach(days) { day in
+                    UsageCalendarDayCard(
+                        day: day,
+                        maxTokens: maxTokens,
+                        theme: theme
+                    )
+                    .overlay {
+                        GeometryReader { cardProxy in
+                            Color.clear
+                                .contentShape(Rectangle())
+                                .onContinuousHover { phase in
+                                    switch phase {
+                                    case .active(let location):
+                                        let frame = cardProxy.frame(in: .named(Self.coordinateSpaceName))
+                                        hoveredDayID = day.id
+                                        hoverLocation = CGPoint(
+                                            x: frame.minX + location.x,
+                                            y: frame.minY + location.y
+                                        )
+                                    case .ended:
+                                        if hoveredDayID == day.id {
+                                            hoveredDayID = nil
+                                            hoverLocation = nil
+                                        }
+                                    }
+                                }
                         }
                     }
                 }
-
-                if let hoveredDay {
-                    UsageCalendarDayHoverDetail(day: hoveredDay, lang: lang, theme: theme)
-                        .frame(width: 280, alignment: .topLeading)
-                        .padding(10)
-                        .transition(.opacity.combined(with: .scale(scale: 0.96)))
-                        .allowsHitTesting(false)
+            }
+            .coordinateSpace(name: Self.coordinateSpaceName)
+            .overlay(alignment: .topLeading) {
+                GeometryReader { proxy in
+                    if let hoveredDay, let hoverLocation {
+                        UsageCalendarDayHoverDetail(day: hoveredDay, lang: lang, theme: theme)
+                            .frame(width: Self.hoverPanelSize.width, alignment: .topLeading)
+                            .position(hoverPanelCenter(for: hoverLocation, in: proxy.size))
+                            .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                            .allowsHitTesting(false)
+                    }
                 }
             }
             .animation(.easeOut(duration: 0.16), value: hoveredDayID)
@@ -268,6 +283,22 @@ private struct UsageCalendarPanel: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .strokeBorder(theme.outline.opacity(0.08))
         )
+    }
+
+    private func hoverPanelCenter(for location: CGPoint, in size: CGSize) -> CGPoint {
+        let panelSize = Self.hoverPanelSize
+        let gap = Self.hoverPanelGap
+        let maxX = max(0, size.width - panelSize.width)
+        let maxY = max(0, size.height - panelSize.height)
+        let preferredX = location.x + gap + panelSize.width <= size.width
+            ? location.x + gap
+            : location.x - gap - panelSize.width
+        let preferredY = location.y + gap + panelSize.height <= size.height
+            ? location.y + gap
+            : location.y - gap - panelSize.height
+        let originX = min(max(0, preferredX), maxX)
+        let originY = min(max(0, preferredY), maxY)
+        return CGPoint(x: originX + panelSize.width / 2, y: originY + panelSize.height / 2)
     }
 }
 

@@ -365,8 +365,8 @@
 "whiteNoise.category.utility" = "工具";
 
 /* Recent Usage */
-"usage.surface.title" = "7 天小时热力图";
-"usage.surface.legend" = "每小时贡献";
+"usage.surface.title" = "今日小时热力图";
+"usage.surface.legend" = "今日分小时贡献";
 "usage.surface.latest" = "最近";
 "usage.surface.model" = "模型";
 "usage.surface.cost" = "Cost";

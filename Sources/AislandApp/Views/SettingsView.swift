@@ -39,15 +39,15 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         }
     }
 
-    var iconColor: Color {
+    func iconColor(theme: IslandThemePalette) -> Color {
         switch self {
-        case .general:    .gray
-        case .setup:      .orange
-        case .ai:         IslandTheme.cyber.primary
-        case .skills:     IslandTheme.cyber.secondary
-        case .appearance: IslandTheme.cyber.primary
-        case .usage:      IslandTheme.cyber.success
-        case .shortcuts:  .gray
+        case .general:    theme.textTertiary
+        case .setup:      theme.warning
+        case .ai:         theme.primary
+        case .skills:     theme.secondary
+        case .appearance: theme.primary
+        case .usage:      theme.primary
+        case .shortcuts:  theme.textTertiary
         }
     }
 
@@ -119,7 +119,7 @@ struct SettingsView: View {
                                 Text(tab.label(lang))
                             } icon: {
                                 Image(systemName: tab.icon)
-                                    .foregroundStyle(tab.iconColor)
+                                    .foregroundStyle(tab.iconColor(theme: theme))
                             }
                             .tag(tab)
                         }

@@ -11,20 +11,16 @@ struct RecentModelUsageView: View {
         model.usageAnalyticsHourlyModelUsage
     }
 
-    private var completeDays: [RecentUsageDay] {
-        RecentUsageDay.completeRecentDays(from: rows, dayCount: 7)
-    }
-
-    private var days: [RecentUsageDay] {
-        RecentUsageDay.trimmedToMeaningfulHours(days: completeDays)
+    private var today: RecentUsageDay {
+        RecentUsageDay.today(from: rows)
     }
 
     private var totalTokens: Int {
-        rows.reduce(0) { $0 + $1.totalTokens }
+        today.totalTokens
     }
 
     private var totalCostUSD: Double {
-        rows.reduce(0) { $0 + $1.costUSD }
+        today.costUSD
     }
 
     var body: some View {
@@ -54,11 +50,11 @@ struct RecentModelUsageView: View {
                         .monospacedDigit()
                 }
 
-                if totalTokens == 0 && totalCostUSD == 0 {
+                if rows.isEmpty && totalTokens == 0 && totalCostUSD == 0 {
                     emptyState
                 } else {
                     HourlyContributionHeatmap(
-                        days: days,
+                        day: today,
                         theme: theme,
                         legend: model.lang.t("usage.surface.legend"),
                         lessLabel: model.lang.t("usage.surface.less"),
@@ -101,51 +97,36 @@ struct RecentModelUsageView: View {
 }
 
 private struct HourlyContributionHeatmap: View {
-    var days: [RecentUsageDay]
+    var day: RecentUsageDay
     var theme: IslandThemePalette
     var legend: String
     var lessLabel: String
     var moreLabel: String
 
     private var maxTokens: Int {
-        max(days.flatMap(\.cells).map(\.totalTokens).max() ?? 1, 1)
-    }
-
-    private var hourValues: [Int] {
-        days.first?.cells.map(\.hourOfDay) ?? Array(0..<24)
+        max(day.cells.map(\.totalTokens).max() ?? 1, 1)
     }
 
     var body: some View {
         GeometryReader { proxy in
-            let labelWidth: CGFloat = 52
-            let cellSpacing: CGFloat = 4
-            let columnCount = max(hourValues.count, 1)
-            let availableCellWidth = proxy.size.width - labelWidth - CGFloat(max(0, columnCount - 1)) * cellSpacing
-            let cellSize = min(20, max(9, availableCellWidth / CGFloat(columnCount)))
+            let columnCount = proxy.size.width >= 430 ? 8 : 6
+            let columns = Array(repeating: GridItem(.flexible(), spacing: 7), count: columnCount)
 
             VStack(alignment: .leading, spacing: 12) {
-                hourHeader(labelWidth: labelWidth, cellSize: cellSize, spacing: cellSpacing)
+                HStack(alignment: .firstTextBaseline) {
+                    Text(day.detailLabel)
+                        .font(IslandTheme.labelFont(size: 10.5))
+                        .foregroundStyle(theme.textSecondary.opacity(0.9))
+                    Spacer(minLength: 0)
+                    Text("00-23")
+                        .font(IslandTheme.labelFont(size: 10))
+                        .foregroundStyle(theme.textTertiary)
+                        .monospacedDigit()
+                }
 
-                VStack(alignment: .leading, spacing: cellSpacing) {
-                    ForEach(days) { day in
-                        HStack(spacing: cellSpacing) {
-                            Text(day.shortLabel)
-                                .font(IslandTheme.labelFont(size: 9))
-                                .foregroundStyle(theme.textSecondary.opacity(day.isToday ? 0.95 : 0.62))
-                                .lineLimit(1)
-                                .frame(width: labelWidth, alignment: .trailing)
-
-                            ForEach(day.cells) { cell in
-                                RoundedRectangle(cornerRadius: cellSize * 0.24, style: .continuous)
-                                    .fill(fill(for: cell))
-                                    .frame(width: cellSize, height: cellSize)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: cellSize * 0.24, style: .continuous)
-                                            .strokeBorder(stroke(for: cell), lineWidth: 0.55)
-                                    )
-                                    .help(cell.helpText)
-                            }
-                        }
+                LazyVGrid(columns: columns, alignment: .leading, spacing: 7) {
+                    ForEach(day.cells) { cell in
+                        hourTile(for: cell)
                     }
                 }
                 .padding(10)
@@ -175,20 +156,42 @@ private struct HourlyContributionHeatmap: View {
         }
     }
 
-    private func hourHeader(labelWidth: CGFloat, cellSize: CGFloat, spacing: CGFloat) -> some View {
-        HStack(spacing: spacing) {
-            Color.clear.frame(width: labelWidth, height: 1)
-            ForEach(hourValues, id: \.self) { hour in
-                Text(shouldShowHourLabel(hour) ? String(format: "%02d", hour) : "")
-                    .font(IslandTheme.labelFont(size: 8.5))
-                    .foregroundStyle(theme.textSecondary.opacity(0.58))
-                    .frame(width: cellSize)
+    private func hourTile(for cell: RecentUsageHourCell) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .center, spacing: 4) {
+                Text(String(format: "%02d", cell.hourOfDay))
+                    .font(IslandTheme.labelFont(size: 9.5))
+                    .foregroundStyle(cell.isFuture ? theme.textTertiary.opacity(0.62) : theme.text.opacity(0.92))
+                    .monospacedDigit()
+                Spacer(minLength: 0)
+                if cell.isCurrentHour {
+                    Circle()
+                        .fill(theme.primary)
+                        .frame(width: 5, height: 5)
+                }
             }
-        }
-    }
 
-    private func shouldShowHourLabel(_ hour: Int) -> Bool {
-        hour == hourValues.first || hour == hourValues.last || hour % 6 == 0
+            Spacer(minLength: 0)
+
+            Text(cell.totalTokens > 0 ? cell.totalTokens.recentUsageTokenString : "·")
+                .font(IslandTheme.bodyFont(size: 10.5, weight: .black))
+                .foregroundStyle(cell.totalTokens > 0 ? theme.text : theme.textTertiary.opacity(0.58))
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 7)
+        .frame(minHeight: 44, alignment: .topLeading)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(fill(for: cell))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(stroke(for: cell), lineWidth: cell.isCurrentHour ? 1.1 : 0.65)
+        )
+        .help(cell.helpText)
     }
 
     private func fill(for cell: RecentUsageHourCell) -> Color {
@@ -205,7 +208,7 @@ private struct HourlyContributionHeatmap: View {
 
     private func stroke(for cell: RecentUsageHourCell) -> Color {
         if cell.isCurrentHour {
-            return theme.text.opacity(0.48)
+            return theme.primaryContainer.opacity(0.78)
         }
         return theme.text.opacity(cell.totalTokens > 0 ? 0.10 : 0.04)
     }
@@ -217,6 +220,7 @@ private struct RecentUsageDay: Identifiable {
 
     var id: TimeInterval { dayStartAt.timeIntervalSince1970 }
     var totalTokens: Int { cells.reduce(0) { $0 + $1.totalTokens } }
+    var costUSD: Double { cells.reduce(0) { $0 + $1.costUSD } }
 
     var isToday: Bool {
         Calendar.current.isDateInToday(dayStartAt)
@@ -224,6 +228,17 @@ private struct RecentUsageDay: Identifiable {
 
     var shortLabel: String {
         Self.shortFormatter.string(from: dayStartAt)
+    }
+
+    var detailLabel: String {
+        Self.detailFormatter.string(from: dayStartAt)
+    }
+
+    static func today(from rows: [UsageAnalyticsHourlyModelBucket]) -> RecentUsageDay {
+        completeRecentDays(from: rows, dayCount: 1).first ?? RecentUsageDay(
+            dayStartAt: Calendar.current.startOfDay(for: .now),
+            cells: []
+        )
     }
 
     static func completeRecentDays(from rows: [UsageAnalyticsHourlyModelBucket], dayCount: Int) -> [RecentUsageDay] {
@@ -254,28 +269,17 @@ private struct RecentUsageDay: Identifiable {
         }
     }
 
-    static func trimmedToMeaningfulHours(days: [RecentUsageDay]) -> [RecentUsageDay] {
-        let activeHours = days
-            .flatMap(\.cells)
-            .filter { ($0.totalTokens > 0 || $0.costUSD > 0) && !$0.isFuture }
-            .map(\.hourOfDay)
-
-        guard let firstHour = activeHours.min(), let lastHour = activeHours.max() else {
-            return days
-        }
-
-        return days.map { day in
-            RecentUsageDay(
-                dayStartAt: day.dayStartAt,
-                cells: day.cells.filter { (firstHour...lastHour).contains($0.hourOfDay) }
-            )
-        }
-    }
-
     private static let shortFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = .current
         formatter.setLocalizedDateFormatFromTemplate("EEE")
+        return formatter
+    }()
+
+    private static let detailFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = .current
+        formatter.setLocalizedDateFormatFromTemplate("MMM d")
         return formatter
     }()
 }
