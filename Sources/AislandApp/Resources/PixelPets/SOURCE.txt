@@ -1,0 +1,14 @@
+FreePixel Animals source
+
+Collection page: https://freepixel.art/browse/animals
+Homepage/license summary: https://freepixel.art/
+
+Downloaded assets:
+- kitten.png: kitten tiny fluffy paws playing
+- corgi.png: corgi short legs orange fluffy happy
+- puppy.png: puppy small cute floppy ears playful
+- hamster.png: hamster small brown cheeks stuffed
+- bunny.png: rabbit white floppy ears sitting
+- panda.png: panda giant black white bamboo eating
+
+FreePixel describes its assets as free for commercial use with no attribution required. Keep this source note with the bundled pet PNGs for attribution and provenance review.

@@ -18,6 +18,14 @@ struct IslandPixelGlyph: View {
                 .scaledToFill()
                 .frame(width: min(width, height), height: min(width, height))
                 .clipShape(Circle())
+        } else if let petImage = style.pixelPetImage {
+            petImage
+                .resizable()
+                .interpolation(.none)
+                .antialiased(false)
+                .scaledToFit()
+                .frame(width: width, height: height)
+                .shadow(color: tint.opacity(0.36), radius: 2.2, x: 0, y: 0)
         } else if style == .bars || style == .custom {
             AislandBrandMark(
                 size: min(width, height),
@@ -26,7 +34,7 @@ struct IslandPixelGlyph: View {
                 style: .duotone
             )
             .frame(width: width, height: height)
-        } else {
+        } else if !style.chartFrames.isEmpty {
             TimelineView(.animation(minimumInterval: 0.18, paused: !isAnimating)) { context in
                 let frame = style.chartFrames[frameIndex(for: context.date, frameCount: style.chartFrames.count)]
 
@@ -36,6 +44,14 @@ struct IslandPixelGlyph: View {
                 }
                 .frame(width: width, height: height, alignment: .bottomLeading)
             }
+        } else {
+            AislandBrandMark(
+                size: min(width, height),
+                tint: tint,
+                isAnimating: isAnimating,
+                style: .duotone
+            )
+            .frame(width: width, height: height)
         }
     }
 
@@ -47,6 +63,28 @@ struct IslandPixelGlyph: View {
 }
 
 extension IslandPixelShapeStyle {
+    fileprivate var pixelPetImage: Image? {
+        guard let resourceName = pixelPetResourceName,
+              let url = Bundle.module.url(forResource: resourceName, withExtension: "png", subdirectory: "PixelPets"),
+              let image = NSImage(contentsOf: url)
+        else {
+            return nil
+        }
+        return Image(nsImage: image)
+    }
+
+    private var pixelPetResourceName: String? {
+        switch self {
+        case .kitten: "kitten"
+        case .corgi: "corgi"
+        case .puppy: "puppy"
+        case .hamster: "hamster"
+        case .bunny: "bunny"
+        case .panda: "panda"
+        case .bars, .steps, .blocks, .custom: nil
+        }
+    }
+
     fileprivate var chartFrames: [([Int], [Int])] {
         switch self {
         case .bars:
@@ -64,6 +102,8 @@ extension IslandPixelShapeStyle {
              ([3, 4, 3, 2], [3, 4, 2]),
              ([2, 3, 4, 3], [2, 4, 3]),
              ([2, 4, 3, 2], [3, 4, 2])]
+        case .kitten, .corgi, .puppy, .hamster, .bunny, .panda:
+            []
         case .custom:
             [([1, 3, 2, 1], [2, 3, 1])]
         }

@@ -55,6 +55,12 @@ enum IslandPixelShapeStyle: String, CaseIterable, Identifiable {
     case bars
     case steps
     case blocks
+    case kitten
+    case corgi
+    case puppy
+    case hamster
+    case bunny
+    case panda
     case custom
 
     var id: String { rawValue }

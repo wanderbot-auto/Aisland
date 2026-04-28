@@ -72,7 +72,7 @@ struct AppearanceSettingsPane: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
 
-            HStack(spacing: 12) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 76), spacing: 10)], spacing: 10) {
                 ForEach(IslandPixelShapeStyle.allCases) { style in
                     pixelShapeCard(style)
                 }
@@ -366,6 +366,12 @@ struct AppearanceSettingsPane: View {
         case .bars:   lang.t("settings.appearance.pixelShape.bars")
         case .steps:  lang.t("settings.appearance.pixelShape.steps")
         case .blocks: lang.t("settings.appearance.pixelShape.blocks")
+        case .kitten: lang.t("settings.appearance.pixelShape.kitten")
+        case .corgi: lang.t("settings.appearance.pixelShape.corgi")
+        case .puppy: lang.t("settings.appearance.pixelShape.puppy")
+        case .hamster: lang.t("settings.appearance.pixelShape.hamster")
+        case .bunny: lang.t("settings.appearance.pixelShape.bunny")
+        case .panda: lang.t("settings.appearance.pixelShape.panda")
         case .custom: lang.t("settings.appearance.pixelShape.custom")
         }
     }

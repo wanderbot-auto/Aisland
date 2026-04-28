@@ -82,6 +82,12 @@
 "settings.appearance.pixelShape.bars" = "猫咪";
 "settings.appearance.pixelShape.steps" = "阶梯";
 "settings.appearance.pixelShape.blocks" = "方块";
+"settings.appearance.pixelShape.kitten" = "小猫";
+"settings.appearance.pixelShape.corgi" = "柯基";
+"settings.appearance.pixelShape.puppy" = "小狗";
+"settings.appearance.pixelShape.hamster" = "仓鼠";
+"settings.appearance.pixelShape.bunny" = "兔兔";
+"settings.appearance.pixelShape.panda" = "熊猫";
 "settings.appearance.pixelShape.custom" = "自定义";
 "settings.appearance.avatar.upload" = "上传图片";
 "settings.appearance.avatar.remove" = "移除";

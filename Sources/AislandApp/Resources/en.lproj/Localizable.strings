@@ -82,6 +82,12 @@
 "settings.appearance.pixelShape.bars" = "Cat";
 "settings.appearance.pixelShape.steps" = "Steps";
 "settings.appearance.pixelShape.blocks" = "Blocks";
+"settings.appearance.pixelShape.kitten" = "Kitten";
+"settings.appearance.pixelShape.corgi" = "Corgi";
+"settings.appearance.pixelShape.puppy" = "Puppy";
+"settings.appearance.pixelShape.hamster" = "Hamster";
+"settings.appearance.pixelShape.bunny" = "Bunny";
+"settings.appearance.pixelShape.panda" = "Panda";
 "settings.appearance.pixelShape.custom" = "Custom";
 "settings.appearance.avatar.upload" = "Upload Image";
 "settings.appearance.avatar.remove" = "Remove";
