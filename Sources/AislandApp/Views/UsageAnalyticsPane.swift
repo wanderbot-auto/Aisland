@@ -14,6 +14,14 @@ struct UsageAnalyticsPane: View {
     private var selectedDayCount: Int {
         min(30, max(1, Int(selectedRangeDays.rounded())))
     }
+    private var heatmapBucketHourSpan: Int {
+        let targetCellCount = 7 * 24
+        return (1...24).min { lhs, rhs in
+            let lhsCellCount = selectedDayCount * Int(ceil(24.0 / Double(lhs)))
+            let rhsCellCount = selectedDayCount * Int(ceil(24.0 / Double(rhs)))
+            return abs(lhsCellCount - targetCellCount) < abs(rhsCellCount - targetCellCount)
+        } ?? 1
+    }
     private var rangedHourlyUsage: [UsageAnalyticsHourlyModelBucket] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: .now)
@@ -21,7 +29,11 @@ struct UsageAnalyticsPane: View {
         return hourlyUsage.filter { $0.hourStartAt >= start }
     }
     private var completeHeatmapDays: [UsageHeatmapDay] {
-        UsageHeatmapDay.completeRecentDays(from: rangedHourlyUsage, dayCount: selectedDayCount)
+        UsageHeatmapDay.completeRecentDays(
+            from: rangedHourlyUsage,
+            dayCount: selectedDayCount,
+            bucketHourSpan: heatmapBucketHourSpan
+        )
     }
     private var heatmapDays: [UsageHeatmapDay] {
         UsageHeatmapDay.trimmedToMeaningfulHours(days: completeHeatmapDays)
@@ -32,9 +44,6 @@ struct UsageAnalyticsPane: View {
     private var totalTokens: Int { heatmapCells.reduce(0) { $0 + $1.totalTokens } }
     private var totalCostUSD: Double { heatmapCells.reduce(0) { $0 + $1.costUSD } }
     private var activeHourCount: Int { heatmapCells.filter(\.hasUsage).count }
-    private var globalTotals: UsageAnalyticsTotals? {
-        model.usageAnalyticsSnapshot(for: .day)?.totals
-    }
 
     private var peakCell: UsageHeatmapHourCell? {
         heatmapCells
@@ -52,21 +61,9 @@ struct UsageAnalyticsPane: View {
 
     var body: some View {
         Form {
-            Section(lang.t("usage.global.title")) {
-                GlobalUsageOverview(
-                    totals: globalTotals,
-                    lang: lang,
-                    theme: theme
-                )
-                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                .listRowBackground(Color.clear)
-            }
-
-            Section(lang.t("usage.range.title")) {
-                rangeControl
-            }
-
             Section(lang.t("usage.heatmap.title")) {
+                rangeControl
+
                 if hourlyUsage.isEmpty {
                     emptyState
                 } else {
@@ -91,7 +88,7 @@ struct UsageAnalyticsPane: View {
                             lessLabel: lang.t("usage.heatmap.less"),
                             moreLabel: lang.t("usage.heatmap.more")
                         )
-                        .frame(minWidth: 360)
+                        .frame(maxWidth: .infinity)
 
                         Divider()
 
@@ -102,6 +99,7 @@ struct UsageAnalyticsPane: View {
                         )
                         .frame(width: 230, alignment: .topLeading)
                     }
+                    .frame(maxWidth: .infinity)
                     .padding(.top, 6)
                 }
             }
@@ -196,73 +194,6 @@ struct UsageAnalyticsPane: View {
     }
 }
 
-private struct GlobalUsageOverview: View {
-    var totals: UsageAnalyticsTotals?
-    var lang: LanguageManager
-    var theme: IslandThemePalette
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 130), spacing: 10)], alignment: .leading, spacing: 10) {
-                overviewMetric(
-                    title: lang.t("usage.heatmap.total"),
-                    value: (totals?.totalTokens ?? 0).abbreviatedTokenString
-                )
-                overviewMetric(
-                    title: lang.t("usage.heatmap.cost"),
-                    value: (totals?.totalCostUSD ?? 0).currencyString
-                )
-                overviewMetric(
-                    title: lang.t("usage.global.entries"),
-                    value: "\(totals?.entryCount ?? 0)"
-                )
-                overviewMetric(
-                    title: lang.t("usage.global.sources"),
-                    value: "\(totals?.sourceFileCount ?? 0)"
-                )
-            }
-
-            if let spanText {
-                Text(spanText)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(14)
-        .background(theme.backgroundElevated)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(theme.outline.opacity(0.14), lineWidth: 1)
-        )
-    }
-
-    private var spanText: String? {
-        guard let totals, let first = totals.firstSeenAt, let last = totals.lastSeenAt else {
-            return nil
-        }
-        return lang.t(
-            "usage.global.span",
-            first.formatted(date: .abbreviated, time: .omitted),
-            last.formatted(date: .abbreviated, time: .omitted)
-        )
-    }
-
-    private func overviewMetric(title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title.uppercased())
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(.secondary)
-            Text(value)
-                .font(IslandTheme.bodyFont(size: 18, weight: .semibold))
-                .foregroundStyle(theme.text)
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
 private struct HeatmapSummaryStrip: View {
     var totalTokens: Int
     var totalCostUSD: Double
@@ -284,7 +215,7 @@ private struct HeatmapSummaryStrip: View {
             metricCard(
                 title: lang.t("usage.heatmap.peak"),
                 value: peakCell?.totalTokens.abbreviatedTokenString ?? "0",
-                detail: peakCell.map { UsageHeatmapFormatters.hourLabel.string(from: $0.hourStartAt) } ?? lang.t("usage.surface.noRecent")
+                detail: peakCell.map { UsageHeatmapFormatters.shortBucketLabel(start: $0.hourStartAt, end: $0.hourEndAt) } ?? lang.t("usage.surface.noRecent")
             )
             metricCard(
                 title: lang.t("usage.heatmap.activeHours"),
@@ -346,11 +277,13 @@ private struct HourlyUsageHeatmap: View {
             let labelWidth: CGFloat = 64
             let cellSpacing: CGFloat = 4
             let columnCount = max(hourValues.count, 1)
-            let availableCellWidth = proxy.size.width - labelWidth - CGFloat(max(0, columnCount - 1)) * cellSpacing
-            let cellSize = min(22, max(10, availableCellWidth / CGFloat(columnCount)))
+            let horizontalPadding: CGFloat = 24
+            let availableCellWidth = proxy.size.width - labelWidth - horizontalPadding - CGFloat(max(0, columnCount - 1)) * cellSpacing
+            let cellWidth = max(8, availableCellWidth / CGFloat(columnCount))
+            let cellHeight: CGFloat = 18
 
             VStack(alignment: .leading, spacing: 12) {
-                hourHeader(labelWidth: labelWidth, cellSize: cellSize, spacing: cellSpacing)
+                hourHeader(labelWidth: labelWidth, cellWidth: cellWidth, spacing: cellSpacing)
 
                 VStack(alignment: .leading, spacing: cellSpacing) {
                     ForEach(days) { day in
@@ -366,11 +299,11 @@ private struct HourlyUsageHeatmap: View {
                             .frame(width: labelWidth, alignment: .trailing)
 
                             ForEach(day.cells) { cell in
-                                RoundedRectangle(cornerRadius: cellSize * 0.28, style: .continuous)
+                                RoundedRectangle(cornerRadius: 4, style: .continuous)
                                     .fill(fill(for: cell))
-                                    .frame(width: cellSize, height: cellSize)
+                                    .frame(width: cellWidth, height: cellHeight)
                                     .overlay(
-                                        RoundedRectangle(cornerRadius: cellSize * 0.28, style: .continuous)
+                                        RoundedRectangle(cornerRadius: 4, style: .continuous)
                                             .strokeBorder(stroke(for: cell), lineWidth: selectedHourID == cell.id ? 1.6 : 0.7)
                                     )
                                     .shadow(color: glow(for: cell), radius: cell.hasUsage ? 5 : 0, x: 0, y: 0)
@@ -409,14 +342,14 @@ private struct HourlyUsageHeatmap: View {
         .frame(height: max(190, CGFloat(days.count) * 26 + 74))
     }
 
-    private func hourHeader(labelWidth: CGFloat, cellSize: CGFloat, spacing: CGFloat) -> some View {
+    private func hourHeader(labelWidth: CGFloat, cellWidth: CGFloat, spacing: CGFloat) -> some View {
         HStack(spacing: spacing) {
             Color.clear.frame(width: labelWidth, height: 1)
             ForEach(hourValues, id: \.self) { hour in
                 Text(shouldShowHourLabel(hour) ? String(format: "%02d", hour) : "")
                     .font(IslandTheme.labelFont(size: 8.5))
                     .foregroundStyle(theme.textSecondary.opacity(0.58))
-                    .frame(width: cellSize)
+                    .frame(width: cellWidth)
             }
         }
     }
@@ -467,7 +400,7 @@ private struct UsageHourDetail: View {
                         Text(lang.t("usage.heatmap.selectedHour"))
                             .font(IslandTheme.labelFont(size: 10))
                             .foregroundStyle(theme.textSecondary.opacity(0.82))
-                        Text(UsageHeatmapFormatters.detailHourLabel.string(from: cell.hourStartAt))
+                        Text(UsageHeatmapFormatters.bucketLabel(start: cell.hourStartAt, end: cell.hourEndAt))
                             .font(IslandTheme.bodyFont(size: 14, weight: .semibold))
                             .foregroundStyle(theme.text)
                     }
@@ -603,10 +536,15 @@ private struct UsageHeatmapDay: Identifiable {
         UsageHeatmapFormatters.dayLabel.string(from: dayStartAt)
     }
 
-    static func completeRecentDays(from rows: [UsageAnalyticsHourlyModelBucket], dayCount: Int) -> [UsageHeatmapDay] {
+    static func completeRecentDays(
+        from rows: [UsageAnalyticsHourlyModelBucket],
+        dayCount: Int,
+        bucketHourSpan: Int
+    ) -> [UsageHeatmapDay] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: .now)
         let currentHour = calendar.dateInterval(of: .hour, for: .now)?.start ?? .now
+        let clampedBucketHourSpan = min(24, max(1, bucketHourSpan))
         let grouped = Dictionary(grouping: rows) { row in
             calendar.dateInterval(of: .hour, for: row.hourStartAt)?.start ?? row.hourStartAt
         }
@@ -616,15 +554,30 @@ private struct UsageHeatmapDay: Identifiable {
                 return nil
             }
 
-            let cells = (0..<24).compactMap { hourOffset -> UsageHeatmapHourCell? in
-                guard let hour = calendar.date(byAdding: .hour, value: hourOffset, to: day) else {
+            let cells = stride(from: 0, to: 24, by: clampedBucketHourSpan).compactMap { hourOffset -> UsageHeatmapHourCell? in
+                guard let bucketStart = calendar.date(byAdding: .hour, value: hourOffset, to: day),
+                      let bucketEnd = calendar.date(
+                        byAdding: .hour,
+                        value: min(clampedBucketHourSpan, 24 - hourOffset),
+                        to: bucketStart
+                      ) else {
                     return nil
                 }
-                let hourRows = (grouped[hour] ?? []).sorted { lhs, rhs in
+                let bucketRows = stride(from: hourOffset, to: min(24, hourOffset + clampedBucketHourSpan), by: 1)
+                    .compactMap { offset in
+                        calendar.date(byAdding: .hour, value: offset, to: day)
+                    }
+                    .flatMap { grouped[$0] ?? [] }
+                    .sorted { lhs, rhs in
                     if lhs.totalTokens == rhs.totalTokens { return lhs.modelDisplayName < rhs.modelDisplayName }
                     return lhs.totalTokens > rhs.totalTokens
                 }
-                return UsageHeatmapHourCell(hourStartAt: hour, rows: hourRows, isCurrentHour: hour == currentHour)
+                return UsageHeatmapHourCell(
+                    hourStartAt: bucketStart,
+                    hourEndAt: bucketEnd,
+                    rows: bucketRows,
+                    isCurrentHour: bucketStart <= currentHour && currentHour < bucketEnd
+                )
             }
 
             return UsageHeatmapDay(dayStartAt: day, cells: cells)
@@ -652,6 +605,7 @@ private struct UsageHeatmapDay: Identifiable {
 
 private struct UsageHeatmapHourCell: Identifiable {
     var hourStartAt: Date
+    var hourEndAt: Date
     var rows: [UsageAnalyticsHourlyModelBucket]
     var isCurrentHour: Bool
 
@@ -669,7 +623,7 @@ private struct UsageHeatmapHourCell: Identifiable {
             .map { "\($0.modelDisplayName): \($0.totalTokens.abbreviatedTokenString), \($0.costUSD.currencyString)" }
             .joined(separator: "\n")
         let suffix = modelText.isEmpty ? "" : "\n\(modelText)"
-        return "\(UsageHeatmapFormatters.detailHourLabel.string(from: hourStartAt))\n\(totalTokens.abbreviatedTokenString) · \(costUSD.currencyString)\(suffix)"
+        return "\(UsageHeatmapFormatters.bucketLabel(start: hourStartAt, end: hourEndAt))\n\(totalTokens.abbreviatedTokenString) · \(costUSD.currencyString)\(suffix)"
     }
 }
 
@@ -709,6 +663,29 @@ private enum UsageHeatmapFormatters {
         formatter.locale = .current
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
+        return formatter
+    }()
+
+    static func shortBucketLabel(start: Date, end: Date) -> String {
+        let adjustedEnd = end.addingTimeInterval(-1)
+        if Calendar.current.dateComponents([.hour], from: start, to: end).hour == 1 {
+            return hourLabel.string(from: start)
+        }
+        return "\(hourLabel.string(from: start))-\(hourOnlyLabel.string(from: adjustedEnd))"
+    }
+
+    static func bucketLabel(start: Date, end: Date) -> String {
+        let adjustedEnd = end.addingTimeInterval(-1)
+        if Calendar.current.dateComponents([.hour], from: start, to: end).hour == 1 {
+            return detailHourLabel.string(from: start)
+        }
+        return "\(detailHourLabel.string(from: start)) - \(hourOnlyLabel.string(from: adjustedEnd))"
+    }
+
+    private static let hourOnlyLabel: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = .current
+        formatter.setLocalizedDateFormatFromTemplate("HH")
         return formatter
     }()
 }

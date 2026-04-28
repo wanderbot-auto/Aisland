@@ -129,16 +129,11 @@
 "usage.chart.tokensPerDay.subtitle" = "按模型堆叠显示每日 token，并在每日上方标识预估或记录的 Cost。";
 "usage.chart.tokensPerDay" = "Tokens Per Day";
 "usage.heatmap.title" = "小时热力图";
-"usage.global.title" = "全局统计";
-"usage.global.entries" = "记录数";
-"usage.global.sources" = "来源文件";
-"usage.global.span" = "%@ - %@";
-"usage.range.title" = "监测时间范围";
 "usage.range.oneDay" = "1 天";
 "usage.range.days" = "%d 天";
 "usage.heatmap.total" = "总量";
 "usage.heatmap.peak" = "峰值";
-"usage.heatmap.activeHours" = "活跃小时";
+"usage.heatmap.activeHours" = "活跃时段";
 "usage.heatmap.cost" = "Cost";
 "usage.heatmap.legend" = "每小时 Token";
 "usage.heatmap.less" = "低";
