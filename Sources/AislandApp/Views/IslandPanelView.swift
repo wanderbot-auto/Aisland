@@ -150,7 +150,12 @@ struct IslandPanelView: View {
     }
 
     private var sideWidth: CGFloat {
-        max(0, closedNotchHeight - 12) + 10
+        let iconWidth = model.islandPixelShapeStyle.isPixelPet ? closedPixelPetGlyphSize.width : max(0, closedNotchHeight - 12)
+        return iconWidth + 10
+    }
+
+    private var closedPixelPetGlyphSize: CGSize {
+        CGSize(width: min(34, max(28, closedNotchHeight + 7)), height: min(34, max(28, closedNotchHeight + 7)))
     }
 
     private var targetOverlayScreen: NSScreen? {
@@ -337,6 +342,8 @@ struct IslandPanelView: View {
                                 tint: scoutTint,
                                 style: model.islandPixelShapeStyle,
                                 isAnimating: hasClosedActivity,
+                                width: model.islandPixelShapeStyle.isPixelPet ? closedPixelPetGlyphSize.width : 26,
+                                height: model.islandPixelShapeStyle.isPixelPet ? closedPixelPetGlyphSize.height : 14,
                                 customAvatarImage: model.customAvatarImage
                             )
                             .matchedGeometryEffect(id: "island-icon", in: notchNamespace, isSource: true)

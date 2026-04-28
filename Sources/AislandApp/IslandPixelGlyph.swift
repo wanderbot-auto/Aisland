@@ -63,6 +63,10 @@ struct IslandPixelGlyph: View {
 }
 
 extension IslandPixelShapeStyle {
+    var isPixelPet: Bool {
+        pixelPetResourceName != nil
+    }
+
     fileprivate var pixelPetImage: Image? {
         guard let resourceName = pixelPetResourceName,
               let url = Bundle.module.url(forResource: resourceName, withExtension: "png"),
