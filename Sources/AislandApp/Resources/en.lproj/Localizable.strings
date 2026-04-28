@@ -131,6 +131,21 @@
 "usage.chart.contributionGraph" = "Contribution Graph";
 "usage.chart.tokensPerDay.subtitle" = "Stacked by model with estimated or reported cost shown above each day.";
 "usage.chart.tokensPerDay" = "Tokens Per Day";
+"usage.heatmap.title" = "7-day x 24-hour heatmap";
+"usage.heatmap.subtitle" = "Find recent hourly peaks with Aisland's accent hue; saturation marks intensity.";
+"usage.heatmap.total" = "Total";
+"usage.heatmap.peak" = "Peak";
+"usage.heatmap.activeHours" = "Active hours";
+"usage.heatmap.cost" = "Cost";
+"usage.heatmap.legend" = "Hourly tokens";
+"usage.heatmap.less" = "Low";
+"usage.heatmap.more" = "Peak";
+"usage.heatmap.selectedHour" = "Selected hour";
+"usage.heatmap.modelBreakdown" = "Top models";
+"usage.heatmap.modelBreakdown.subtitle" = "Ranked by token volume across the same 7-day heatmap window.";
+"usage.heatmap.noHour" = "No usage in this hour";
+"usage.heatmap.entries" = "%d entries";
+"usage.heatmap.tokenBreakdown" = "%@ in · %@ out";
 
 /* Settings - Sound */
 "settings.sound.notifications" = "Notification Sounds";

@@ -131,6 +131,21 @@
 "usage.chart.contributionGraph" = "Contribution Graph";
 "usage.chart.tokensPerDay.subtitle" = "按模型堆疊顯示每日 token，並在每日上方標識預估或記錄的 Cost。";
 "usage.chart.tokensPerDay" = "Tokens Per Day";
+"usage.heatmap.title" = "7 天 x 24 小時熱力圖";
+"usage.heatmap.subtitle" = "按小時捕捉最近峰值，沿用 Aisland 主題色相，僅用飽和度區分強度。";
+"usage.heatmap.total" = "總量";
+"usage.heatmap.peak" = "峰值";
+"usage.heatmap.activeHours" = "活躍小時";
+"usage.heatmap.cost" = "Cost";
+"usage.heatmap.legend" = "每小時 Token";
+"usage.heatmap.less" = "低";
+"usage.heatmap.more" = "峰值";
+"usage.heatmap.selectedHour" = "選中小時";
+"usage.heatmap.modelBreakdown" = "高頻模型";
+"usage.heatmap.modelBreakdown.subtitle" = "按同一個 7 天熱力圖區間內的 token 總量排序。";
+"usage.heatmap.noHour" = "這個小時尚無用量";
+"usage.heatmap.entries" = "%d 條";
+"usage.heatmap.tokenBreakdown" = "%@ 輸入 · %@ 輸出";
 
 /* Settings - Sound */
 "settings.sound.notifications" = "通知音效";
