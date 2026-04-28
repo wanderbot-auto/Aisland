@@ -65,7 +65,7 @@ struct IslandPixelGlyph: View {
 extension IslandPixelShapeStyle {
     fileprivate var pixelPetImage: Image? {
         guard let resourceName = pixelPetResourceName,
-              let url = Bundle.module.url(forResource: resourceName, withExtension: "png", subdirectory: "PixelPets"),
+              let url = Bundle.module.url(forResource: resourceName, withExtension: "png"),
               let image = NSImage(contentsOf: url)
         else {
             return nil
