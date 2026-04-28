@@ -329,8 +329,11 @@
 "settings.skills.about.body" = "Skills are read-only Markdown workflow guidance injected into temporary chat when relevant. Aisland does not execute scripts from Skills.";
 "settings.skills.import" = "Install Skill...";
 "settings.skills.installed" = "Installed Skills";
+"settings.skills.project" = "Project Skills";
+"settings.skills.global" = "Global Skills";
 "settings.skills.empty.title" = "No Skills found";
 "settings.skills.empty.body" = "Install a local SKILL.md file or a folder that contains SKILL.md.";
+"settings.skills.empty.scope" = "No Skills installed in this scope.";
 "settings.skills.alwaysApply" = "Always";
 "settings.skills.active" = "Active";
 "settings.skills.managed" = "Aisland";

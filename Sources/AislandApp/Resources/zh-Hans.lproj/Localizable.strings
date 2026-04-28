@@ -329,8 +329,11 @@
 "settings.skills.about.body" = "Skills 是只读 Markdown 工作流指导，会在相关临时对话中注入。Aisland 不会执行 Skill 中的脚本。";
 "settings.skills.import" = "安装 Skill...";
 "settings.skills.installed" = "已安装 Skills";
+"settings.skills.project" = "项目级 Skills";
+"settings.skills.global" = "全局级 Skills";
 "settings.skills.empty.title" = "暂无 Skills";
 "settings.skills.empty.body" = "可安装本地 SKILL.md 文件，或包含 SKILL.md 的文件夹。";
+"settings.skills.empty.scope" = "此层级暂无已安装 Skill。";
 "settings.skills.alwaysApply" = "始终";
 "settings.skills.active" = "启用中";
 "settings.skills.managed" = "Aisland";

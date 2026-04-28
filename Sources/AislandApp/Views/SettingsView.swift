@@ -375,6 +375,15 @@ struct SkillsSettingsPane: View {
 
     private var lang: LanguageManager { model.lang }
     private var installedSkills: [TemporaryChatInstalledSkill] { model.temporaryChatInstalledSkills }
+    private var projectSkills: [TemporaryChatInstalledSkill] {
+        installedSkills.filter { installScope(for: $0) == .project }
+    }
+    private var globalSkills: [TemporaryChatInstalledSkill] {
+        installedSkills.filter { installScope(for: $0) == .global }
+    }
+    private var skillGridColumns: [GridItem] {
+        Array(repeating: GridItem(.flexible(), spacing: 12), count: 3)
+    }
 
     var body: some View {
         Form {
@@ -423,18 +432,16 @@ struct SkillsSettingsPane: View {
                     )
                     .frame(maxWidth: .infinity)
                 } else {
-                    skillScopeOverview
-                        .padding(.bottom, 4)
-
-                    LazyVGrid(
-                        columns: [GridItem(.adaptive(minimum: 260), spacing: 12)],
-                        alignment: .leading,
-                        spacing: 12
-                    ) {
-                        ForEach(installedSkills) { skill in
-                            skillCard(skill)
-                        }
-                    }
+                    skillGroup(
+                        title: lang.t("settings.skills.project"),
+                        skills: projectSkills,
+                        scope: .project
+                    )
+                    skillGroup(
+                        title: lang.t("settings.skills.global"),
+                        skills: globalSkills,
+                        scope: .global
+                    )
                 }
             } header: {
                 Text(lang.t("settings.skills.installed"))
@@ -467,39 +474,50 @@ struct SkillsSettingsPane: View {
         }
     }
 
-    private var skillScopeOverview: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 118), spacing: 8)], spacing: 8) {
-            ForEach(TemporaryChatSkillInstallScope.allCases) { scope in
-                let count = installedSkills.filter { installScope(for: $0) == scope }.count
-                HStack(spacing: 8) {
-                    Image(systemName: scope.systemImageName)
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(scope.color(theme: theme))
-                        .frame(width: 24, height: 24)
-                        .background(scope.color(theme: theme).opacity(0.12), in: Circle())
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(scope.title(lang))
-                            .font(IslandTheme.labelFont(size: 10))
-                            .foregroundStyle(theme.textSecondary)
-                        Text("\(count)")
-                            .font(IslandTheme.bodyFont(size: 15, weight: .black))
-                            .foregroundStyle(count > 0 ? theme.text : theme.textTertiary)
-                            .monospacedDigit()
+    private func skillGroup(
+        title: String,
+        skills: [TemporaryChatInstalledSkill],
+        scope: TemporaryChatSkillInstallScope
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .center, spacing: 8) {
+                Image(systemName: scope.systemImageName)
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(scope.color(theme: theme))
+                    .frame(width: 24, height: 24)
+                    .background(scope.color(theme: theme).opacity(0.12), in: Circle())
+                Text(title)
+                    .font(IslandTheme.bodyFont(size: 13, weight: .semibold))
+                    .foregroundStyle(theme.text)
+                Text("\(skills.count)")
+                    .font(IslandTheme.labelFont(size: 10))
+                    .foregroundStyle(scope.color(theme: theme))
+                    .monospacedDigit()
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(scope.color(theme: theme).opacity(0.10), in: Capsule())
+                Spacer(minLength: 0)
+            }
+
+            if skills.isEmpty {
+                Text(lang.t("settings.skills.empty.scope"))
+                    .font(.caption)
+                    .foregroundStyle(theme.textTertiary)
+                    .frame(maxWidth: .infinity, minHeight: 58, alignment: .leading)
+                    .padding(.horizontal, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(theme.surfaceContainer.opacity(0.26))
+                    )
+            } else {
+                LazyVGrid(columns: skillGridColumns, alignment: .leading, spacing: 12) {
+                    ForEach(skills) { skill in
+                        skillCard(skill)
                     }
-                    Spacer(minLength: 0)
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 9)
-                .background(
-                    RoundedRectangle(cornerRadius: 13, style: .continuous)
-                        .fill(theme.surfaceContainer.opacity(0.36))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 13, style: .continuous)
-                        .strokeBorder(scope.color(theme: theme).opacity(count > 0 ? 0.18 : 0.07), lineWidth: 1)
-                )
             }
         }
+        .padding(.bottom, scope == .project ? 12 : 0)
     }
 
     private func skillCard(_ skill: TemporaryChatInstalledSkill) -> some View {
@@ -537,7 +555,7 @@ struct SkillsSettingsPane: View {
                 Image(systemName: "folder")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(theme.textTertiary)
-                Text(skill.definition.fileURL.path)
+                Text(skillRootDirectory(for: skill))
                     .font(.caption2.monospaced())
                     .foregroundStyle(theme.textSecondary)
                     .lineLimit(2)
@@ -561,17 +579,12 @@ struct SkillsSettingsPane: View {
             }
 
             if skill.isOverridden, let active = skill.activeDefinition {
-                Text(lang.t("settings.skills.overridden.help", sourceTitle(for: active.source)))
+                Text(lang.t("settings.skills.overridden.help", installScope(for: active).title(lang)))
                     .font(.caption2)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(theme.warning)
             }
 
             HStack {
-                Button(lang.t("settings.skills.reveal")) {
-                    model.revealTemporaryChatSkill(skill)
-                }
-                .buttonStyle(.borderless)
-
                 if skill.isAislandManaged {
                     Button(lang.t("settings.general.uninstall"), role: .destructive) {
                         pendingUninstallSkill = skill
@@ -610,49 +623,43 @@ struct SkillsSettingsPane: View {
             return .global
         }
 
-        switch skill.definition.source {
-        case .repository:
-            return .repository
-        case .project:
+        return installScope(for: skill.definition)
+    }
+
+    private func installScope(for definition: TemporaryChatSkillDefinition) -> TemporaryChatSkillInstallScope {
+        switch definition.source {
+        case .repository, .project:
             return .project
         case .user:
-            return .user
+            return .global
         }
     }
 
-    private func sourceTitle(for source: TemporaryChatSkillSource) -> String {
-        switch source {
-        case .repository:
-            lang.t("settings.skills.source.repository")
-        case .project:
-            lang.t("settings.skills.source.project")
-        case .user:
-            lang.t("settings.skills.source.user")
+    private func skillRootDirectory(for skill: TemporaryChatInstalledSkill) -> String {
+        let skillDirectory = skill.definition.fileURL.deletingLastPathComponent()
+        let parentDirectory = skillDirectory.deletingLastPathComponent()
+        if parentDirectory.lastPathComponent.lowercased() == "skills" {
+            return parentDirectory.path
         }
+        return skillDirectory.path
     }
 }
 
 private enum TemporaryChatSkillInstallScope: CaseIterable, Identifiable {
     case global
-    case user
     case project
-    case repository
 
     var id: String {
         switch self {
         case .global: "global"
-        case .user: "user"
         case .project: "project"
-        case .repository: "repository"
         }
     }
 
     var systemImageName: String {
         switch self {
         case .global: "globe"
-        case .user: "person.crop.circle"
         case .project: "folder.badge.gearshape"
-        case .repository: "shippingbox"
         }
     }
 
@@ -660,12 +667,8 @@ private enum TemporaryChatSkillInstallScope: CaseIterable, Identifiable {
         switch self {
         case .global:
             lang.t("settings.skills.scope.global")
-        case .user:
-            lang.t("settings.skills.scope.user")
         case .project:
             lang.t("settings.skills.scope.project")
-        case .repository:
-            lang.t("settings.skills.scope.repository")
         }
     }
 
@@ -673,12 +676,8 @@ private enum TemporaryChatSkillInstallScope: CaseIterable, Identifiable {
         switch self {
         case .global:
             theme.primary
-        case .user:
-            theme.secondary
         case .project:
             theme.tertiary
-        case .repository:
-            theme.warning
         }
     }
 }
