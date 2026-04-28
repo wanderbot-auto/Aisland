@@ -43,7 +43,32 @@ final class AppModel {
     private static let whiteNoiseItemVolumesDefaultsKey = "whiteNoise.itemVolumes"
     private static let whiteNoiseGlobalVolumeDefaultsKey = "whiteNoise.globalVolume"
 
-    static let defaultStatusColors: [SessionPhase: String] = [
+    static let defaultStatusColors = themeDefaultStatusColors(for: .cyberMinimalist)
+    static func themeDefaultStatusColors(for theme: IslandInterfaceTheme) -> [SessionPhase: String] {
+        switch theme {
+        case .cyberMinimalist:
+            return [
+                .running: "#00D1FF",
+                .waitingForApproval: "#FFB547",
+                .waitingForAnswer: "#A4E6FF",
+                .completed: "#42E86B",
+            ]
+        case .graphiteClassic:
+            return [
+                .running: "#7BB7FF",
+                .waitingForApproval: "#FFCB6B",
+                .waitingForAnswer: "#A7F3D0",
+                .completed: "#7EE787",
+            ]
+        }
+    }
+    private static let themeDefaultStatusColorPalettes =
+        IslandInterfaceTheme.allCases.map { themeDefaultStatusColors(for: $0) }
+    private static func statusColorsAreThemeDefaults(_ colors: [SessionPhase: String]) -> Bool {
+        themeDefaultStatusColorPalettes.contains(colors)
+    }
+
+    static let legacyDefaultStatusColors: [SessionPhase: String] = [
         .running: "#00D1FF",
         .waitingForApproval: "#FFB547",
         .waitingForAnswer: "#FFD95A",
@@ -367,6 +392,11 @@ final class AppModel {
         didSet {
             guard interfaceTheme != oldValue else { return }
             UserDefaults.standard.set(interfaceTheme.rawValue, forKey: Self.interfaceThemeDefaultsKey)
+            if Self.statusColorsAreThemeDefaults(statusColorHexes) {
+                statusColorHexes = Self.themeDefaultStatusColors(for: interfaceTheme)
+            } else {
+                _cachedStatusColors = [:]
+            }
         }
     }
 
@@ -610,13 +640,17 @@ final class AppModel {
         ) ?? .bars
         customAvatarImage = AvatarImageStore.currentImage()
         if let saved = UserDefaults.standard.dictionary(forKey: Self.islandStatusColorsDefaultsKey) as? [String: String] {
-            var colors = Self.defaultStatusColors
+            var colors = Self.themeDefaultStatusColors(for: interfaceTheme)
             for (key, value) in saved {
                 if let phase = SessionPhase(rawValue: key) {
                     colors[phase] = value.normalizedHexColorString
                 }
             }
-            statusColorHexes = colors
+            statusColorHexes = colors == Self.legacyDefaultStatusColors
+                ? Self.themeDefaultStatusColors(for: interfaceTheme)
+                : colors
+        } else {
+            statusColorHexes = Self.themeDefaultStatusColors(for: interfaceTheme)
         }
         overlay.appModel = self
         overlay.restoreDisplayPreference()
