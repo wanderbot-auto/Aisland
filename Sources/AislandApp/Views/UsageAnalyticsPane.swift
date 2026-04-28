@@ -7,10 +7,22 @@ struct UsageAnalyticsPane: View {
 
     @Environment(\.islandTheme) private var theme
     @State private var selectedHourID: TimeInterval?
+    @State private var selectedRangeDays = 7.0
 
     private var lang: LanguageManager { model.lang }
     private var hourlyUsage: [UsageAnalyticsHourlyModelBucket] { model.usageAnalyticsHourlyModelUsage }
-    private var completeHeatmapDays: [UsageHeatmapDay] { UsageHeatmapDay.completeRecentDays(from: hourlyUsage, dayCount: 7) }
+    private var selectedDayCount: Int {
+        min(30, max(1, Int(selectedRangeDays.rounded())))
+    }
+    private var rangedHourlyUsage: [UsageAnalyticsHourlyModelBucket] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        let start = calendar.date(byAdding: .day, value: -(selectedDayCount - 1), to: today) ?? today
+        return hourlyUsage.filter { $0.hourStartAt >= start }
+    }
+    private var completeHeatmapDays: [UsageHeatmapDay] {
+        UsageHeatmapDay.completeRecentDays(from: rangedHourlyUsage, dayCount: selectedDayCount)
+    }
     private var heatmapDays: [UsageHeatmapDay] {
         UsageHeatmapDay.trimmedToMeaningfulHours(days: completeHeatmapDays)
     }
@@ -20,6 +32,9 @@ struct UsageAnalyticsPane: View {
     private var totalTokens: Int { heatmapCells.reduce(0) { $0 + $1.totalTokens } }
     private var totalCostUSD: Double { heatmapCells.reduce(0) { $0 + $1.costUSD } }
     private var activeHourCount: Int { heatmapCells.filter(\.hasUsage).count }
+    private var globalTotals: UsageAnalyticsTotals? {
+        model.usageAnalyticsSnapshot(for: .day)?.totals
+    }
 
     private var peakCell: UsageHeatmapHourCell? {
         heatmapCells
@@ -36,17 +51,85 @@ struct UsageAnalyticsPane: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                usageToolbar
-                recentPeakHeatmapSection
-                modelBreakdownSection
+        Form {
+            Section(lang.t("usage.global.title")) {
+                GlobalUsageOverview(
+                    totals: globalTotals,
+                    lang: lang,
+                    theme: theme
+                )
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listRowBackground(Color.clear)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(20)
+
+            Section(lang.t("usage.range.title")) {
+                rangeControl
+            }
+
+            Section(lang.t("usage.heatmap.title")) {
+                if hourlyUsage.isEmpty {
+                    emptyState
+                } else {
+                    HeatmapSummaryStrip(
+                        totalTokens: totalTokens,
+                        totalCostUSD: totalCostUSD,
+                        activeHourCount: activeHourCount,
+                        hourColumnCount: heatmapHourCount,
+                        dayCount: selectedDayCount,
+                        peakCell: peakCell,
+                        rangeLabel: rangeLabel,
+                        lang: lang,
+                        theme: theme
+                    )
+
+                    HStack(alignment: .top, spacing: 16) {
+                        HourlyUsageHeatmap(
+                            days: heatmapDays,
+                            selectedHourID: $selectedHourID,
+                            theme: theme,
+                            legend: lang.t("usage.heatmap.legend"),
+                            lessLabel: lang.t("usage.heatmap.less"),
+                            moreLabel: lang.t("usage.heatmap.more")
+                        )
+                        .frame(minWidth: 360)
+
+                        Divider()
+
+                        UsageHourDetail(
+                            cell: selectedCell,
+                            lang: lang,
+                            theme: theme
+                        )
+                        .frame(width: 230, alignment: .topLeading)
+                    }
+                    .padding(.top, 6)
+                }
+            }
+
+            if !rangedHourlyUsage.isEmpty {
+                Section(lang.t("usage.heatmap.modelBreakdown")) {
+                    RecentModelBreakdown(rows: rangedHourlyUsage, theme: theme)
+                        .padding(.vertical, 2)
+                }
+            }
         }
+        .formStyle(.grouped)
         .islandSettingsPaneBackground()
         .navigationTitle(lang.t("settings.tab.usage"))
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    model.refreshUsageAnalytics()
+                } label: {
+                    if model.usageAnalyticsIsRefreshing {
+                        Label(lang.t("usage.refreshing"), systemImage: "arrow.triangle.2.circlepath")
+                    } else {
+                        Label(lang.t("usage.refresh"), systemImage: "arrow.clockwise")
+                    }
+                }
+                .disabled(model.usageAnalyticsIsRefreshing)
+            }
+        }
         .onAppear {
             if hourlyUsage.isEmpty {
                 model.refreshUsageAnalytics()
@@ -54,6 +137,9 @@ struct UsageAnalyticsPane: View {
             normalizeSelectedHour()
         }
         .onChange(of: hourlyUsage) { _, _ in
+            normalizeSelectedHour()
+        }
+        .onChange(of: selectedDayCount) { _, _ in
             normalizeSelectedHour()
         }
     }
@@ -65,76 +151,34 @@ struct UsageAnalyticsPane: View {
         selectedHourID = peakCell?.id
     }
 
-    private var usageToolbar: some View {
-        HStack(alignment: .center, spacing: 10) {
-            if model.usageAnalyticsIsRefreshing {
-                Label(lang.t("usage.refreshing"), systemImage: "arrow.triangle.2.circlepath")
-                    .font(IslandTheme.labelFont(size: 11))
-                    .foregroundStyle(theme.textSecondary)
-            } else if let refreshedAt = model.usageAnalyticsLastRefreshedAt {
-                Text(refreshedAt.formatted(date: .abbreviated, time: .shortened))
-                    .font(IslandTheme.labelFont(size: 11))
-                    .foregroundStyle(theme.textSecondary)
-            }
-
-            Spacer(minLength: 12)
-
-            Button(lang.t("usage.refresh")) {
-                model.refreshUsageAnalytics()
-            }
-            .buttonStyle(.bordered)
-            .disabled(model.usageAnalyticsIsRefreshing)
+    private var rangeLabel: String {
+        if selectedDayCount == 1 {
+            return lang.t("usage.range.oneDay")
         }
+        return lang.t("usage.range.days", selectedDayCount)
     }
 
-    private var recentPeakHeatmapSection: some View {
-        usagePanel {
-            VStack(alignment: .leading, spacing: 16) {
-                sectionHeading(
-                    title: lang.t("usage.heatmap.title")
-                )
-
-                if hourlyUsage.isEmpty {
-                    emptyState
-                } else {
-                    HeatmapSummaryStrip(
-                        totalTokens: totalTokens,
-                        totalCostUSD: totalCostUSD,
-                        activeHourCount: activeHourCount,
-                        hourColumnCount: heatmapHourCount,
-                        peakCell: peakCell,
-                        lang: lang,
-                        theme: theme
-                    )
-
-                    SevenDayHourlyHeatmap(
-                        days: heatmapDays,
-                        selectedHourID: $selectedHourID,
-                        theme: theme,
-                        legend: lang.t("usage.heatmap.legend"),
-                        lessLabel: lang.t("usage.heatmap.less"),
-                        moreLabel: lang.t("usage.heatmap.more")
-                    )
-
-                    if let selectedCell {
-                        UsageHourDetail(cell: selectedCell, lang: lang, theme: theme)
-                    }
+    private var rangeControl: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 12) {
+                Slider(value: $selectedRangeDays, in: 1...30, step: 1)
+                Text(rangeLabel)
+                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 72, alignment: .trailing)
+            }
+            HStack(spacing: 12) {
+                if let refreshedAt = model.usageAnalyticsLastRefreshedAt {
+                    Text(refreshedAt.formatted(date: .abbreviated, time: .shortened))
+                }
+                if let error = model.usageAnalyticsLastRefreshError {
+                    Text(error)
+                        .foregroundStyle(theme.error)
+                        .lineLimit(1)
                 }
             }
-        }
-    }
-
-    @ViewBuilder
-    private var modelBreakdownSection: some View {
-        if !hourlyUsage.isEmpty {
-            usagePanel {
-                VStack(alignment: .leading, spacing: 14) {
-                    sectionHeading(
-                        title: lang.t("usage.heatmap.modelBreakdown")
-                    )
-                    RecentModelBreakdown(rows: hourlyUsage, theme: theme)
-                }
-            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
     }
 
@@ -150,25 +194,72 @@ struct UsageAnalyticsPane: View {
         }
         .frame(maxWidth: .infinity, minHeight: 120, alignment: .leading)
     }
+}
 
-    private func usagePanel<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        content()
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(18)
-            .background(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(theme.card.opacity(0.86))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .strokeBorder(theme.outline.opacity(0.12))
-            )
+private struct GlobalUsageOverview: View {
+    var totals: UsageAnalyticsTotals?
+    var lang: LanguageManager
+    var theme: IslandThemePalette
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 130), spacing: 10)], alignment: .leading, spacing: 10) {
+                overviewMetric(
+                    title: lang.t("usage.heatmap.total"),
+                    value: (totals?.totalTokens ?? 0).abbreviatedTokenString
+                )
+                overviewMetric(
+                    title: lang.t("usage.heatmap.cost"),
+                    value: (totals?.totalCostUSD ?? 0).currencyString
+                )
+                overviewMetric(
+                    title: lang.t("usage.global.entries"),
+                    value: "\(totals?.entryCount ?? 0)"
+                )
+                overviewMetric(
+                    title: lang.t("usage.global.sources"),
+                    value: "\(totals?.sourceFileCount ?? 0)"
+                )
+            }
+
+            if let spanText {
+                Text(spanText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(14)
+        .background(theme.backgroundElevated)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(theme.outline.opacity(0.14), lineWidth: 1)
+        )
     }
 
-    private func sectionHeading(title: String) -> some View {
-        Text(title)
-            .font(IslandTheme.titleFont(size: 20))
-            .foregroundStyle(theme.text)
+    private var spanText: String? {
+        guard let totals, let first = totals.firstSeenAt, let last = totals.lastSeenAt else {
+            return nil
+        }
+        return lang.t(
+            "usage.global.span",
+            first.formatted(date: .abbreviated, time: .omitted),
+            last.formatted(date: .abbreviated, time: .omitted)
+        )
+    }
+
+    private func overviewMetric(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title.uppercased())
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(IslandTheme.bodyFont(size: 18, weight: .semibold))
+                .foregroundStyle(theme.text)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -177,7 +268,9 @@ private struct HeatmapSummaryStrip: View {
     var totalCostUSD: Double
     var activeHourCount: Int
     var hourColumnCount: Int
+    var dayCount: Int
     var peakCell: UsageHeatmapHourCell?
+    var rangeLabel: String
     var lang: LanguageManager
     var theme: IslandThemePalette
 
@@ -186,7 +279,7 @@ private struct HeatmapSummaryStrip: View {
             metricCard(
                 title: lang.t("usage.heatmap.total"),
                 value: totalTokens.abbreviatedTokenString,
-                detail: lang.t("usage.surface.recentDays")
+                detail: rangeLabel
             )
             metricCard(
                 title: lang.t("usage.heatmap.peak"),
@@ -196,12 +289,12 @@ private struct HeatmapSummaryStrip: View {
             metricCard(
                 title: lang.t("usage.heatmap.activeHours"),
                 value: "\(activeHourCount)",
-                detail: "7 x \(hourColumnCount)"
+                detail: "\(dayCount) x \(hourColumnCount)"
             )
             metricCard(
                 title: lang.t("usage.heatmap.cost"),
                 value: totalCostUSD.currencyString,
-                detail: lang.t("usage.surface.recentDays")
+                detail: rangeLabel
             )
         }
     }
@@ -226,21 +319,13 @@ private struct HeatmapSummaryStrip: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 11)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(theme.surfaceContainer.opacity(0.48))
         )
-        .overlay(alignment: .topTrailing) {
-            Circle()
-                .fill(theme.primary.opacity(0.18))
-                .frame(width: 34, height: 34)
-                .blur(radius: 12)
-                .offset(x: 8, y: -8)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 
-private struct SevenDayHourlyHeatmap: View {
+private struct HourlyUsageHeatmap: View {
     var days: [UsageHeatmapDay]
     @Binding var selectedHourID: TimeInterval?
     var theme: IslandThemePalette
@@ -298,11 +383,11 @@ private struct SevenDayHourlyHeatmap: View {
                 }
                 .padding(12)
                 .background(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .fill(theme.surfaceContainer.opacity(0.34))
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .strokeBorder(theme.outline.opacity(0.08))
                 )
 
@@ -321,7 +406,7 @@ private struct SevenDayHourlyHeatmap: View {
                 .foregroundStyle(theme.textSecondary)
             }
         }
-        .frame(height: 230)
+        .frame(height: max(190, CGFloat(days.count) * 26 + 74))
     }
 
     private func hourHeader(labelWidth: CGFloat, cellSize: CGFloat, spacing: CGFloat) -> some View {
@@ -370,69 +455,75 @@ private struct SevenDayHourlyHeatmap: View {
 }
 
 private struct UsageHourDetail: View {
-    var cell: UsageHeatmapHourCell
+    var cell: UsageHeatmapHourCell?
     var lang: LanguageManager
     var theme: IslandThemePalette
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(lang.t("usage.heatmap.selectedHour"))
-                        .font(IslandTheme.labelFont(size: 10))
-                        .foregroundStyle(theme.textSecondary.opacity(0.82))
-                    Text(UsageHeatmapFormatters.detailHourLabel.string(from: cell.hourStartAt))
-                        .font(IslandTheme.bodyFont(size: 14, weight: .semibold))
-                        .foregroundStyle(theme.text)
+            if let cell {
+                HStack(alignment: .firstTextBaseline) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(lang.t("usage.heatmap.selectedHour"))
+                            .font(IslandTheme.labelFont(size: 10))
+                            .foregroundStyle(theme.textSecondary.opacity(0.82))
+                        Text(UsageHeatmapFormatters.detailHourLabel.string(from: cell.hourStartAt))
+                            .font(IslandTheme.bodyFont(size: 14, weight: .semibold))
+                            .foregroundStyle(theme.text)
+                    }
+                    Spacer(minLength: 12)
+                    VStack(alignment: .trailing, spacing: 3) {
+                        Text(cell.totalTokens.abbreviatedTokenString)
+                            .font(IslandTheme.bodyFont(size: 16, weight: .black))
+                            .foregroundStyle(theme.text)
+                            .monospacedDigit()
+                        Text(cell.costUSD.currencyString)
+                            .font(IslandTheme.labelFont(size: 11))
+                            .foregroundStyle(theme.textSecondary)
+                    }
                 }
-                Spacer(minLength: 12)
-                VStack(alignment: .trailing, spacing: 3) {
-                    Text(cell.totalTokens.abbreviatedTokenString)
-                        .font(IslandTheme.bodyFont(size: 16, weight: .black))
-                        .foregroundStyle(theme.text)
-                        .monospacedDigit()
-                    Text(cell.costUSD.currencyString)
-                        .font(IslandTheme.labelFont(size: 11))
-                        .foregroundStyle(theme.textSecondary)
-                }
-            }
 
-            if cell.rows.isEmpty {
-                Text(lang.t("usage.heatmap.noHour"))
-                    .font(IslandTheme.bodyFont(size: 12, weight: .medium))
-                    .foregroundStyle(theme.textSecondary)
-            } else {
-                VStack(spacing: 7) {
-                    ForEach(cell.rows.prefix(5)) { row in
-                        HStack(spacing: 8) {
-                            Circle()
-                                .fill(UsageModelColor.color(for: row.modelIdentifier, theme: theme))
-                                .frame(width: 8, height: 8)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(row.modelDisplayName)
-                                    .font(IslandTheme.bodyFont(size: 12, weight: .semibold))
+                if cell.rows.isEmpty {
+                    Text(lang.t("usage.heatmap.noHour"))
+                        .font(IslandTheme.bodyFont(size: 12, weight: .medium))
+                        .foregroundStyle(theme.textSecondary)
+                } else {
+                    VStack(spacing: 7) {
+                        ForEach(cell.rows.prefix(5)) { row in
+                            HStack(spacing: 8) {
+                                Circle()
+                                    .fill(UsageModelColor.color(for: row.modelIdentifier, theme: theme))
+                                    .frame(width: 8, height: 8)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(row.modelDisplayName)
+                                        .font(IslandTheme.bodyFont(size: 12, weight: .semibold))
+                                        .foregroundStyle(theme.text)
+                                        .lineLimit(1)
+                                    Text(lang.t("usage.heatmap.tokenBreakdown", row.inputTokens.abbreviatedTokenString, row.outputTokens.abbreviatedTokenString))
+                                        .font(IslandTheme.bodyFont(size: 10.5, weight: .medium))
+                                        .foregroundStyle(theme.textSecondary)
+                                        .lineLimit(1)
+                                }
+                                Spacer(minLength: 10)
+                                Text(row.totalTokens.abbreviatedTokenString)
+                                    .font(IslandTheme.bodyFont(size: 12, weight: .bold))
                                     .foregroundStyle(theme.text)
-                                    .lineLimit(1)
-                                Text(lang.t("usage.heatmap.tokenBreakdown", row.inputTokens.abbreviatedTokenString, row.outputTokens.abbreviatedTokenString))
-                                    .font(IslandTheme.bodyFont(size: 10.5, weight: .medium))
+                                    .monospacedDigit()
+                                Text(lang.t("usage.heatmap.entries", row.entryCount))
+                                    .font(IslandTheme.labelFont(size: 10.5))
                                     .foregroundStyle(theme.textSecondary)
-                                    .lineLimit(1)
                             }
-                            Spacer(minLength: 10)
-                            Text(row.totalTokens.abbreviatedTokenString)
-                                .font(IslandTheme.bodyFont(size: 12, weight: .bold))
-                                .foregroundStyle(theme.text)
-                                .monospacedDigit()
-                            Text(lang.t("usage.heatmap.entries", row.entryCount))
-                                .font(IslandTheme.labelFont(size: 10.5))
-                                .foregroundStyle(theme.textSecondary)
                         }
                     }
                 }
+            } else {
+                Text(lang.t("usage.heatmap.noHour"))
+                    .font(IslandTheme.bodyFont(size: 12, weight: .medium))
+                    .foregroundStyle(theme.textSecondary)
             }
         }
         .padding(13)
-        .background(theme.surfaceContainer.opacity(0.48), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(theme.surfaceContainer.opacity(0.48), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }
 

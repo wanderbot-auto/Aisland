@@ -128,7 +128,14 @@
 "usage.chart.contributionGraph" = "Contribution Graph";
 "usage.chart.tokensPerDay.subtitle" = "Stacked by model with estimated or reported cost shown above each day.";
 "usage.chart.tokensPerDay" = "Tokens Per Day";
-"usage.heatmap.title" = "7-day hourly heatmap";
+"usage.heatmap.title" = "Hourly heatmap";
+"usage.global.title" = "Global usage";
+"usage.global.entries" = "Entries";
+"usage.global.sources" = "Sources";
+"usage.global.span" = "%@ - %@";
+"usage.range.title" = "Monitoring range";
+"usage.range.oneDay" = "1 day";
+"usage.range.days" = "%d days";
 "usage.heatmap.total" = "Total";
 "usage.heatmap.peak" = "Peak";
 "usage.heatmap.activeHours" = "Active hours";

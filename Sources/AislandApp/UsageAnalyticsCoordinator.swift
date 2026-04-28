@@ -5,7 +5,7 @@ import AislandCore
 @MainActor
 @Observable
 final class UsageAnalyticsCoordinator {
-    private static let recentHourlyWindow = 7 * 24
+    private static let recentHourlyWindow = 30 * 24
 
     @ObservationIgnored
     private let store: UsageAnalyticsStore
