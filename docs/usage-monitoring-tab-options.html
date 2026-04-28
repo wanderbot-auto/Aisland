@@ -3,1113 +3,488 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Aisland 用量监测 TAB 方案</title>
+  <title>Aisland 用量监测 Heatmap 方案</title>
   <style>
     :root {
-      --background: #000;
+      --bg: #000;
       --surface: #131313;
-      --surface-lowest: #0e0e0e;
-      --surface-low: #1b1b1b;
-      --surface-mid: #1f1f1f;
-      --surface-high: #2a2a2a;
-      --surface-highest: #353535;
+      --surface-2: #1b1b1b;
+      --surface-3: #242424;
+      --line: rgba(255,255,255,.10);
+      --line-hot: rgba(164,230,255,.28);
       --text: #e2e2e2;
-      --text-strong: #fff;
-      --text-muted: #bbc9cf;
-      --text-dim: #75838a;
-      --outline: rgba(255, 255, 255, 0.10);
-      --outline-strong: rgba(164, 230, 255, 0.28);
+      --muted: #bbc9cf;
+      --dim: #75838a;
       --cyan: #00d1ff;
       --cyan-soft: #a4e6ff;
-      --cyan-dark: #003543;
       --green: #3ddc97;
       --amber: #ffcc66;
       --red: #ff7a70;
-      --violet: #9db2ff;
-      --glass: rgba(0, 0, 0, 0.68);
-      --card: rgba(26, 26, 26, 0.74);
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 16px;
-      --radius-xl: 24px;
-      --shadow-cyan: 0 0 34px rgba(0, 209, 255, 0.16);
-      --shadow-soft: 0 28px 80px rgba(0, 0, 0, 0.48);
-      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+      --card: rgba(24,24,24,.72);
+      --glass: rgba(0,0,0,.68);
+      --radius: 24px;
+      --shadow: 0 26px 80px rgba(0,0,0,.52);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
       color-scheme: dark;
     }
 
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
-
     body {
-      min-height: 100vh;
       margin: 0;
+      min-height: 100vh;
       color: var(--text);
       background:
-        radial-gradient(circle at 50% -10%, rgba(0, 209, 255, 0.14), transparent 32rem),
-        radial-gradient(circle at 88% 8%, rgba(164, 230, 255, 0.08), transparent 22rem),
-        radial-gradient(circle at 12% 24%, rgba(61, 220, 151, 0.07), transparent 24rem),
+        radial-gradient(circle at 50% -12%, rgba(0,209,255,.16), transparent 34rem),
+        radial-gradient(circle at 12% 16%, rgba(61,220,151,.07), transparent 24rem),
         linear-gradient(180deg, #000 0%, #090909 100%);
       overflow-x: hidden;
     }
-
     body::before {
       content: "";
       position: fixed;
       inset: 0;
       pointer-events: none;
-      opacity: 0.18;
+      opacity: .16;
       background-image:
-        linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+        linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
       background-size: 48px 48px;
-      mask-image: radial-gradient(circle at top, black, transparent 74%);
+      mask-image: radial-gradient(circle at top, black, transparent 76%);
     }
 
     .page {
       position: relative;
       z-index: 1;
-      width: min(1220px, calc(100vw - 32px));
+      width: min(1240px, calc(100vw - 32px));
       margin: 0 auto;
-      padding: 18px 0 72px;
+      padding: 18px 0 70px;
     }
 
-    .top-island {
+    .island {
       position: sticky;
       top: 12px;
-      z-index: 20;
-      width: min(640px, 100%);
-      margin: 0 auto 42px;
+      z-index: 10;
+      width: min(560px, 100%);
+      margin: 0 auto 34px;
       padding: 10px 12px;
-      border: 1px solid var(--outline);
+      border: 1px solid var(--line);
       border-radius: 999px;
       background: var(--glass);
-      box-shadow: var(--shadow-cyan), inset 0 1px rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 34px rgba(0,209,255,.16), inset 0 1px rgba(255,255,255,.08);
       backdrop-filter: blur(34px) saturate(1.15);
     }
-
-    .island-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-height: 22px;
-    }
-
-    .orb {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: var(--cyan);
-      box-shadow: 0 0 22px var(--cyan);
-      flex: 0 0 auto;
-    }
-
-    .island-title {
-      color: var(--text-strong);
-      font-size: 13px;
-      font-weight: 760;
-      letter-spacing: -0.01em;
-    }
-
-    .island-meta {
-      margin-left: auto;
-      color: var(--text-muted);
-      font-size: 11px;
-      font-weight: 720;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-    }
+    .island-row { display: flex; align-items: center; gap: 10px; min-height: 22px; }
+    .orb { width: 10px; height: 10px; border-radius: 999px; background: var(--cyan); box-shadow: 0 0 22px var(--cyan); }
+    .island-title { color: #fff; font-size: 13px; font-weight: 760; }
+    .island-meta { margin-left: auto; color: var(--muted); font-size: 11px; font-weight: 760; letter-spacing: .08em; text-transform: uppercase; }
 
     .hero {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 360px;
-      gap: 24px;
-      align-items: stretch;
-      margin-bottom: 20px;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: end;
+      margin-bottom: 18px;
     }
-
-    .copy,
-    .thinking-card,
-    .nav,
-    .option,
-    .decision-card,
-    .mix-card {
-      border: 1px solid var(--outline);
-      background: rgba(19, 19, 19, 0.72);
+    .kicker { color: var(--cyan-soft); font-size: 11px; font-weight: 760; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { max-width: 820px; margin: 12px 0 10px; color: #fff; font-size: clamp(38px, 6vw, 72px); line-height: .94; letter-spacing: -.06em; }
+    .lead { max-width: 720px; margin: 0; color: var(--muted); font-size: 15px; line-height: 1.65; }
+    .hero-card {
+      width: 310px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: inset 0 1px rgba(255,255,255,.05), var(--shadow);
       backdrop-filter: blur(24px);
-      box-shadow: inset 0 1px rgba(255, 255, 255, 0.05), var(--shadow-soft);
     }
-
-    .copy {
-      position: relative;
-      overflow: hidden;
-      min-height: 360px;
-      padding: 34px;
-      border-radius: var(--radius-xl);
-    }
-
-    .copy::after {
-      content: "";
-      position: absolute;
-      inset: -130px -80px auto auto;
-      width: 320px;
-      height: 320px;
-      border-radius: 999px;
-      background: rgba(0, 209, 255, 0.16);
-      filter: blur(34px);
-    }
-
-    .kicker,
-    .eyebrow {
-      position: relative;
-      z-index: 1;
-      color: var(--cyan-soft);
-      font-size: 11px;
-      font-weight: 760;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    h1 {
-      position: relative;
-      z-index: 1;
-      max-width: 780px;
-      margin: 14px 0 14px;
-      color: var(--text-strong);
-      font-size: clamp(42px, 7vw, 82px);
-      line-height: 0.92;
-      letter-spacing: -0.065em;
-    }
-
-    .lead {
-      position: relative;
-      z-index: 1;
-      max-width: 720px;
-      margin: 0;
-      color: var(--text-muted);
-      font-size: 15px;
-      line-height: 1.68;
-    }
-
-    .actions {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 24px;
-    }
-
-    .button,
-    .chip,
-    .tab,
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid rgba(255, 255, 255, 0.13);
-      border-radius: 999px;
-      color: var(--text);
-      background: rgba(255, 255, 255, 0.035);
-      text-decoration: none;
-      white-space: nowrap;
-    }
-
-    .button {
-      min-height: 38px;
-      padding: 0 16px;
-      font-size: 12px;
-      font-weight: 760;
-      letter-spacing: 0.01em;
-    }
-
-    .button.primary {
-      border-color: transparent;
-      color: #001f28;
-      background: var(--cyan);
-      box-shadow: 0 0 24px rgba(0, 209, 255, 0.24);
-    }
-
-    .thinking-card {
-      position: relative;
-      overflow: hidden;
-      padding: 22px;
-      border-radius: var(--radius-xl);
-      background: rgba(10, 10, 10, 0.78);
-    }
-
-    .thinking-card h2,
-    .decision-card h2,
-    .mix-card h2 {
-      margin: 0 0 14px;
-      color: var(--text-strong);
-      font-size: 20px;
-      line-height: 1.1;
-      letter-spacing: -0.03em;
-    }
-
-    .thinking-list {
-      display: grid;
-      gap: 12px;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-
-    .thinking-list li {
-      display: grid;
-      grid-template-columns: 30px 1fr;
-      gap: 10px;
-      align-items: start;
-      color: var(--text-muted);
-      font-size: 13px;
-      line-height: 1.54;
-    }
-
-    .num {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 30px;
-      height: 30px;
-      border-radius: 999px;
-      color: var(--cyan-soft);
-      background: rgba(0, 209, 255, 0.09);
-      border: 1px solid rgba(164, 230, 255, 0.18);
-      font-size: 11px;
-      font-weight: 800;
-    }
-
-    .thinking-list strong { color: var(--text-strong); }
+    .hero-card b { display: block; color: #fff; font-size: 22px; letter-spacing: -.04em; }
+    .hero-card span { color: var(--dim); font-size: 12px; font-weight: 680; }
 
     .nav {
-      position: sticky;
-      top: 74px;
-      z-index: 18;
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 8px;
-      margin-bottom: 20px;
+      margin: 18px 0;
       padding: 8px;
+      border: 1px solid var(--line);
       border-radius: 999px;
-      background: rgba(0, 0, 0, 0.62);
+      background: rgba(0,0,0,.62);
+      backdrop-filter: blur(22px);
     }
-
     .nav a {
       min-height: 36px;
-      padding: 0 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       border-radius: 999px;
-      color: var(--text-muted);
+      color: var(--muted);
       text-decoration: none;
       font-size: 12px;
-      font-weight: 720;
-      text-align: center;
-      border: 1px solid transparent;
+      font-weight: 760;
     }
-
-    .nav a:first-child {
-      color: #001f28;
-      background: var(--cyan);
-      box-shadow: 0 0 20px rgba(0, 209, 255, 0.18);
-    }
-
-    .quick-grid {
-      display: grid;
-      grid-template-columns: 1.2fr 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .quick-card,
-    .insight,
-    .metric,
-    .mini-card,
-    .choice,
-    .list-item {
-      border: 1px solid var(--outline);
-      border-radius: var(--radius-lg);
-      background: rgba(255, 255, 255, 0.035);
-      box-shadow: inset 0 1px rgba(255, 255, 255, 0.04);
-    }
-
-    .quick-card {
-      min-height: 132px;
-      padding: 16px;
-    }
-
-    .quick-card.recommended {
-      border-color: var(--outline-strong);
-      background: linear-gradient(135deg, rgba(0, 209, 255, 0.13), rgba(255, 255, 255, 0.035));
-    }
-
-    .quick-card small,
-    .panel-kicker {
-      color: var(--text-dim);
-      font-size: 10px;
-      font-weight: 780;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    .quick-card h3,
-    .choice h3 {
-      margin: 9px 0 6px;
-      color: var(--text-strong);
-      font-size: 17px;
-      letter-spacing: -0.03em;
-    }
-
-    .quick-card p,
-    .choice p,
-    .decision-card p,
-    .mix-card p {
-      margin: 0;
-      color: var(--text-muted);
-      font-size: 13px;
-      line-height: 1.58;
-    }
+    .nav a:first-child { color: #001f28; background: var(--cyan); box-shadow: 0 0 20px rgba(0,209,255,.18); }
 
     .option {
-      overflow: hidden;
       margin: 20px 0;
-      border-radius: 28px;
-    }
-
-    .option-head {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 280px;
-      gap: 16px;
-      align-items: start;
-      padding: 22px 24px;
-      border-bottom: 1px solid var(--outline);
-    }
-
-    .option h2 {
-      margin: 10px 0 8px;
-      color: var(--text-strong);
-      font-size: clamp(28px, 4vw, 46px);
-      line-height: 0.98;
-      letter-spacing: -0.055em;
-    }
-
-    .option-desc {
-      max-width: 820px;
-      margin: 0;
-      color: var(--text-muted);
-      font-size: 14px;
-      line-height: 1.64;
-    }
-
-    .best-for {
-      padding: 14px;
-      border: 1px solid var(--outline);
-      border-radius: var(--radius-lg);
-      background: rgba(0, 0, 0, 0.28);
-      color: var(--text-muted);
-      font-size: 12px;
-      line-height: 1.55;
-    }
-
-    .best-for strong {
-      display: block;
-      margin-bottom: 4px;
-      color: var(--text-strong);
-    }
-
-    .mock { padding: 18px; }
-
-    .app-shell {
       overflow: hidden;
-      border: 1px solid var(--outline);
-      border-radius: 24px;
-      background:
-        radial-gradient(circle at 58% -18%, rgba(0, 209, 255, 0.16), transparent 25rem),
-        linear-gradient(180deg, rgba(22, 22, 22, 0.96), rgba(8, 8, 8, 0.98));
-      box-shadow: inset 0 1px rgba(255,255,255,0.07), 0 24px 70px rgba(0,0,0,0.42);
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      background: rgba(19,19,19,.72);
+      box-shadow: inset 0 1px rgba(255,255,255,.05), var(--shadow);
+      backdrop-filter: blur(24px);
     }
+    .option-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 20px 22px;
+      border-bottom: 1px solid var(--line);
+    }
+    .option h2 { margin: 8px 0 6px; color: #fff; font-size: clamp(26px, 3.6vw, 42px); line-height: 1; letter-spacing: -.052em; }
+    .option p { max-width: 650px; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.58; }
+    .pick {
+      min-width: 132px;
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      color: #001f28;
+      background: var(--cyan);
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 0 22px rgba(0,209,255,.20);
+    }
+    .pick.ghost { color: var(--muted); background: rgba(255,255,255,.04); border: 1px solid var(--line); box-shadow: none; }
 
-    .app-topbar {
+    .mock {
+      padding: 18px;
+      background:
+        radial-gradient(circle at 70% 0%, rgba(0,209,255,.10), transparent 22rem),
+        linear-gradient(180deg, rgba(255,255,255,.025), transparent);
+    }
+    .window {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(22,22,22,.98), rgba(8,8,8,.98));
+      box-shadow: inset 0 1px rgba(255,255,255,.07);
+    }
+    .topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
       padding: 12px 14px;
-      border-bottom: 1px solid var(--outline);
-      background: rgba(255, 255, 255, 0.025);
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.025);
     }
-
-    .window-dots {
-      display: flex;
-      gap: 7px;
-      align-items: center;
-    }
-
-    .window-dots span {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: #ff5f57;
-    }
-
-    .window-dots span:nth-child(2) { background: #ffbd2e; }
-    .window-dots span:nth-child(3) { background: #28c840; }
-
-    .crumbs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .chip,
-    .pill {
+    .dots { display: flex; gap: 7px; }
+    .dots span { width: 10px; height: 10px; border-radius: 999px; background: #ff5f57; }
+    .dots span:nth-child(2) { background: #ffbd2e; }
+    .dots span:nth-child(3) { background: #28c840; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .chip {
       min-height: 26px;
+      display: inline-flex;
+      align-items: center;
       padding: 0 10px;
-      color: var(--text-muted);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255,255,255,.035);
       font-size: 11px;
       font-weight: 720;
     }
+    .chip.active { color: #001f28; background: var(--cyan); border-color: transparent; }
 
-    .chip.active,
-    .pill.active {
-      color: #001f28;
-      border-color: transparent;
-      background: var(--cyan);
-    }
-
-    .settings-shell {
-      display: grid;
-      grid-template-columns: 180px minmax(0, 1fr);
-      min-height: 720px;
-    }
-
-    .sidebar {
-      padding: 14px;
-      border-right: 1px solid var(--outline);
-      background: rgba(0, 0, 0, 0.22);
-    }
-
-    .side-title {
-      margin: 0 0 14px;
-      color: var(--text-dim);
-      font-size: 11px;
-      font-weight: 780;
-      letter-spacing: 0.10em;
-      text-transform: uppercase;
-    }
-
-    .side-item {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      min-height: 36px;
-      padding: 0 10px;
-      border-radius: 12px;
-      color: var(--text-muted);
-      font-size: 13px;
-      font-weight: 650;
-    }
-
-    .side-item::before {
-      content: "";
-      width: 8px;
-      height: 8px;
-      border-radius: 99px;
-      background: rgba(255,255,255,0.16);
-    }
-
-    .side-item.active {
-      color: var(--text-strong);
-      background: rgba(0, 209, 255, 0.10);
-      outline: 1px solid rgba(164, 230, 255, 0.18);
-    }
-
-    .side-item.active::before {
-      background: var(--cyan);
-      box-shadow: 0 0 14px var(--cyan);
-    }
-
-    .content {
-      padding: 18px;
-    }
-
+    .content { padding: 18px; }
     .content-head {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 12px;
-      align-items: end;
-      margin-bottom: 14px;
-    }
-
-    .content h3,
-    .panel h3 {
-      margin: 0;
-      color: var(--text-strong);
-      font-size: 20px;
-      line-height: 1.16;
-      letter-spacing: -0.03em;
-    }
-
-    .content-head p,
-    .panel-title p {
-      margin: 5px 0 0;
-      color: var(--text-dim);
-      font-size: 12px;
-      line-height: 1.45;
-    }
-
-    .filters {
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: flex-end;
-    }
-
-    .metric-row {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
       margin-bottom: 12px;
     }
+    .title h3 { margin: 0; color: #fff; font-size: 20px; letter-spacing: -.03em; }
+    .title span { color: var(--dim); font-size: 12px; }
 
-    .metric {
-      min-height: 82px;
-      padding: 13px;
+    .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+    .kpi {
+      min-height: 76px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,.035);
     }
-
-    .metric b {
-      display: block;
-      color: var(--text-strong);
-      font-size: 25px;
-      letter-spacing: -0.04em;
-    }
-
-    .metric span {
-      color: var(--text-dim);
-      font-size: 11px;
-      font-weight: 680;
-    }
-
-    .metric em {
-      display: inline-flex;
-      margin-top: 8px;
-      color: var(--green);
-      font-size: 11px;
-      font-style: normal;
-      font-weight: 760;
-    }
-
-    .metric.warn em { color: var(--amber); }
-    .metric.bad em { color: var(--red); }
+    .kpi b { display: block; color: #fff; font-size: 24px; letter-spacing: -.04em; }
+    .kpi span { color: var(--dim); font-size: 11px; font-weight: 700; }
 
     .panel {
-      border: 1px solid var(--outline);
-      border-radius: var(--radius-xl);
-      background: var(--card);
-      box-shadow: inset 0 1px rgba(255,255,255,0.05);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(26,26,26,.74);
+      box-shadow: inset 0 1px rgba(255,255,255,.05);
     }
+    .panel.pad { padding: 14px; }
+    .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .panel-head h3 { margin: 0; color: #fff; font-size: 18px; letter-spacing: -.03em; }
+    .panel-head span { color: var(--dim); font-size: 11px; }
 
-    .panel + .panel { margin-top: 12px; }
-
-    .panel-title {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 14px;
-      margin-bottom: 14px;
-    }
-
-    .heatmap-panel { padding: 16px; }
-
-    .heatmap-shell {
+    .heat-wrap {
       overflow: hidden;
       padding: 12px;
-      border: 1px solid rgba(164, 230, 255, 0.14);
+      border: 1px solid rgba(164,230,255,.14);
       border-radius: 18px;
-      background: rgba(0, 0, 0, 0.28);
+      background: rgba(0,0,0,.26);
     }
+    .months { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 8px; color: var(--dim); font-size: 10px; font-weight: 760; letter-spacing: .06em; text-transform: uppercase; }
+    .calendar { display: grid; grid-template-columns: repeat(52, minmax(8px, 1fr)); grid-template-rows: repeat(7, 10px); grid-auto-flow: column; gap: 4px; min-width: 760px; }
+    .cell { border-radius: 3px; background: rgba(255,255,255,.055); outline: 1px solid rgba(255,255,255,.035); }
+    .cell.l1 { background: rgba(0,209,255,.16); }
+    .cell.l2 { background: rgba(0,209,255,.29); }
+    .cell.l3 { background: rgba(0,209,255,.50); }
+    .cell.l4 { background: rgba(61,220,151,.58); }
+    .cell.l5 { background: rgba(255,204,102,.72); }
+    .cell.l6 { background: rgba(255,122,112,.88); box-shadow: 0 0 16px rgba(255,122,112,.24); }
+    .legend { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 10px; color: var(--dim); font-size: 10px; font-weight: 760; }
+    .legend .cell { width: 12px; height: 12px; }
 
-    .heatmap-head {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      margin-bottom: 8px;
-      color: var(--text-dim);
-      font-size: 10px;
-      font-weight: 760;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    .calendar {
-      display: grid;
-      grid-template-columns: repeat(52, minmax(8px, 1fr));
-      grid-template-rows: repeat(7, 10px);
-      grid-auto-flow: column;
-      gap: 4px;
-      min-width: 760px;
-    }
-
-    .day {
-      border-radius: 3px;
-      background: rgba(255,255,255,0.055);
-      outline: 1px solid rgba(255,255,255,0.035);
-    }
-
-    .day.l1 { background: rgba(0, 209, 255, 0.16); }
-    .day.l2 { background: rgba(0, 209, 255, 0.28); }
-    .day.l3 { background: rgba(0, 209, 255, 0.48); }
-    .day.l4 { background: rgba(61, 220, 151, 0.58); }
-    .day.l5 { background: rgba(255, 204, 102, 0.72); }
-    .day.l6 { background: rgba(255, 122, 112, 0.86); box-shadow: 0 0 16px rgba(255, 122, 112, 0.22); }
-
-    .legend {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 6px;
-      margin-top: 10px;
-      color: var(--text-dim);
-      font-size: 10px;
-      font-weight: 700;
-    }
-
-    .legend .day {
-      width: 12px;
-      height: 12px;
-    }
-
-    .insight-row {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .insight {
-      min-height: 88px;
-      padding: 13px;
-      color: var(--text-muted);
-      font-size: 12px;
-      line-height: 1.52;
-    }
-
-    .insight strong {
-      display: block;
-      margin-bottom: 5px;
-      color: var(--text-strong);
-      font-size: 13px;
-    }
-
-    .lower-grid {
-      display: grid;
-      grid-template-columns: 1.4fr 1fr;
-      gap: 12px;
-      margin-top: 12px;
-    }
-
-    .spark-bars {
-      display: flex;
-      align-items: end;
-      gap: 7px;
-      height: 178px;
-      padding: 14px 4px 0;
-    }
-
-    .bar {
-      flex: 1;
-      min-width: 8px;
-      border-radius: 999px 999px 3px 3px;
-      background: linear-gradient(180deg, var(--cyan), rgba(0, 209, 255, 0.20));
-    }
-
-    .bar.green { background: linear-gradient(180deg, var(--green), rgba(61, 220, 151, 0.18)); }
-    .bar.amber { background: linear-gradient(180deg, var(--amber), rgba(255, 204, 102, 0.18)); }
-
-    .list {
-      display: grid;
-      gap: 8px;
-    }
-
-    .list-item {
+    .below { display: grid; grid-template-columns: 1.2fr .8fr; gap: 12px; margin-top: 12px; }
+    .bars { height: 138px; display: flex; align-items: end; gap: 7px; padding: 12px 4px 0; }
+    .bar { flex: 1; min-width: 7px; border-radius: 999px 999px 3px 3px; background: linear-gradient(180deg, var(--cyan), rgba(0,209,255,.18)); }
+    .bar.green { background: linear-gradient(180deg, var(--green), rgba(61,220,151,.16)); }
+    .bar.warn { background: linear-gradient(180deg, var(--amber), rgba(255,204,102,.16)); }
+    .mini-list { display: grid; gap: 8px; }
+    .row {
+      min-height: 38px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      min-height: 40px;
-      padding: 0 11px;
-      color: var(--text-muted);
-      font-size: 12px;
-      font-weight: 680;
-    }
-
-    .list-item span { color: var(--text-strong); }
-
-    .mini-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .mini-card {
-      min-height: 96px;
-      padding: 13px;
-    }
-
-    .mini-card b {
-      display: block;
-      color: var(--text-strong);
-      font-size: 23px;
-      letter-spacing: -0.035em;
-    }
-
-    .mini-card span {
-      color: var(--text-dim);
-      font-size: 11px;
-      font-weight: 680;
-    }
-
-    .sankey,
-    .stream,
-    .waterfall,
-    .scatter,
-    .radar {
-      overflow: hidden;
-      border: 1px solid var(--outline);
-      border-radius: 18px;
-      background: rgba(0,0,0,0.25);
-    }
-
-    .two-grid {
-      display: grid;
-      grid-template-columns: 1.2fr 0.8fr;
-      gap: 12px;
-    }
-
-    .matrix {
-      display: grid;
-      grid-template-columns: 132px repeat(7, minmax(72px, 1fr));
-      gap: 6px;
-      overflow-x: auto;
-      padding-bottom: 2px;
-    }
-
-    .matrix-cell {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 42px;
       padding: 0 10px;
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 12px;
-      color: var(--text-muted);
-      background: rgba(255,255,255,0.035);
-      font-size: 11px;
-      font-weight: 760;
-    }
-
-    .matrix-cell.name {
-      justify-content: flex-start;
-      color: var(--text-strong);
-      background: rgba(255,255,255,0.055);
-    }
-
-    .hot1 { background: rgba(0,209,255,.12); color: var(--cyan-soft); }
-    .hot2 { background: rgba(0,209,255,.24); color: var(--cyan-soft); }
-    .hot3 { background: rgba(61,220,151,.32); color: #e8fff6; }
-    .hot4 { background: rgba(255,204,102,.48); color: #fff6df; }
-    .hot5 { background: rgba(255,122,112,.58); color: #fff0ef; box-shadow: 0 0 18px rgba(255,122,112,.14); }
-
-    .choice-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .choice {
-      min-height: 132px;
-      padding: 14px;
-    }
-
-    .decision-card,
-    .mix-card {
-      margin-top: 20px;
-      padding: 22px;
-      border-radius: var(--radius-xl);
-    }
-
-    .checklist {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 16px;
-    }
-
-    .check {
-      min-height: 86px;
-      padding: 13px;
-      border: 1px solid var(--outline);
-      border-radius: var(--radius-lg);
-      background: rgba(255,255,255,0.035);
-      color: var(--text-muted);
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      color: var(--muted);
+      background: rgba(255,255,255,.035);
       font-size: 12px;
-      line-height: 1.5;
+      font-weight: 680;
     }
+    .row b { color: #fff; }
 
-    .check strong {
-      display: block;
-      margin-bottom: 5px;
-      color: var(--text-strong);
-      font-size: 13px;
+    .split-grid { display: grid; grid-template-columns: 1fr 260px; gap: 12px; }
+    .day-card { min-height: 100%; padding: 14px; border-left: 1px solid var(--line); background: rgba(255,255,255,.025); }
+    .big-number { color: #fff; font-size: 40px; font-weight: 780; letter-spacing: -.06em; }
+    .day-card p { margin: 8px 0 14px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+    .lanes { display: grid; gap: 10px; }
+    .lane { display: grid; grid-template-columns: 118px 1fr 62px; gap: 10px; align-items: center; }
+    .lane-name { color: var(--muted); font-size: 12px; font-weight: 740; }
+    .lane-total { color: #fff; font-size: 12px; font-weight: 780; text-align: right; }
+    .lane-map { display: grid; grid-template-columns: repeat(28, 1fr); gap: 4px; min-height: 12px; }
+    .lane-map .cell { height: 12px; }
+
+    .hour-grid { display: grid; grid-template-columns: 60px repeat(24, minmax(10px, 1fr)); gap: 4px; overflow-x: auto; }
+    .hour-label, .hour { min-height: 18px; display: flex; align-items: center; justify-content: center; color: var(--dim); font-size: 10px; font-weight: 760; }
+    .hour-label { justify-content: flex-start; color: var(--muted); }
+    .hour { border-radius: 5px; background: rgba(255,255,255,.055); }
+    .hour.l1 { background: rgba(0,209,255,.16); }
+    .hour.l2 { background: rgba(0,209,255,.30); }
+    .hour.l3 { background: rgba(0,209,255,.52); }
+    .hour.l4 { background: rgba(61,220,151,.58); }
+    .hour.l5 { background: rgba(255,204,102,.72); }
+    .hour.l6 { background: rgba(255,122,112,.88); }
+
+    .summary {
+      margin-top: 20px;
+      padding: 18px;
+      border: 1px solid var(--line-hot);
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, rgba(0,209,255,.12), rgba(255,255,255,.03));
+      box-shadow: inset 0 1px rgba(255,255,255,.05), var(--shadow);
     }
+    .summary h2 { margin: 0 0 8px; color: #fff; font-size: 24px; letter-spacing: -.04em; }
+    .summary p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.58; }
 
-    .accent-line {
-      height: 2px;
-      width: 84px;
-      margin-top: 16px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, var(--cyan), transparent);
+    @media (max-width: 980px) {
+      .hero, .below, .split-grid { grid-template-columns: 1fr; }
+      .hero-card { width: 100%; }
+      .nav { grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: 22px; }
+      .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .day-card { border-left: 0; border-top: 1px solid var(--line); }
     }
-
-    @media (max-width: 1060px) {
-      .hero,
-      .quick-grid,
-      .settings-shell,
-      .lower-grid,
-      .two-grid,
-      .option-head { grid-template-columns: 1fr; }
-      .sidebar { display: none; }
-      .choice-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .nav { border-radius: 22px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-
-    @media (max-width: 720px) {
-      .page { width: min(100% - 20px, 1220px); }
-      .copy, .thinking-card, .decision-card, .mix-card { padding: 18px; }
-      .content { padding: 12px; }
-      .content-head,
-      .app-topbar { align-items: flex-start; grid-template-columns: 1fr; flex-direction: column; }
-      .filters { justify-content: flex-start; }
-      .metric-row,
-      .insight-row,
-      .mini-grid,
-      .choice-grid,
-      .checklist { grid-template-columns: 1fr; }
-      h1 { font-size: 44px; }
-      .nav { position: static; grid-template-columns: 1fr; border-radius: 18px; }
+    @media (max-width: 680px) {
+      .page { width: min(100% - 20px, 1240px); }
+      .option-head, .content-head, .topbar { flex-direction: column; align-items: flex-start; }
+      .nav, .kpis { grid-template-columns: 1fr; border-radius: 18px; }
       .calendar { grid-template-columns: repeat(26, minmax(8px, 1fr)); min-width: 0; }
-      .heatmap-head { grid-template-columns: repeat(4, 1fr); }
+      .months { grid-template-columns: repeat(4, 1fr); }
+      .lane { grid-template-columns: 1fr; }
+      .lane-total { text-align: left; }
+      h1 { font-size: 42px; }
     }
   </style>
 </head>
 <body>
   <main class="page">
-    <div class="top-island" aria-label="Aisland status island">
-      <div class="island-row"><span class="orb"></span><span class="island-title">Aisland · Usage tab design review</span><span class="island-meta">local-first</span></div>
+    <div class="island">
+      <div class="island-row"><span class="orb"></span><span class="island-title">Aisland · Usage Heatmap Options</span><span class="island-meta">choose one</span></div>
     </div>
 
     <section class="hero">
-      <div class="copy">
-        <div class="kicker">Aisland Cyber-Minimalist / Usage Monitoring</div>
-        <h1>把用量监测收成一块安静、可信、能行动的仪表板。</h1>
-        <p class="lead">这版不再做泛化 BI 页面，而是贴合 Aisland 的黑色玻璃、细描边、青色状态光和紧凑 macOS 工具感。核心判断：用量页不是“字段浏览器”，而是帮用户在几秒内回答三件事——今天有没有异常、异常从哪里来、下一步怎么处理。</p>
-        <div class="actions">
-          <a class="button primary" href="#option-a">看推荐主方案</a>
-          <a class="button" href="#thinking">设计思考</a>
-          <a class="button" href="#mix">可混搭模块</a>
-        </div>
+      <div>
+        <div class="kicker">Usage Monitoring / Heatmap only</div>
+        <h1>只保留 Contribution heatmap，做 4 个可选呈现。</h1>
+        <p class="lead">去掉字段面板，去掉复杂分析页。每个方案都围绕热力图展开，差别只在信息密度和点击后的辅助内容。</p>
       </div>
-      <aside class="thinking-card" id="thinking">
-        <h2>这版的取舍</h2>
-        <ul class="thinking-list">
-          <li><span class="num">01</span><span><strong>移除右侧字段面板</strong>默认视野只保留监测、解释、行动。字段选择放到顶部筛选和“保存视图”。</span></li>
-          <li><span class="num">02</span><span><strong>贡献热力图变成主画布</strong>横向 52 周宽图占据首屏，保持 Aisland 的轻密度信息风格。</span></li>
-          <li><span class="num">03</span><span><strong>解释少而准</strong>用 3 个 insight 卡回答峰值、来源、建议，而不是堆更多图。</span></li>
-          <li><span class="num">04</span><span><strong>延续主题语言</strong>黑底、玻璃卡、单一青色主强调，异常只用小面积琥珀/红色。</span></li>
-        </ul>
-      </aside>
+      <div class="hero-card"><b>A 最推荐</b><span>宽热力图 + 少量指标，最贴合 Aisland。</span></div>
     </section>
 
-    <nav class="nav" aria-label="方案导航">
-      <a href="#option-a">A 推荐：Focus Board</a>
-      <a href="#option-b">B 归因：Flow</a>
-      <a href="#option-c">C 预算：Burn</a>
-      <a href="#option-d">D 团队：Matrix</a>
+    <nav class="nav">
+      <a href="#a">A / Clean Wide</a>
+      <a href="#b">B / Day Focus</a>
+      <a href="#c">C / Agent Lanes</a>
+      <a href="#d">D / Hour Lens</a>
     </nav>
 
-    <section class="quick-grid" aria-label="快速选择">
-      <article class="quick-card recommended"><small>Recommended default</small><h3>A / Focus Board</h3><p>最贴合当前 Aisland：首屏一个宽热力图、四个关键指标、三条解释。简洁、低学习成本，适合先落地。</p></article>
-      <article class="quick-card"><small>Secondary drawer</small><h3>B / Flow RCA</h3><p>点击异常热力格后打开，用流向图 + 事件线解释峰值链路，不干扰默认页。</p></article>
-      <article class="quick-card"><small>Management view</small><h3>C / Budget Burn</h3><p>给 owner 看预算燃尽、超支日期和节省动作，适合作为顶部风险卡或二级视图。</p></article>
-    </section>
-
-    <section class="option" id="option-a">
+    <section class="option" id="a">
       <header class="option-head">
-        <div>
-          <div class="eyebrow">A / 推荐主方案</div>
-          <h2>Focus Board：宽热力图 + 少量高信号解释</h2>
-          <p class="option-desc">默认 TAB 只保留“监测必需品”：顶部筛选、KPI、52 周贡献热力图、异常解释、模型排行。它最大化热力图宽度，同时把右侧字段面板完全移出默认视野。</p>
-        </div>
-        <div class="best-for"><strong>为什么推荐</strong>它和当前 `UsageAnalyticsPane` 的贡献热力图 / 日趋势结构最接近，改造成本低；视觉上也最像 Aisland：黑色玻璃、单一青色、紧凑指标。</div>
+        <div><div class="kicker">A / Recommended</div><h2>Clean Wide</h2><p>一张最宽的 52 周热力图，下面只留趋势和 Top drivers。</p></div>
+        <span class="pick">推荐</span>
       </header>
       <div class="mock">
-        <div class="app-shell">
-          <div class="app-topbar">
-            <div class="window-dots"><span></span><span></span><span></span></div>
-            <div class="crumbs"><span class="chip active">Usage</span><span class="chip">Last 90 days</span><span class="chip">All agents</span><span class="chip">Saved view</span></div>
-            <div class="crumbs"><span class="chip">Export</span><span class="chip">Alert rules</span></div>
-          </div>
-          <div class="settings-shell">
-            <aside class="sidebar">
-              <p class="side-title">Settings</p>
-              <div class="side-item">General</div>
-              <div class="side-item">AI Chat</div>
-              <div class="side-item">Setup</div>
-              <div class="side-item active">Usage</div>
-              <div class="side-item">Display</div>
-              <div class="side-item">Shortcuts</div>
-            </aside>
-            <section class="content">
-              <div class="content-head">
-                <div><h3>Usage Monitoring</h3><p>Local logs only · Codex / Claude / OpenCode aggregated · field panel hidden by default</p></div>
-                <div class="filters"><span class="pill active">90D</span><span class="pill">Project</span><span class="pill">Model</span><span class="pill">Fields</span></div>
-              </div>
-
-              <div class="metric-row">
-                <div class="metric"><b>18.6M</b><span>tokens this week</span><em>+12% vs last week</em></div>
-                <div class="metric"><b>$742</b><span>estimated cost</span><em>within budget</em></div>
-                <div class="metric bad"><b>3</b><span>abnormal windows</span><em>needs review</em></div>
-                <div class="metric warn"><b>94.2%</b><span>success rate</span><em>-1.8%</em></div>
-              </div>
-
-              <div class="panel heatmap-panel">
-                <div class="panel-title"><div><h3>Contribution heatmap</h3><p>52-week wide canvas. Cyan = stable usage, amber/red = anomaly pressure.</p></div><span class="pill active">wide</span></div>
-                <div class="heatmap-shell">
-                  <div class="heatmap-head"><span>Apr</span><span>Jun</span><span>Aug</span><span>Oct</span><span>Dec</span><span>Feb</span><span>Apr</span></div>
-                  <div class="calendar" aria-label="52 周贡献热力图">
-                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                    <span class="day l1"></span><span class="day l3"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span><span class="day l2"></span>
-                    <span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l5"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
-                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l1"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                    <span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
-                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l1"></span><span class="day l2"></span><span class="day l4"></span><span class="day l5"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
-                    <span class="day"></span><span class="day l1"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l3"></span><span class="day l1"></span>
-                    <span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l2"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
-                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l5"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l4"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                    <span class="day l1"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
-                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l2"></span><span class="day l3"></span><span class="day l5"></span><span class="day l6"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l5"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l3"></span><span class="day l1"></span>
-                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l4"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l5"></span><span class="day l4"></span><span class="day l2"></span><span class="day"></span>
-                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l3"></span><span class="day l1"></span>
-                    <span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
-                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l5"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l4"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l3"></span><span class="day l1"></span>
-                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span><span class="day"></span>
-                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l2"></span><span class="day l3"></span><span class="day l5"></span><span class="day l6"></span><span class="day l4"></span><span class="day l2"></span><span class="day"></span>
-                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l5"></span><span class="day l4"></span><span class="day l1"></span><span class="day"></span>
-                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l6"></span><span class="day l4"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l4"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l5"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span><span class="day l4"></span><span class="day l2"></span><span class="day"></span>
-                    <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l2"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                    <span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l3"></span><span class="day l2"></span><span class="day l1"></span>
-                    <span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l5"></span><span class="day l3"></span><span class="day l1"></span><span class="day"></span>
-                  </div>
-                  <div class="legend">less <span class="day"></span><span class="day l1"></span><span class="day l2"></span><span class="day l3"></span><span class="day l4"></span><span class="day l6"></span> more</div>
-                </div>
-                <div class="insight-row">
-                  <div class="insight"><strong>峰值解释</strong>周四 14:00 的红格来自批处理重试，输出 token 比同窗口均值高 38%。</div>
-                  <div class="insight"><strong>贡献来源</strong>61% 消耗来自 3 个自动化任务；人工会话保持稳定，不需要扩大治理范围。</div>
-                  <div class="insight"><strong>建议动作</strong>给 nightly job 设置 25k token 软阈值，并把重试间隔从 30s 拉到 120s。</div>
-                </div>
-              </div>
-
-              <div class="lower-grid">
-                <div class="panel">
-                  <div class="panel-title"><div><h3>Daily token trend</h3><p>保留现有日趋势，但缩成解释热力图的辅助视图。</p></div><span class="pill">30D</span></div>
-                  <div class="spark-bars"><span class="bar" style="height:46%"></span><span class="bar green" style="height:55%"></span><span class="bar" style="height:61%"></span><span class="bar" style="height:48%"></span><span class="bar green" style="height:74%"></span><span class="bar amber" style="height:92%"></span><span class="bar" style="height:62%"></span><span class="bar green" style="height:70%"></span><span class="bar" style="height:86%"></span><span class="bar amber" style="height:78%"></span><span class="bar green" style="height:58%"></span><span class="bar" style="height:82%"></span></div>
-                </div>
-                <div class="panel">
-                  <div class="panel-title"><div><h3>Top drivers</h3><p>替代右侧字段面板的默认信息。</p></div></div>
-                  <div class="list">
-                    <div class="list-item">Code generation / gpt-5.4 <span>42%</span></div>
-                    <div class="list-item">Design parsing / vision <span>26%</span></div>
-                    <div class="list-item">Batch fix / codex <span>19%</span></div>
-                    <div class="list-item">Docs summary / mini <span>13%</span></div>
-                  </div>
-                </div>
-              </div>
-            </section>
+        <div class="window">
+          <div class="topbar"><div class="dots"><span></span><span></span><span></span></div><div class="chips"><span class="chip active">Usage</span><span class="chip">90D</span><span class="chip">All agents</span><span class="chip">Fields</span></div></div>
+          <div class="content">
+            <div class="content-head"><div class="title"><h3>Contribution heatmap</h3><span>Local usage · compact monitoring</span></div><div class="chips"><span class="chip active">Tokens</span><span class="chip">Cost</span><span class="chip">Calls</span></div></div>
+            <div class="kpis"><div class="kpi"><b>18.6M</b><span>tokens</span></div><div class="kpi"><b>$742</b><span>estimated</span></div><div class="kpi"><b>94%</b><span>success</span></div><div class="kpi"><b>3</b><span>hot days</span></div></div>
+            <div class="panel pad">
+              <div class="panel-head"><div><h3>52-week contribution</h3><span>wide canvas</span></div><span class="chip active">Live</span></div>
+              <div class="heat-wrap"><div class="months"><span>Apr</span><span>Jun</span><span>Aug</span><span>Oct</span><span>Dec</span><span>Feb</span><span>Apr</span></div><div class="calendar" data-heatmap="wide"></div><div class="legend">less <span class="cell"></span><span class="cell l1"></span><span class="cell l2"></span><span class="cell l3"></span><span class="cell l4"></span><span class="cell l6"></span> more</div></div>
+            </div>
+            <div class="below">
+              <div class="panel pad"><div class="panel-head"><div><h3>Daily trend</h3><span>small support chart</span></div></div><div class="bars" data-bars="a"></div></div>
+              <div class="panel pad"><div class="panel-head"><div><h3>Top drivers</h3><span>no side panel</span></div></div><div class="mini-list"><div class="row">Codex batch fix <b>42%</b></div><div class="row">Claude review <b>27%</b></div><div class="row">OpenCode plugin <b>18%</b></div></div></div>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="option" id="option-b">
-      <header class="option-head"><div><div class="eyebrow">B / 异常归因</div><h2>Flow RCA：点击热力格后的解释抽屉</h2><p class="option-desc">B 不建议做默认页。它更适合从 A 的异常红格进入：看团队、场景、模型之间的用量流向，再用事件时间线解释峰值前后的动作。</p></div><div class="best-for"><strong>实用点</strong>当用户问“为什么这里红了”，B 能给链路证据，而不是让用户自己翻字段。</div></header>
-      <div class="mock"><div class="app-shell" style="padding:18px;"><div class="two-grid"><div class="panel"><div class="panel-title"><div><h3>Usage flow</h3><p>从 agent / 场景 / 模型看消耗流向。</p></div><span class="pill active">cost weighted</span></div><div class="sankey"><svg viewBox="0 0 860 320" role="img" aria-label="用量流向图"><defs><linearGradient id="flowA" x1="0" x2="1"><stop offset="0" stop-color="#00d1ff" stop-opacity=".78"/><stop offset="1" stop-color="#ff7a70" stop-opacity=".48"/></linearGradient><linearGradient id="flowB" x1="0" x2="1"><stop offset="0" stop-color="#3ddc97" stop-opacity=".72"/><stop offset="1" stop-color="#00d1ff" stop-opacity=".38"/></linearGradient><linearGradient id="flowC" x1="0" x2="1"><stop offset="0" stop-color="#ffcc66" stop-opacity=".68"/><stop offset="1" stop-color="#9db2ff" stop-opacity=".36"/></linearGradient></defs><path d="M110 80 C270 58 330 82 460 118 S650 178 760 92" fill="none" stroke="url(#flowA)" stroke-width="42" stroke-linecap="round"/><path d="M110 162 C280 192 330 146 460 158 S650 130 760 176" fill="none" stroke="url(#flowB)" stroke-width="32" stroke-linecap="round"/><path d="M110 246 C270 226 350 244 464 218 S640 242 760 250" fill="none" stroke="url(#flowC)" stroke-width="26" stroke-linecap="round"/><g font-family="Inter, sans-serif" font-size="14" font-weight="760" fill="#e2e2e2"><rect x="32" y="52" width="148" height="52" rx="14" fill="#1b1b1b" stroke="rgba(255,255,255,.12)"/><text x="58" y="84">Codex</text><rect x="32" y="136" width="148" height="52" rx="14" fill="#1b1b1b" stroke="rgba(255,255,255,.12)"/><text x="58" y="168">Claude Code</text><rect x="32" y="220" width="148" height="52" rx="14" fill="#1b1b1b" stroke="rgba(255,255,255,.12)"/><text x="58" y="252">OpenCode</text><rect x="382" y="96" width="158" height="52" rx="14" fill="#1b1b1b" stroke="rgba(255,255,255,.12)"/><text x="414" y="128">Batch fix</text><rect x="382" y="180" width="158" height="52" rx="14" fill="#1b1b1b" stroke="rgba(255,255,255,.12)"/><text x="414" y="212">Design parse</text><rect x="700" y="64" width="126" height="52" rx="14" fill="#1b1b1b" stroke="rgba(255,255,255,.12)"/><text x="737" y="96">5.4</text><rect x="700" y="148" width="126" height="52" rx="14" fill="#1b1b1b" stroke="rgba(255,255,255,.12)"/><text x="730" y="180">Codex</text><rect x="700" y="232" width="126" height="52" rx="14" fill="#1b1b1b" stroke="rgba(255,255,255,.12)"/><text x="738" y="264">Mini</text></g></svg></div></div><div class="panel"><div class="panel-title"><div><h3>Event line</h3><p>把异常窗口附近的事件串起来。</p></div></div><div class="list"><div class="list-item">13:04 Batch job started <span>4,208 req</span></div><div class="list-item">13:27 Retry rate jumped <span>+19%</span></div><div class="list-item">14:12 Budget alert fired <span>70%</span></div><div class="list-item">15:30 Queue drained <span>normal</span></div></div></div></div></div></div>
-    </section>
-
-    <section class="option" id="option-c">
-      <header class="option-head"><div><div class="eyebrow">C / 预算与管理</div><h2>Budget Burn：少数 owner 需要的成本解释</h2><p class="option-desc">把“用了多少”翻译成“还能花多久、为什么变贵、哪里能省”。它适合二级视图或风险告警卡，不适合占据默认监控首屏。</p></div><div class="best-for"><strong>实用点</strong>给预算 owner 直接动作：限制批处理、切模型、开缓存，而不是只看账单。</div></header>
-      <div class="mock"><div class="app-shell" style="padding:18px;"><div class="two-grid"><div class="panel"><div class="panel-title"><div><h3>Cost waterfall</h3><p>解释本月较上月多花在哪。</p></div><span class="pill">+$186</span></div><div class="waterfall"><svg viewBox="0 0 900 260" aria-label="成本瀑布图"><line x1="58" y1="212" x2="850" y2="212" stroke="rgba(255,255,255,.16)"/><g font-family="Inter, sans-serif" font-size="13" font-weight="760"><rect x="74" y="134" width="78" height="78" rx="12" fill="#353535"/><text x="89" y="236" fill="#75838a">Last</text><text x="95" y="178" fill="#fff">$556</text><rect x="194" y="92" width="78" height="42" rx="12" fill="#ff7a70"/><text x="194" y="236" fill="#75838a">Req</text><text x="212" y="119" fill="#fff">+94</text><rect x="314" y="70" width="78" height="22" rx="10" fill="#ff7a70"/><text x="310" y="236" fill="#75838a">Output</text><text x="332" y="86" fill="#fff">+51</text><rect x="434" y="52" width="78" height="18" rx="9" fill="#ff7a70"/><text x="438" y="236" fill="#75838a">Retry</text><text x="454" y="66" fill="#fff">+33</text><rect x="554" y="52" width="78" height="38" rx="12" fill="#3ddc97"/><text x="548" y="236" fill="#75838a">Cache</text><text x="572" y="76" fill="#001f28">-28</text><rect x="674" y="34" width="78" height="18" rx="9" fill="#ffcc66"/><text x="664" y="236" fill="#75838a">Model</text><text x="696" y="48" fill="#001f28">+36</text><rect x="794" y="34" width="78" height="178" rx="12" fill="#00d1ff"/><text x="804" y="236" fill="#75838a">Now</text><text x="814" y="128" fill="#001f28">$742</text></g></svg></div></div><div class="panel"><div class="panel-title"><div><h3>Risk</h3><p>当前速度将在 8 天后撞线。</p></div></div><div class="mini-grid"><div class="mini-card"><b>72%</b><span>budget used</span></div><div class="mini-card"><b>8d</b><span>safe window</span></div><div class="mini-card"><b>$118</b><span>projected overrun</span></div><div class="mini-card"><b>21%</b><span>save potential</span></div></div></div></div></div></div>
-    </section>
-
-    <section class="option" id="option-d">
-      <header class="option-head"><div><div class="eyebrow">D / 团队治理</div><h2>Team Matrix：贡献者维度，不做默认入口</h2><p class="option-desc">当用户需要分摊成本或培训团队时，把宽热力图切成贡献者矩阵。它信息密度高，但默认展示会让页面变重，所以建议作为维度切换。</p></div><div class="best-for"><strong>实用点</strong>发现“高成本低成功率”的自动化任务，以及哪个团队需要优化 prompt / 缓存 / 模型选择。</div></header>
-      <div class="mock"><div class="app-shell" style="padding:18px;"><div class="two-grid"><div class="panel"><div class="panel-title"><div><h3>Contributor matrix</h3><p>行是贡献者或项目，列是最近 7 天。</p></div><span class="pill active">wide</span></div><div class="matrix"><div class="matrix-cell name">Contributor</div><div class="matrix-cell">Mon</div><div class="matrix-cell">Tue</div><div class="matrix-cell">Wed</div><div class="matrix-cell">Thu</div><div class="matrix-cell">Fri</div><div class="matrix-cell">Sat</div><div class="matrix-cell">Sun</div><div class="matrix-cell name">Design Bot</div><div class="matrix-cell hot2">18k</div><div class="matrix-cell hot3">24k</div><div class="matrix-cell hot2">19k</div><div class="matrix-cell hot4">48k</div><div class="matrix-cell hot3">31k</div><div class="matrix-cell hot1">6k</div><div class="matrix-cell">2k</div><div class="matrix-cell name">Code Review</div><div class="matrix-cell hot1">9k</div><div class="matrix-cell hot2">16k</div><div class="matrix-cell hot3">28k</div><div class="matrix-cell hot3">29k</div><div class="matrix-cell hot2">15k</div><div class="matrix-cell hot1">4k</div><div class="matrix-cell">1k</div><div class="matrix-cell name">Data Sync</div><div class="matrix-cell hot2">14k</div><div class="matrix-cell hot2">17k</div><div class="matrix-cell hot3">32k</div><div class="matrix-cell hot5">55k</div><div class="matrix-cell hot4">42k</div><div class="matrix-cell hot1">8k</div><div class="matrix-cell hot1">7k</div><div class="matrix-cell name">Docs Agent</div><div class="matrix-cell">3k</div><div class="matrix-cell hot1">7k</div><div class="matrix-cell hot1">8k</div><div class="matrix-cell hot2">13k</div><div class="matrix-cell hot2">12k</div><div class="matrix-cell">2k</div><div class="matrix-cell">1k</div></div></div><div class="panel"><div class="panel-title"><div><h3>Efficiency radar</h3><p>治理视角只保留聚合评分。</p></div></div><div class="radar"><svg viewBox="0 0 260 248" aria-label="效率雷达图"><g transform="translate(130 124)" fill="none" stroke="rgba(255,255,255,.16)"><polygon points="0,-86 82,-27 51,70 -51,70 -82,-27"/><polygon points="0,-58 55,-18 34,47 -34,47 -55,-18"/><polygon points="0,-30 29,-9 18,24 -18,24 -29,-9"/><polygon points="0,-78 66,-22 34,58 -44,60 -68,-18" fill="rgba(0,209,255,.22)" stroke="#00d1ff" stroke-width="3"/></g><g font-family="Inter, sans-serif" font-size="11" font-weight="760" fill="#bbc9cf"><text x="114" y="20">success</text><text x="204" y="94">cost</text><text x="178" y="216">latency</text><text x="36" y="216">retry</text><text x="18" y="94">cache</text></g></svg></div></div></div></div></div>
-    </section>
-
-    <section class="mix-card" id="mix">
-      <div class="eyebrow">Mix / 只加高信号模块</div>
-      <h2>如果要再加，不要加字段面板，加这些轻量模块</h2>
-      <p>这些模块都可以作为 A 的点击态、抽屉或顶部风险卡；每次只加 1-2 个，保持 Aisland 简洁。</p>
-      <div class="choice-grid" style="margin-top:16px;">
-        <div class="choice"><h3>小时 x 星期热力图</h3><p>适合识别夜间批处理和固定时段拥堵。</p></div>
-        <div class="choice"><h3>异常任务榜</h3><p>按重试、长输出、低缓存命中排序，直接给处理入口。</p></div>
-        <div class="choice"><h3>预算风险条</h3><p>一条细进度线显示预算燃尽和撞线日期。</p></div>
-        <div class="choice"><h3>日历注释层</h3><p>在热力图上叠加发布、配置变更、批处理事件。</p></div>
+    <section class="option" id="b">
+      <header class="option-head">
+        <div><div class="kicker">B / Selected day</div><h2>Day Focus</h2><p>热力图仍然最宽，右侧不放字段，只放选中日期摘要。</p></div>
+        <span class="pick ghost">可选</span>
+      </header>
+      <div class="mock">
+        <div class="window">
+          <div class="topbar"><div class="dots"><span></span><span></span><span></span></div><div class="chips"><span class="chip active">Usage</span><span class="chip">Selected Apr 24</span><span class="chip">Details</span></div></div>
+          <div class="split-grid">
+            <div class="content">
+              <div class="panel pad"><div class="panel-head"><div><h3>Contribution heatmap</h3><span>click a day to inspect</span></div></div><div class="heat-wrap"><div class="months"><span>Apr</span><span>Jun</span><span>Aug</span><span>Oct</span><span>Dec</span><span>Feb</span><span>Apr</span></div><div class="calendar" data-heatmap="focus"></div><div class="legend">less <span class="cell"></span><span class="cell l1"></span><span class="cell l2"></span><span class="cell l3"></span><span class="cell l4"></span><span class="cell l6"></span> more</div></div></div>
+            </div>
+            <aside class="day-card"><div class="kicker">Selected day</div><div class="big-number">1.2M</div><p>Apr 24 · 2 abnormal sessions · retry cost increased.</p><div class="mini-list"><div class="row">Peak window <b>14:00</b></div><div class="row">Top agent <b>Codex</b></div><div class="row">Cost <b>$48</b></div></div></aside>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section class="decision-card">
-      <h2>建议落地顺序</h2>
-      <p>选择 A 作为实现目标：它贴合 Aisland 的主题和当前代码结构，也最符合“美观、实用、简洁”。B/C/D 不丢弃，但降级为从 A 进入的二级解释视图。</p>
-      <div class="checklist">
-        <div class="check"><strong>第一步</strong>SwiftUI 中移除字段侧栏心智：用顶部筛选、保存视图、详情抽屉替代。</div>
-        <div class="check"><strong>第二步</strong>把贡献热力图放在首屏最宽区域，保留现有日趋势作为下方辅助。</div>
-        <div class="check"><strong>第三步</strong>新增三条解释卡：峰值原因、贡献来源、建议动作，避免用户只看到图。</div>
-        <div class="check"><strong>第四步</strong>异常格点击后再进入 B 的归因抽屉；预算风险只在接近阈值时显示。</div>
-        <div class="check"><strong>第五步</strong>颜色严格收敛：青色为主，绿色稳定，琥珀预警，红色只用于异常峰值。</div>
-        <div class="check"><strong>结论</strong>先做 A，不做大而全；让用量页像 Aisland 的监控面板，而不是后台报表。</div>
+    <section class="option" id="c">
+      <header class="option-head">
+        <div><div class="kicker">C / Providers</div><h2>Agent Lanes</h2><p>一行一个 agent / provider，适合比较贡献来源。</p></div>
+        <span class="pick ghost">可选</span>
+      </header>
+      <div class="mock">
+        <div class="window">
+          <div class="topbar"><div class="dots"><span></span><span></span><span></span></div><div class="chips"><span class="chip active">By agent</span><span class="chip">28D</span><span class="chip">Tokens</span></div></div>
+          <div class="content">
+            <div class="content-head"><div class="title"><h3>Contribution lanes</h3><span>same heatmap language, split by source</span></div></div>
+            <div class="panel pad"><div class="lanes" data-lanes></div></div>
+          </div>
+        </div>
       </div>
+    </section>
+
+    <section class="option" id="d">
+      <header class="option-head">
+        <div><div class="kicker">D / Recent hours</div><h2>Hour Lens</h2><p>7 天 x 24 小时热力图，更适合看最近峰值。</p></div>
+        <span class="pick ghost">可选</span>
+      </header>
+      <div class="mock">
+        <div class="window">
+          <div class="topbar"><div class="dots"><span></span><span></span><span></span></div><div class="chips"><span class="chip active">Hourly</span><span class="chip">7D</span><span class="chip">Recent</span></div></div>
+          <div class="content">
+            <div class="content-head"><div class="title"><h3>Hourly contribution</h3><span>detect batch jobs and late-night spikes</span></div></div>
+            <div class="panel pad"><div class="hour-grid" data-hours></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="summary">
+      <h2>建议选 A</h2>
+      <p>最简洁、最像 Aisland，也最容易从当前 Usage 页面演进。B/C/D 只在你更偏向“点选详情 / 来源对比 / 小时峰值”时选择。</p>
     </section>
   </main>
+
+  <script>
+    const pattern = [0,1,2,2,3,1,0,1,3,4,2,1,0,2,2,2,3,5,2,1,0,0,1,2,4,3,2,1,1,3,4,6,3,1,0,2,2,3,3,2,1,0,0,1,2,3,3,2,1,1,2,4,5,4,2,1,2,3,4,3,2,1,0,0,1,1,2,3,2,1,1,2,3,4,6,3,1,2,2,3,2,2,1,0];
+    function level(index, offset = 0) {
+      const base = pattern[(index + offset) % pattern.length];
+      const pulse = index % 47 === 0 || index % 73 === 0 ? 6 : 0;
+      return Math.max(base, pulse);
+    }
+    document.querySelectorAll('[data-heatmap]').forEach((node, nodeIndex) => {
+      for (let i = 0; i < 364; i += 1) {
+        const span = document.createElement('span');
+        const l = level(i, nodeIndex * 11);
+        span.className = l ? `cell l${l}` : 'cell';
+        node.appendChild(span);
+      }
+    });
+    document.querySelectorAll('[data-bars]').forEach((node) => {
+      [44,58,62,50,76,92,64,70,84,78,56,82].forEach((h, i) => {
+        const span = document.createElement('span');
+        span.className = i === 5 || i === 9 ? 'bar warn' : (i % 3 === 1 ? 'bar green' : 'bar');
+        span.style.height = `${h}%`;
+        node.appendChild(span);
+      });
+    });
+    const lanes = [
+      ['Codex', 0, '8.4M'], ['Claude Code', 13, '5.1M'], ['OpenCode', 27, '2.8M'], ['General Agent', 39, '1.6M']
+    ];
+    const laneRoot = document.querySelector('[data-lanes]');
+    lanes.forEach(([name, offset, total]) => {
+      const row = document.createElement('div');
+      row.className = 'lane';
+      row.innerHTML = `<div class="lane-name">${name}</div><div class="lane-map"></div><div class="lane-total">${total}</div>`;
+      const map = row.querySelector('.lane-map');
+      for (let i = 0; i < 28; i += 1) {
+        const cell = document.createElement('span');
+        const l = level(i * 3, Number(offset));
+        cell.className = l ? `cell l${l}` : 'cell';
+        map.appendChild(cell);
+      }
+      laneRoot.appendChild(row);
+    });
+    const hourRoot = document.querySelector('[data-hours]');
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    hourRoot.innerHTML = '<div class="hour-label"></div>' + Array.from({length:24}, (_, i) => `<div class="hour">${i}</div>`).join('');
+    days.forEach((day, d) => {
+      const label = document.createElement('div');
+      label.className = 'hour-label';
+      label.textContent = day;
+      hourRoot.appendChild(label);
+      for (let h = 0; h < 24; h += 1) {
+        const value = h >= 9 && h <= 18 ? ((h + d) % 6) + 1 : ((h + d) % 9 === 0 ? 3 : 0);
+        const hot = d === 3 && h >= 13 && h <= 15 ? 6 : value;
+        const cell = document.createElement('div');
+        cell.className = hot ? `hour l${hot}` : 'hour';
+        hourRoot.appendChild(cell);
+      }
+    });
+  </script>
 </body>
 </html>
