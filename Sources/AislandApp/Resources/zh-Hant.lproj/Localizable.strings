@@ -129,6 +129,11 @@
 "usage.chart.tokensPerDay.subtitle" = "按模型堆疊顯示每日 token，並在每日上方標識預估或記錄的 Cost。";
 "usage.chart.tokensPerDay" = "Tokens Per Day";
 "usage.heatmap.title" = "小時熱力圖";
+"usage.calendar.title" = "每日 Token 日曆";
+"usage.calendar.activeDays" = "活躍天數";
+"usage.calendar.hourlyBreakdown" = "24 小時用量";
+"usage.pareto.title" = "模型貢獻排行";
+"usage.calendar.noDay" = "這一天尚無用量";
 "usage.range.oneDay" = "1 天";
 "usage.range.days" = "%d 天";
 "usage.heatmap.total" = "總量";

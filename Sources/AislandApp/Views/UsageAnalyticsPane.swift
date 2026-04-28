@@ -13,35 +13,21 @@ struct UsageAnalyticsPane: View {
     private var selectedDayCount: Int {
         min(30, max(1, Int(selectedRangeDays.rounded())))
     }
-    private var heatmapDateBucketDaySpan: Int {
-        let targetColumnCount = 14
-        return max(1, Int(ceil(Double(selectedDayCount) / Double(targetColumnCount))))
-    }
     private var rangedHourlyUsage: [UsageAnalyticsHourlyModelBucket] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: .now)
         let start = calendar.date(byAdding: .day, value: -(selectedDayCount - 1), to: today) ?? today
         return hourlyUsage.filter { $0.hourStartAt >= start }
     }
-    private var completeHeatmapDays: [UsageHeatmapDay] {
-        UsageHeatmapDay.completeRecentDays(
-            from: rangedHourlyUsage,
-            dayCount: selectedDayCount,
-            bucketDaySpan: heatmapDateBucketDaySpan
-        )
+    private var calendarDays: [UsageCalendarDay] {
+        UsageCalendarDay.completeRecentDays(from: rangedHourlyUsage, dayCount: selectedDayCount)
     }
-    private var heatmapDays: [UsageHeatmapDay] {
-        completeHeatmapDays
-    }
-    private var heatmapCells: [UsageHeatmapHourCell] { heatmapDays.flatMap(\.cells) }
-    private var heatmapColumnCount: Int { heatmapDays.count }
-
-    private var totalTokens: Int { heatmapCells.reduce(0) { $0 + $1.totalTokens } }
-    private var totalCostUSD: Double { heatmapCells.reduce(0) { $0 + $1.costUSD } }
-    private var activeHourCount: Int { heatmapCells.filter(\.hasUsage).count }
-
-    private var peakCell: UsageHeatmapHourCell? {
-        heatmapCells
+    private var calendarHours: [UsageCalendarHourCell] { calendarDays.flatMap(\.hourCells) }
+    private var totalTokens: Int { calendarHours.reduce(0) { $0 + $1.totalTokens } }
+    private var totalCostUSD: Double { calendarHours.reduce(0) { $0 + $1.costUSD } }
+    private var activeDayCount: Int { calendarDays.filter(\.hasUsage).count }
+    private var peakDay: UsageCalendarDay? {
+        calendarDays
             .filter { $0.hasUsage && !$0.isFuture }
             .max { lhs, rhs in
                 if lhs.totalTokens == rhs.totalTokens { return lhs.costUSD < rhs.costUSD }
@@ -55,12 +41,11 @@ struct UsageAnalyticsPane: View {
                 if hourlyUsage.isEmpty {
                     emptyState
                 } else {
-                    HeatmapSummaryStrip(
+                    UsageSummaryStrip(
                         totalTokens: totalTokens,
                         totalCostUSD: totalCostUSD,
-                        activeHourCount: activeHourCount,
-                        dateColumnCount: heatmapColumnCount,
-                        peakCell: peakCell,
+                        activeDayCount: activeDayCount,
+                        peakDay: peakDay,
                         rangeLabel: rangeLabel,
                         lang: lang,
                         theme: theme
@@ -68,23 +53,8 @@ struct UsageAnalyticsPane: View {
 
                     rangeControl
 
-                    HourlyUsageHeatmap(
-                        days: heatmapDays,
-                        theme: theme,
-                        lang: lang,
-                        legend: lang.t("usage.heatmap.legend"),
-                        lessLabel: lang.t("usage.heatmap.less"),
-                        moreLabel: lang.t("usage.heatmap.more")
-                    )
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 6)
-                }
-            }
-
-            if !rangedHourlyUsage.isEmpty {
-                Section(lang.t("usage.heatmap.modelBreakdown")) {
-                    RecentModelBreakdown(rows: rangedHourlyUsage, theme: theme)
-                        .padding(.vertical, 2)
+                    usageCharts
+                        .padding(.top, 6)
                 }
             }
         }
@@ -108,6 +78,21 @@ struct UsageAnalyticsPane: View {
         .onAppear {
             if hourlyUsage.isEmpty {
                 model.refreshUsageAnalytics()
+            }
+        }
+    }
+
+    private var usageCharts: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .top, spacing: 14) {
+                UsageCalendarPanel(days: calendarDays, lang: lang, theme: theme)
+                    .frame(minWidth: 430, maxWidth: .infinity, alignment: .topLeading)
+                ModelContributionPareto(rows: rangedHourlyUsage, title: lang.t("usage.pareto.title"), theme: theme)
+                    .frame(width: 286, alignment: .topLeading)
+            }
+            VStack(alignment: .leading, spacing: 14) {
+                UsageCalendarPanel(days: calendarDays, lang: lang, theme: theme)
+                ModelContributionPareto(rows: rangedHourlyUsage, title: lang.t("usage.pareto.title"), theme: theme)
             }
         }
     }
@@ -157,12 +142,11 @@ struct UsageAnalyticsPane: View {
     }
 }
 
-private struct HeatmapSummaryStrip: View {
+private struct UsageSummaryStrip: View {
     var totalTokens: Int
     var totalCostUSD: Double
-    var activeHourCount: Int
-    var dateColumnCount: Int
-    var peakCell: UsageHeatmapHourCell?
+    var activeDayCount: Int
+    var peakDay: UsageCalendarDay?
     var rangeLabel: String
     var lang: LanguageManager
     var theme: IslandThemePalette
@@ -176,13 +160,13 @@ private struct HeatmapSummaryStrip: View {
             )
             metricCard(
                 title: lang.t("usage.heatmap.peak"),
-                value: peakCell?.totalTokens.abbreviatedTokenString ?? "0",
-                detail: peakCell?.shortLabel ?? lang.t("usage.surface.noRecent")
+                value: peakDay?.totalTokens.abbreviatedTokenString ?? "0",
+                detail: peakDay?.dateLabel ?? lang.t("usage.surface.noRecent")
             )
             metricCard(
-                title: lang.t("usage.heatmap.activeHours"),
-                value: "\(activeHourCount)",
-                detail: "\(dateColumnCount) x 24"
+                title: lang.t("usage.calendar.activeDays"),
+                value: "\(activeDayCount)",
+                detail: rangeLabel
             )
             metricCard(
                 title: lang.t("usage.heatmap.cost"),
@@ -218,254 +202,202 @@ private struct HeatmapSummaryStrip: View {
     }
 }
 
-private struct HourlyUsageHeatmap: View {
-    var days: [UsageHeatmapDay]
-    var theme: IslandThemePalette
+private struct UsageCalendarPanel: View {
+    var days: [UsageCalendarDay]
     var lang: LanguageManager
-    var legend: String
-    var lessLabel: String
-    var moreLabel: String
+    var theme: IslandThemePalette
 
-    @State private var hoveredCell: UsageHeatmapHourCell?
+    @State private var hoveredDayID: TimeInterval?
 
-    private var maxTokens: Int {
-        max(days.flatMap(\.cells).map(\.totalTokens).max() ?? 1, 1)
+    private var hoveredDay: UsageCalendarDay? {
+        guard let hoveredDayID else { return nil }
+        return days.first { $0.id == hoveredDayID }
     }
-
-    private var hourValues: [Int] {
-        days.first?.cells.map(\.hourOfDay) ?? Array(0..<24)
-    }
+    private var maxTokens: Int { max(days.map(\.totalTokens).max() ?? 1, 1) }
 
     var body: some View {
-        GeometryReader { proxy in
-            let labelWidth: CGFloat = 42
-            let headerHeight: CGFloat = 38
-            let legendHeight: CGFloat = 24
-            let gridPadding: CGFloat = 12
-            let cellSpacing: CGFloat = 3
-            let columnCount = max(days.count, 1)
-            let rowCount = max(hourValues.count, 1)
-            let gridWidth = max(1, proxy.size.width - labelWidth - gridPadding * 2)
-            let gridHeight = max(1, proxy.size.height - headerHeight - legendHeight - gridPadding * 2 - 14)
-            let cellWidth = max(6, (gridWidth - CGFloat(max(0, columnCount - 1)) * cellSpacing) / CGFloat(columnCount))
-            let cellHeight = max(6, (gridHeight - CGFloat(max(0, rowCount - 1)) * cellSpacing) / CGFloat(rowCount))
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(lang.t("usage.calendar.title"))
+                    .font(IslandTheme.bodyFont(size: 13, weight: .semibold))
+                    .foregroundStyle(theme.text)
+                Spacer(minLength: 12)
+                Text(lang.t("usage.heatmap.legend"))
+                    .font(IslandTheme.labelFont(size: 10.5))
+                    .foregroundStyle(theme.textSecondary)
+            }
 
-            VStack(alignment: .leading, spacing: 12) {
-                dateHeader(labelWidth: labelWidth, cellWidth: cellWidth, spacing: cellSpacing)
-
-                ZStack(alignment: .topLeading) {
-                    VStack(alignment: .leading, spacing: cellSpacing) {
-                        ForEach(Array(hourValues.enumerated()), id: \.element) { _, hour in
-                            HStack(spacing: cellSpacing) {
-                                Text(String(format: "%02d", hour))
-                                    .font(IslandTheme.labelFont(size: 8.5))
-                                    .foregroundStyle(theme.textSecondary.opacity(shouldEmphasizeHourLabel(hour) ? 0.72 : 0.38))
-                                    .frame(width: labelWidth, alignment: .trailing)
-
-                                ForEach(days) { day in
-                                    if let cell = day.cell(atHour: hour) {
-                                        RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                            .fill(fill(for: cell))
-                                            .frame(width: cellWidth, height: cellHeight)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                                    .strokeBorder(stroke(for: cell), lineWidth: hoveredCell?.id == cell.id ? 1.4 : 0.7)
-                                            )
-                                            .shadow(color: glow(for: cell), radius: cell.hasUsage ? 5 : 0, x: 0, y: 0)
-                                            .contentShape(Rectangle())
-                                            .help(cell.helpText)
-                                            .onHover { isHovering in
-                                                hoveredCell = isHovering ? cell : (hoveredCell?.id == cell.id ? nil : hoveredCell)
-                                            }
-                                    }
-                                }
+            ZStack(alignment: .topTrailing) {
+                LazyVGrid(
+                    columns: [GridItem(.adaptive(minimum: 72, maximum: 98), spacing: 8)],
+                    alignment: .leading,
+                    spacing: 8
+                ) {
+                    ForEach(days) { day in
+                        UsageCalendarDayCard(
+                            day: day,
+                            maxTokens: maxTokens,
+                            theme: theme
+                        )
+                        .onHover { isHovering in
+                            if isHovering {
+                                hoveredDayID = day.id
+                            } else if hoveredDayID == day.id {
+                                hoveredDayID = nil
                             }
                         }
                     }
-                    .padding(gridPadding)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(theme.surfaceContainer.opacity(0.34))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .strokeBorder(theme.outline.opacity(0.08))
-                    )
+                }
 
-                    if let hoveredCell,
-                       let tooltipPosition = tooltipPosition(
-                        for: hoveredCell,
-                        in: proxy.size,
-                        labelWidth: labelWidth,
-                        gridPadding: gridPadding,
-                        cellWidth: cellWidth,
-                        cellHeight: cellHeight,
-                        spacing: cellSpacing
-                       ) {
-                        UsageHeatmapHoverDetail(
-                            cell: hoveredCell,
-                            lang: lang,
-                            theme: theme
-                        )
-                        .frame(width: 218, alignment: .topLeading)
-                        .position(tooltipPosition)
+                if let hoveredDay {
+                    UsageCalendarDayHoverDetail(day: hoveredDay, lang: lang, theme: theme)
+                        .frame(width: 280, alignment: .topLeading)
+                        .padding(10)
                         .transition(.opacity.combined(with: .scale(scale: 0.96)))
                         .allowsHitTesting(false)
-                    }
                 }
-
-                HStack(spacing: 7) {
-                    Text(legend)
-                    Spacer(minLength: 0)
-                    Text(lessLabel)
-                    ForEach([0.08, 0.24, 0.44, 0.68, 1.0], id: \.self) { intensity in
-                        RoundedRectangle(cornerRadius: 3, style: .continuous)
-                            .fill(UsageHeatmapColor.color(theme: theme, intensity: intensity))
-                            .frame(width: 13, height: 13)
-                    }
-                    Text(moreLabel)
-                }
-                .font(IslandTheme.labelFont(size: 10.5))
-                .foregroundStyle(theme.textSecondary)
             }
+            .animation(.easeOut(duration: 0.16), value: hoveredDayID)
         }
-        .frame(height: 430)
-    }
-
-    private func dateHeader(labelWidth: CGFloat, cellWidth: CGFloat, spacing: CGFloat) -> some View {
-        HStack(spacing: spacing) {
-            Color.clear.frame(width: labelWidth, height: 1)
-            ForEach(Array(days.enumerated()), id: \.element.id) { index, day in
-                VStack(spacing: 1) {
-                    Text(shouldShowDateLabel(at: index) ? day.shortLabel : "")
-                        .font(IslandTheme.labelFont(size: 9.5))
-                        .foregroundStyle(theme.textSecondary.opacity(day.includesToday ? 0.9 : 0.58))
-                    Text(shouldShowDateLabel(at: index) ? day.dateLabel : "")
-                        .font(IslandTheme.labelFont(size: 8))
-                        .foregroundStyle(theme.textTertiary.opacity(day.includesToday ? 0.82 : 0.48))
-                }
-                .lineLimit(1)
-                .minimumScaleFactor(0.65)
-                .frame(width: cellWidth)
-            }
-        }
-        .frame(height: 38, alignment: .bottom)
-    }
-
-    private func shouldShowDateLabel(at index: Int) -> Bool {
-        let count = days.count
-        guard count > 0 else { return false }
-        let cadence = max(1, Int(ceil(Double(count) / 7.0)))
-        return index == 0 || index == count - 1 || index % cadence == 0
-    }
-
-    private func shouldEmphasizeHourLabel(_ hour: Int) -> Bool {
-        hour == hourValues.first || hour == hourValues.last || hour % 3 == 0
-    }
-
-    private func tooltipPosition(
-        for cell: UsageHeatmapHourCell,
-        in size: CGSize,
-        labelWidth: CGFloat,
-        gridPadding: CGFloat,
-        cellWidth: CGFloat,
-        cellHeight: CGFloat,
-        spacing: CGFloat
-    ) -> CGPoint? {
-        guard let columnIndex = days.firstIndex(where: { $0.id == cell.dateBucketStartAt.timeIntervalSince1970 }),
-              let rowIndex = hourValues.firstIndex(of: cell.hourOfDay) else {
-            return nil
-        }
-
-        let tooltipWidth: CGFloat = 218
-        let tooltipHeight: CGFloat = 132
-        let cellCenterX = labelWidth + gridPadding + CGFloat(columnIndex) * (cellWidth + spacing) + cellWidth / 2
-        let cellCenterY = 38 + gridPadding + CGFloat(rowIndex) * (cellHeight + spacing) + cellHeight / 2
-        let prefersRightSide = cellCenterX + tooltipWidth + 18 < size.width
-        let rawX = prefersRightSide
-            ? cellCenterX + tooltipWidth / 2 + 14
-            : cellCenterX - tooltipWidth / 2 - 14
-        let minX = tooltipWidth / 2 + 6
-        let maxX = max(minX, size.width - tooltipWidth / 2 - 6)
-        let minY = 38 + tooltipHeight / 2
-        let maxY = max(minY, size.height - 28 - tooltipHeight / 2)
-
-        return CGPoint(
-            x: min(max(rawX, minX), maxX),
-            y: min(max(cellCenterY, minY), maxY)
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(theme.surfaceContainer.opacity(0.34))
         )
-    }
-
-    private func fill(for cell: UsageHeatmapHourCell) -> Color {
-        guard !cell.isFuture else {
-            return theme.surfaceContainer.opacity(0.18)
-        }
-        guard cell.hasUsage else {
-            return theme.surfaceContainer.opacity(0.42)
-        }
-
-        let normalized = Double(cell.totalTokens) / Double(maxTokens)
-        return UsageHeatmapColor.color(theme: theme, intensity: sqrt(min(max(normalized, 0), 1)))
-    }
-
-    private func stroke(for cell: UsageHeatmapHourCell) -> Color {
-        if hoveredCell?.id == cell.id {
-            return theme.text.opacity(0.76)
-        }
-        if cell.isCurrentHour {
-            return theme.primaryContainer.opacity(0.7)
-        }
-        return theme.text.opacity(cell.hasUsage ? 0.12 : 0.05)
-    }
-
-    private func glow(for cell: UsageHeatmapHourCell) -> Color {
-        guard cell.hasUsage else { return Color.clear }
-        let normalized = Double(cell.totalTokens) / Double(maxTokens)
-        return UsageHeatmapColor.color(theme: theme, intensity: normalized).opacity(0.16 + 0.18 * normalized)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(theme.outline.opacity(0.08))
+        )
     }
 }
 
-private struct UsageHeatmapHoverDetail: View {
-    var cell: UsageHeatmapHourCell
+private struct UsageCalendarDayCard: View {
+    var day: UsageCalendarDay
+    var maxTokens: Int
+    var theme: IslandThemePalette
+
+    private var intensity: Double {
+        guard maxTokens > 0 else { return 0 }
+        return min(max(Double(day.totalTokens) / Double(maxTokens), 0), 1)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(day.shortLabel)
+                    .font(IslandTheme.labelFont(size: 9.5))
+                    .foregroundStyle(theme.textSecondary.opacity(day.includesToday ? 0.96 : 0.72))
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+                if day.includesToday {
+                    Circle()
+                        .fill(theme.primaryContainer.opacity(0.72))
+                        .frame(width: 5, height: 5)
+                }
+            }
+            Text(day.dateLabel)
+                .font(IslandTheme.labelFont(size: 8.5))
+                .foregroundStyle(theme.textTertiary)
+                .lineLimit(1)
+            Spacer(minLength: 10)
+            Text(day.totalTokens.abbreviatedTokenString)
+                .font(IslandTheme.bodyFont(size: 12, weight: .black))
+                .foregroundStyle(day.hasUsage ? theme.text : theme.textSecondary.opacity(0.58))
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+            Text(day.costUSD.currencyString)
+                .font(IslandTheme.labelFont(size: 9))
+                .foregroundStyle(theme.textSecondary.opacity(day.hasUsage ? 0.88 : 0.48))
+                .lineLimit(1)
+        }
+        .padding(8)
+        .frame(height: 76, alignment: .topLeading)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(alignment: .bottom) {
+            GeometryReader { proxy in
+                VStack(spacing: 0) {
+                    Spacer(minLength: 0)
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(fill)
+                        .frame(height: max(day.hasUsage ? 7 : 0, proxy.size.height * CGFloat(intensity)))
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(theme.surfaceContainer.opacity(0.38))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(stroke, lineWidth: day.includesToday ? 1.2 : 0.8)
+        )
+        .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .help(day.helpText)
+    }
+
+    private var fill: LinearGradient {
+        let hot = intensity >= 0.76
+        let base = hot ? theme.primaryContainer : theme.primary
+        return LinearGradient(
+            colors: [base.opacity(0.08), base.opacity(hot ? 0.68 : 0.56)],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+
+    private var stroke: Color {
+        if day.includesToday { return theme.primaryContainer.opacity(0.65) }
+        return theme.text.opacity(day.hasUsage ? 0.10 : 0.055)
+    }
+}
+
+private struct UsageCalendarDayHoverDetail: View {
+    var day: UsageCalendarDay
     var lang: LanguageManager
     var theme: IslandThemePalette
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 9) {
+        VStack(alignment: .leading, spacing: 11) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Text(cell.detailLabel)
-                    .font(IslandTheme.bodyFont(size: 12.5, weight: .semibold))
-                    .foregroundStyle(theme.text)
-                    .lineLimit(2)
-                Spacer(minLength: 0)
-                VStack(alignment: .trailing, spacing: 1) {
-                    Text(cell.totalTokens.abbreviatedTokenString)
-                        .font(IslandTheme.bodyFont(size: 14, weight: .black))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(day.detailLabel)
+                        .font(IslandTheme.bodyFont(size: 13, weight: .semibold))
+                        .foregroundStyle(theme.text)
+                    Text(lang.t("usage.calendar.hourlyBreakdown"))
+                        .font(IslandTheme.labelFont(size: 10))
+                        .foregroundStyle(theme.textSecondary)
+                }
+                Spacer(minLength: 8)
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(day.totalTokens.abbreviatedTokenString)
+                        .font(IslandTheme.bodyFont(size: 15, weight: .black))
                         .foregroundStyle(theme.text)
                         .monospacedDigit()
-                    Text(cell.costUSD.currencyString)
+                    Text(day.costUSD.currencyString)
                         .font(IslandTheme.labelFont(size: 10))
                         .foregroundStyle(theme.textSecondary)
                 }
             }
 
-            if cell.rows.isEmpty {
-                Text(lang.t("usage.heatmap.noHour"))
+            if day.modelSummaries.isEmpty {
+                Text(lang.t("usage.calendar.noDay"))
                     .font(IslandTheme.bodyFont(size: 11, weight: .medium))
                     .foregroundStyle(theme.textSecondary)
             } else {
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(cell.rows.prefix(3)) { row in
+                VStack(alignment: .leading, spacing: 7) {
+                    ForEach(day.modelSummaries.prefix(4)) { model in
                         HStack(spacing: 7) {
                             Circle()
-                                .fill(UsageModelColor.color(for: row.modelIdentifier, theme: theme))
+                                .fill(UsageModelColor.color(for: model.modelIdentifier, theme: theme))
                                 .frame(width: 7, height: 7)
-                            Text(row.modelDisplayName)
+                            Text(model.modelDisplayName)
                                 .font(IslandTheme.bodyFont(size: 11, weight: .semibold))
                                 .foregroundStyle(theme.text)
                                 .lineLimit(1)
                             Spacer(minLength: 6)
-                            Text(row.totalTokens.abbreviatedTokenString)
+                            Text(model.totalTokens.abbreviatedTokenString)
                                 .font(IslandTheme.bodyFont(size: 11, weight: .bold))
                                 .foregroundStyle(theme.textSecondary)
                                 .monospacedDigit()
@@ -473,30 +405,278 @@ private struct UsageHeatmapHoverDetail: View {
                     }
                 }
             }
+
+            UsageHourlySparkHeatmap(cells: day.hourCells, theme: theme)
         }
-        .padding(11)
+        .padding(12)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(theme.surfaceBright.opacity(0.96))
-                .shadow(color: .black.opacity(0.16), radius: 18, x: 0, y: 10)
+                .shadow(color: .black.opacity(0.18), radius: 20, x: 0, y: 12)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .strokeBorder(theme.outline.opacity(0.14))
         )
     }
 }
 
-private struct RecentModelBreakdown: View {
-    var rows: [UsageAnalyticsHourlyModelBucket]
+private struct UsageHourlySparkHeatmap: View {
+    var cells: [UsageCalendarHourCell]
     var theme: IslandThemePalette
 
-    private var models: [UsageHeatmapModelSummary] {
+    private var maxTokens: Int { max(cells.map(\.totalTokens).max() ?? 1, 1) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .bottom, spacing: 3) {
+                ForEach(cells) { cell in
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        .fill(fill(for: cell))
+                        .frame(height: barHeight(for: cell))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                .strokeBorder(cell.isCurrentHour ? theme.primaryContainer.opacity(0.65) : .clear, lineWidth: 0.9)
+                        )
+                }
+            }
+            .frame(height: 42, alignment: .bottom)
+
+            HStack {
+                Text("00")
+                Spacer(minLength: 0)
+                Text("06")
+                Spacer(minLength: 0)
+                Text("12")
+                Spacer(minLength: 0)
+                Text("18")
+                Spacer(minLength: 0)
+                Text("23")
+            }
+            .font(IslandTheme.labelFont(size: 8.5))
+            .foregroundStyle(theme.textTertiary)
+        }
+        .padding(.top, 9)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(theme.outline.opacity(0.08))
+                .frame(height: 1)
+        }
+    }
+
+    private func barHeight(for cell: UsageCalendarHourCell) -> CGFloat {
+        guard cell.hasUsage else { return 5 }
+        let normalized = Double(cell.totalTokens) / Double(maxTokens)
+        return 5 + 37 * CGFloat(sqrt(min(max(normalized, 0), 1)))
+    }
+
+    private func fill(for cell: UsageCalendarHourCell) -> Color {
+        guard !cell.isFuture else { return theme.surfaceContainer.opacity(0.16) }
+        guard cell.hasUsage else { return theme.surfaceContainer.opacity(0.42) }
+        let normalized = Double(cell.totalTokens) / Double(maxTokens)
+        return UsageHeatmapColor.color(theme: theme, intensity: sqrt(min(max(normalized, 0), 1)))
+    }
+}
+
+private struct ModelContributionPareto: View {
+    var rows: [UsageAnalyticsHourlyModelBucket]
+    var title: String
+    var theme: IslandThemePalette
+
+    private var models: [UsageModelSummary] {
+        UsageModelSummary.models(from: rows)
+    }
+    private var maxTokens: Int { max(models.map(\.totalTokens).max() ?? 1, 1) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(title)
+                    .font(IslandTheme.bodyFont(size: 13, weight: .semibold))
+                    .foregroundStyle(theme.text)
+                Spacer(minLength: 8)
+                Text("Pareto")
+                    .font(IslandTheme.labelFont(size: 10.5))
+                    .foregroundStyle(theme.textSecondary)
+            }
+
+            if models.isEmpty {
+                Text("-")
+                    .font(IslandTheme.bodyFont(size: 12, weight: .semibold))
+                    .foregroundStyle(theme.textSecondary)
+                    .frame(maxWidth: .infinity, minHeight: 120)
+            } else {
+                VStack(spacing: 10) {
+                    ForEach(models.prefix(7)) { model in
+                        ModelContributionRow(model: model, maxTokens: maxTokens, theme: theme)
+                    }
+                }
+            }
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(theme.surfaceContainer.opacity(0.34))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(theme.outline.opacity(0.08))
+        )
+    }
+}
+
+private struct ModelContributionRow: View {
+    var model: UsageModelSummary
+    var maxTokens: Int
+    var theme: IslandThemePalette
+
+    private var ratio: Double {
+        guard maxTokens > 0 else { return 0 }
+        return min(max(Double(model.totalTokens) / Double(maxTokens), 0), 1)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(model.modelDisplayName)
+                        .font(IslandTheme.bodyFont(size: 11.5, weight: .semibold))
+                        .foregroundStyle(theme.text)
+                        .lineLimit(1)
+                    Text(model.provider?.displayName ?? "")
+                        .font(IslandTheme.labelFont(size: 9.5))
+                        .foregroundStyle(theme.textSecondary)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 8)
+                VStack(alignment: .trailing, spacing: 1) {
+                    Text(model.totalTokens.abbreviatedTokenString)
+                        .font(IslandTheme.bodyFont(size: 11.5, weight: .bold))
+                        .foregroundStyle(theme.text)
+                        .monospacedDigit()
+                    Text(model.costUSD.currencyString)
+                        .font(IslandTheme.labelFont(size: 9.5))
+                        .foregroundStyle(theme.textSecondary)
+                }
+            }
+
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(theme.surfaceContainer.opacity(0.52))
+                    Capsule()
+                        .fill(UsageModelColor.chartGradient(for: model.modelIdentifier, theme: theme))
+                        .frame(width: max(8, proxy.size.width * CGFloat(ratio)))
+                }
+            }
+            .frame(height: 18)
+        }
+        .padding(.vertical, 2)
+    }
+}
+
+private struct UsageCalendarDay: Identifiable {
+    var dayStartAt: Date
+    var hourCells: [UsageCalendarHourCell]
+
+    var id: TimeInterval { dayStartAt.timeIntervalSince1970 }
+    var includesToday: Bool { Calendar.current.isDateInToday(dayStartAt) }
+    var isFuture: Bool { dayStartAt > .now }
+    var totalTokens: Int { hourCells.reduce(0) { $0 + $1.totalTokens } }
+    var costUSD: Double { hourCells.reduce(0) { $0 + $1.costUSD } }
+    var hasUsage: Bool { totalTokens > 0 || costUSD > 0 }
+    var rows: [UsageAnalyticsHourlyModelBucket] { hourCells.flatMap(\.rows) }
+    var modelSummaries: [UsageModelSummary] { UsageModelSummary.models(from: rows) }
+
+    var shortLabel: String {
+        UsageCalendarFormatters.weekdayLabel.string(from: dayStartAt)
+    }
+
+    var dateLabel: String {
+        UsageCalendarFormatters.dayLabel.string(from: dayStartAt)
+    }
+
+    var detailLabel: String {
+        UsageCalendarFormatters.detailDayLabel.string(from: dayStartAt)
+    }
+
+    var helpText: String {
+        let modelText = modelSummaries.prefix(4)
+            .map { "\($0.modelDisplayName): \($0.totalTokens.abbreviatedTokenString), \($0.costUSD.currencyString)" }
+            .joined(separator: "\n")
+        let suffix = modelText.isEmpty ? "" : "\n\(modelText)"
+        return "\(detailLabel)\n\(totalTokens.abbreviatedTokenString) · \(costUSD.currencyString)\(suffix)"
+    }
+
+    static func completeRecentDays(
+        from rows: [UsageAnalyticsHourlyModelBucket],
+        dayCount: Int
+    ) -> [UsageCalendarDay] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        let currentHour = calendar.dateInterval(of: .hour, for: .now)?.start ?? .now
+        let clampedDayCount = max(1, dayCount)
+        let grouped = Dictionary(grouping: rows) { row in
+            calendar.dateInterval(of: .hour, for: row.hourStartAt)?.start ?? row.hourStartAt
+        }
+
+        return (0..<clampedDayCount).compactMap { dayOffset in
+            guard let day = calendar.date(byAdding: .day, value: dayOffset - clampedDayCount + 1, to: today) else {
+                return nil
+            }
+
+            let hourCells = (0..<24).compactMap { hourOffset -> UsageCalendarHourCell? in
+                guard let hourStart = calendar.date(byAdding: .hour, value: hourOffset, to: day),
+                      let hourEnd = calendar.date(byAdding: .hour, value: 1, to: hourStart) else {
+                    return nil
+                }
+                let hourRows = (grouped[hourStart] ?? [])
+                    .sorted { lhs, rhs in
+                        if lhs.totalTokens == rhs.totalTokens { return lhs.modelDisplayName < rhs.modelDisplayName }
+                        return lhs.totalTokens > rhs.totalTokens
+                    }
+                return UsageCalendarHourCell(
+                    hourStartAt: hourStart,
+                    hourEndAt: hourEnd,
+                    rows: hourRows,
+                    isCurrentHour: hourStart <= currentHour && currentHour < hourEnd
+                )
+            }
+
+            return UsageCalendarDay(dayStartAt: day, hourCells: hourCells)
+        }
+    }
+}
+
+private struct UsageCalendarHourCell: Identifiable {
+    var hourStartAt: Date
+    var hourEndAt: Date
+    var rows: [UsageAnalyticsHourlyModelBucket]
+    var isCurrentHour: Bool
+
+    var id: TimeInterval { hourStartAt.timeIntervalSince1970 }
+    var totalTokens: Int { rows.reduce(0) { $0 + $1.totalTokens } }
+    var inputTokens: Int { rows.reduce(0) { $0 + $1.inputTokens } }
+    var outputTokens: Int { rows.reduce(0) { $0 + $1.outputTokens } }
+    var costUSD: Double { rows.reduce(0) { $0 + $1.costUSD } }
+    var hasUsage: Bool { totalTokens > 0 || costUSD > 0 }
+    var isFuture: Bool { hourStartAt > .now }
+}
+
+private struct UsageModelSummary: Identifiable {
+    var id: String
+    var modelIdentifier: String
+    var modelDisplayName: String
+    var provider: UsageLogProvider?
+    var totalTokens: Int
+    var costUSD: Double
+
+    static func models(from rows: [UsageAnalyticsHourlyModelBucket]) -> [UsageModelSummary] {
         Dictionary(grouping: rows) { row in
             "\(row.provider.rawValue)|\(row.modelIdentifier)"
         }
         .map { _, rows in
-            UsageHeatmapModelSummary(
+            UsageModelSummary(
                 id: "\(rows.first?.provider.rawValue ?? "unknown")|\(rows.first?.modelIdentifier ?? "unknown")",
                 modelIdentifier: rows.first?.modelIdentifier ?? "unknown",
                 modelDisplayName: rows.first?.modelDisplayName ?? "Unknown",
@@ -511,177 +691,9 @@ private struct RecentModelBreakdown: View {
             return lhs.totalTokens > rhs.totalTokens
         }
     }
-
-    var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 190), spacing: 8)], alignment: .leading, spacing: 8) {
-            ForEach(models) { model in
-                HStack(spacing: 8) {
-                    RoundedRectangle(cornerRadius: 4, style: .continuous)
-                        .fill(UsageModelColor.chartGradient(for: model.modelIdentifier, theme: theme))
-                        .frame(width: 10, height: 24)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(model.modelDisplayName)
-                            .font(IslandTheme.bodyFont(size: 11.5, weight: .semibold))
-                            .foregroundStyle(theme.text)
-                            .lineLimit(1)
-                        Text(model.provider?.displayName ?? "")
-                            .font(IslandTheme.bodyFont(size: 10, weight: .medium))
-                            .foregroundStyle(theme.textSecondary)
-                            .lineLimit(1)
-                    }
-                    Spacer(minLength: 6)
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text(model.totalTokens.abbreviatedTokenString)
-                            .font(IslandTheme.bodyFont(size: 11.5, weight: .bold))
-                            .foregroundStyle(theme.text)
-                            .monospacedDigit()
-                        Text(model.costUSD.currencyString)
-                            .font(IslandTheme.bodyFont(size: 10.5, weight: .bold))
-                            .foregroundStyle(theme.textSecondary)
-                    }
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 9)
-                .background(theme.surfaceContainer.opacity(0.48), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            }
-        }
-    }
 }
 
-private struct UsageHeatmapDay: Identifiable {
-    var dayStartAt: Date
-    var dayEndAt: Date
-    var cells: [UsageHeatmapHourCell]
-
-    var id: TimeInterval { dayStartAt.timeIntervalSince1970 }
-    var includesToday: Bool {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: .now)
-        return dayStartAt <= today && today < dayEndAt
-    }
-
-    var shortLabel: String {
-        if isSingleDay {
-            return UsageHeatmapFormatters.weekdayLabel.string(from: dayStartAt)
-        }
-        return "\(calendarDaySpan)d"
-    }
-
-    var dateLabel: String {
-        UsageHeatmapFormatters.dateRangeLabel(start: dayStartAt, end: dayEndAt)
-    }
-
-    private var isSingleDay: Bool { calendarDaySpan <= 1 }
-
-    private var calendarDaySpan: Int {
-        max(1, Calendar.current.dateComponents([.day], from: dayStartAt, to: dayEndAt).day ?? 1)
-    }
-
-    func cell(atHour hour: Int) -> UsageHeatmapHourCell? {
-        cells.first { $0.hourOfDay == hour }
-    }
-
-    static func completeRecentDays(
-        from rows: [UsageAnalyticsHourlyModelBucket],
-        dayCount: Int,
-        bucketDaySpan: Int
-    ) -> [UsageHeatmapDay] {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: .now)
-        let currentHour = calendar.dateInterval(of: .hour, for: .now)?.start ?? .now
-        let clampedDayCount = max(1, dayCount)
-        let clampedBucketDaySpan = max(1, bucketDaySpan)
-        let grouped = Dictionary(grouping: rows) { row in
-            calendar.dateInterval(of: .hour, for: row.hourStartAt)?.start ?? row.hourStartAt
-        }
-        let allDays = (0..<clampedDayCount).compactMap { dayOffset in
-            calendar.date(byAdding: .day, value: dayOffset - clampedDayCount + 1, to: today)
-        }
-
-        return stride(from: 0, to: allDays.count, by: clampedBucketDaySpan).compactMap { bucketStartIndex in
-            let bucketEndIndex = min(allDays.count, bucketStartIndex + clampedBucketDaySpan)
-            let bucketDays = Array(allDays[bucketStartIndex..<bucketEndIndex])
-            guard let bucketStartDay = bucketDays.first,
-                  let lastDay = bucketDays.last,
-                  let bucketEndDay = calendar.date(byAdding: .day, value: 1, to: lastDay) else {
-                return nil
-            }
-
-            let cells = (0..<24).compactMap { hourOffset -> UsageHeatmapHourCell? in
-                guard let representativeHourStart = calendar.date(byAdding: .hour, value: hourOffset, to: bucketStartDay),
-                      let representativeHourEnd = calendar.date(byAdding: .hour, value: 1, to: representativeHourStart) else {
-                    return nil
-                }
-                let bucketRows = bucketDays
-                    .compactMap { calendar.date(byAdding: .hour, value: hourOffset, to: $0) }
-                    .flatMap { grouped[$0] ?? [] }
-                    .sorted { lhs, rhs in
-                        if lhs.totalTokens == rhs.totalTokens { return lhs.modelDisplayName < rhs.modelDisplayName }
-                        return lhs.totalTokens > rhs.totalTokens
-                    }
-                return UsageHeatmapHourCell(
-                    dateBucketStartAt: bucketStartDay,
-                    dateBucketEndAt: bucketEndDay,
-                    representativeHourStartAt: representativeHourStart,
-                    representativeHourEndAt: representativeHourEnd,
-                    rows: bucketRows,
-                    isCurrentHour: bucketDays.contains { day in
-                        guard let hourStart = calendar.date(byAdding: .hour, value: hourOffset, to: day),
-                              let hourEnd = calendar.date(byAdding: .hour, value: 1, to: hourStart) else {
-                            return false
-                        }
-                        return hourStart <= currentHour && currentHour < hourEnd
-                    }
-                )
-            }
-
-            return UsageHeatmapDay(dayStartAt: bucketStartDay, dayEndAt: bucketEndDay, cells: cells)
-        }
-    }
-}
-
-private struct UsageHeatmapHourCell: Identifiable {
-    var dateBucketStartAt: Date
-    var dateBucketEndAt: Date
-    var representativeHourStartAt: Date
-    var representativeHourEndAt: Date
-    var rows: [UsageAnalyticsHourlyModelBucket]
-    var isCurrentHour: Bool
-
-    var id: TimeInterval { representativeHourStartAt.timeIntervalSince1970 }
-    var totalTokens: Int { rows.reduce(0) { $0 + $1.totalTokens } }
-    var inputTokens: Int { rows.reduce(0) { $0 + $1.inputTokens } }
-    var outputTokens: Int { rows.reduce(0) { $0 + $1.outputTokens } }
-    var costUSD: Double { rows.reduce(0) { $0 + $1.costUSD } }
-    var hasUsage: Bool { totalTokens > 0 || costUSD > 0 }
-    var isFuture: Bool { representativeHourStartAt > .now }
-    var hourOfDay: Int { Calendar.current.component(.hour, from: representativeHourStartAt) }
-    var shortLabel: String {
-        UsageHeatmapFormatters.shortBucketLabel(dateStart: dateBucketStartAt, dateEnd: dateBucketEndAt, hourStart: representativeHourStartAt, hourEnd: representativeHourEndAt)
-    }
-    var detailLabel: String {
-        UsageHeatmapFormatters.bucketLabel(dateStart: dateBucketStartAt, dateEnd: dateBucketEndAt, hourStart: representativeHourStartAt, hourEnd: representativeHourEndAt)
-    }
-
-    var helpText: String {
-        let modelText = rows.prefix(4)
-            .map { "\($0.modelDisplayName): \($0.totalTokens.abbreviatedTokenString), \($0.costUSD.currencyString)" }
-            .joined(separator: "\n")
-        let suffix = modelText.isEmpty ? "" : "\n\(modelText)"
-        return "\(detailLabel)\n\(totalTokens.abbreviatedTokenString) · \(costUSD.currencyString)\(suffix)"
-    }
-}
-
-private struct UsageHeatmapModelSummary: Identifiable {
-    var id: String
-    var modelIdentifier: String
-    var modelDisplayName: String
-    var provider: UsageLogProvider?
-    var totalTokens: Int
-    var costUSD: Double
-}
-
-private enum UsageHeatmapFormatters {
+private enum UsageCalendarFormatters {
     static let weekdayLabel: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = .current
@@ -696,30 +708,11 @@ private enum UsageHeatmapFormatters {
         return formatter
     }()
 
-    static func dateRangeLabel(start: Date, end: Date) -> String {
-        let adjustedEnd = end.addingTimeInterval(-1)
-        if Calendar.current.isDate(start, inSameDayAs: adjustedEnd) {
-            return dayLabel.string(from: start)
-        }
-        return "\(dayLabel.string(from: start))-\(dayLabel.string(from: adjustedEnd))"
-    }
-
-    static func shortBucketLabel(dateStart: Date, dateEnd: Date, hourStart: Date, hourEnd: Date) -> String {
-        "\(dateRangeLabel(start: dateStart, end: dateEnd)) \(timeRangeLabel(start: hourStart, end: hourEnd))"
-    }
-
-    static func bucketLabel(dateStart: Date, dateEnd: Date, hourStart: Date, hourEnd: Date) -> String {
-        "\(dateRangeLabel(start: dateStart, end: dateEnd)) · \(timeRangeLabel(start: hourStart, end: hourEnd))"
-    }
-
-    private static func timeRangeLabel(start: Date, end: Date) -> String {
-        "\(hourOnlyLabel.string(from: start)):00-\(hourOnlyLabel.string(from: end)):00"
-    }
-
-    private static let hourOnlyLabel: DateFormatter = {
+    static let detailDayLabel: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = .current
-        formatter.setLocalizedDateFormatFromTemplate("HH")
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
         return formatter
     }()
 }
@@ -772,8 +765,8 @@ private enum UsageModelColor {
                 base,
                 blended(base, with: theme.text, amount: 0.08),
             ],
-            startPoint: .top,
-            endPoint: .bottom
+            startPoint: .leading,
+            endPoint: .trailing
         )
     }
 

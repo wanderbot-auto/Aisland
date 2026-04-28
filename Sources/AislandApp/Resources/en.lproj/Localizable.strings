@@ -129,6 +129,11 @@
 "usage.chart.tokensPerDay.subtitle" = "Stacked by model with estimated or reported cost shown above each day.";
 "usage.chart.tokensPerDay" = "Tokens Per Day";
 "usage.heatmap.title" = "Hourly heatmap";
+"usage.calendar.title" = "Daily token calendar";
+"usage.calendar.activeDays" = "Active days";
+"usage.calendar.hourlyBreakdown" = "24h hourly usage";
+"usage.pareto.title" = "Model contribution";
+"usage.calendar.noDay" = "No usage on this day";
 "usage.range.oneDay" = "1 day";
 "usage.range.days" = "%d days";
 "usage.heatmap.total" = "Total";
