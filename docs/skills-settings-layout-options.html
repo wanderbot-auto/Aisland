@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aisland Settings · Skills Layout Options</title>
+  <style>
+    :root {
+      --bg: #000;
+      --surface: #131313;
+      --surface-2: #1a1a1a;
+      --surface-3: #1f1f1f;
+      --surface-4: #2a2a2a;
+      --surface-5: #353535;
+      --text: #e2e2e2;
+      --muted: #bbc9cf;
+      --faint: #859399;
+      --line: rgba(133, 147, 153, .16);
+      --line-strong: rgba(164, 230, 255, .28);
+      --primary: #00d1ff;
+      --primary-soft: #a4e6ff;
+      --success: #42e86b;
+      --warning: #ffb547;
+      --repo: #ffb547;
+      --project: #dedcdb;
+      --user: #c8c6c5;
+      --global: #00d1ff;
+      --danger: #ffb4ab;
+      --radius: 22px;
+      --shadow: 0 22px 70px rgba(0, 0, 0, .48);
+      color-scheme: dark;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Inter, ui-rounded, "SF Pro Rounded", "SF Pro Display", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 15% 8%, rgba(0, 209, 255, .16), transparent 29%),
+        radial-gradient(circle at 82% 2%, rgba(255, 181, 71, .11), transparent 26%),
+        linear-gradient(140deg, #000 0%, #0a0d0f 42%, #050505 100%);
+    }
+
+    .page {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 34px 0 48px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 22px;
+    }
+
+    .hero-card,
+    .note-card,
+    .option {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(31,31,31,.86), rgba(13,13,13,.88));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px);
+    }
+
+    .hero-card {
+      border-radius: 30px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -120px -120px auto;
+      width: 260px;
+      height: 260px;
+      border-radius: 999px;
+      background: rgba(0, 209, 255, .15);
+      filter: blur(18px);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      color: var(--primary-soft);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .eyebrow i {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--primary);
+      box-shadow: 0 0 18px rgba(0, 209, 255, .72);
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 780px;
+      font-size: clamp(30px, 5vw, 58px);
+      line-height: .94;
+      letter-spacing: -.06em;
+    }
+
+    .lead {
+      margin: 18px 0 0;
+      max-width: 680px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.75;
+    }
+
+    .note-card {
+      border-radius: 30px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 22px;
+    }
+
+    .principles {
+      display: grid;
+      gap: 10px;
+    }
+
+    .principle {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.035);
+      border: 1px solid rgba(255,255,255,.06);
+    }
+
+    .principle b { display: block; font-size: 12px; }
+    .principle span { display: block; margin-top: 3px; color: var(--faint); font-size: 11px; line-height: 1.45; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 3px; flex: 0 0 auto; }
+    .dot.global { background: var(--global); box-shadow: 0 0 15px rgba(0,209,255,.6); }
+    .dot.user { background: var(--user); }
+    .dot.project { background: var(--project); }
+    .dot.repo { background: var(--repo); }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.045);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .pill::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .options {
+      display: grid;
+      gap: 24px;
+    }
+
+    .option {
+      border-radius: 32px;
+      padding: 20px;
+    }
+
+    .option-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+
+    .option-title {
+      display: flex;
+      gap: 13px;
+      align-items: flex-start;
+    }
+
+    .number {
+      width: 34px;
+      height: 34px;
+      border-radius: 13px;
+      display: grid;
+      place-items: center;
+      color: #001f28;
+      background: linear-gradient(135deg, var(--primary-soft), var(--primary));
+      font-size: 14px;
+      font-weight: 950;
+      box-shadow: 0 12px 34px rgba(0, 209, 255, .18);
+    }
+
+    h2 { margin: 0; font-size: 20px; letter-spacing: -.02em; }
+    .option-title p { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+
+    .select-hint {
+      padding: 8px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(0, 209, 255, .24);
+      background: rgba(0, 209, 255, .08);
+      color: var(--primary-soft);
+      font-size: 11px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .mock {
+      overflow: hidden;
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,.08);
+      background:
+        linear-gradient(180deg, rgba(53,53,53,.34), rgba(19,19,19,.62)),
+        #101010;
+    }
+
+    .window-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 0 14px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      background: rgba(0,0,0,.22);
+    }
+
+    .traffic { display: flex; gap: 6px; margin-right: 8px; }
+    .traffic i { width: 10px; height: 10px; border-radius: 50%; background: #434343; }
+    .window-title { color: var(--muted); font-size: 12px; font-weight: 800; }
+    .window-spacer { flex: 1; }
+    .ghost-btn { border: 1px solid rgba(255,255,255,.09); border-radius: 999px; padding: 6px 10px; color: var(--muted); font-size: 11px; background: rgba(255,255,255,.035); }
+    .primary-btn { border-radius: 999px; padding: 7px 11px; color: #001f28; font-size: 11px; font-weight: 900; background: var(--primary); }
+
+    .mock-body { padding: 16px; }
+
+    .scope-row, .scope-columns, .rail-layout, .matrix-head { display: grid; gap: 10px; }
+    .scope-row { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 12px; }
+    .scope-stat { min-height: 72px; border-radius: 16px; padding: 12px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.035); position: relative; overflow: hidden; }
+    .scope-stat::after { content: ""; position: absolute; inset: auto 0 0; height: 3px; background: currentColor; opacity: .75; }
+    .scope-stat strong { display: block; font-size: 18px; color: var(--text); margin-top: 10px; }
+    .scope-stat span { color: var(--muted); font-size: 11px; font-weight: 800; }
+
+    .skill-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .skill-card { min-height: 142px; border-radius: 18px; border: 1px solid rgba(255,255,255,.08); background: rgba(26,26,26,.84); padding: 12px; display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden; }
+    .skill-card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: currentColor; opacity: .92; }
+    .skill-top { display: flex; gap: 10px; align-items: flex-start; }
+    .icon-box { width: 34px; height: 34px; border-radius: 12px; background: currentColor; opacity: .18; flex: 0 0 auto; }
+    .skill-name { font-size: 13px; font-weight: 850; color: var(--text); line-height: 1.15; }
+    .path { margin-top: auto; padding: 8px; border-radius: 10px; background: rgba(0,0,0,.22); color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; }
+    .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+    .chip { border-radius: 999px; padding: 4px 7px; background: currentColor; color: #091013; font-size: 9px; font-weight: 950; }
+    .chip.dark { color: var(--muted); background: rgba(255,255,255,.06); }
+
+    .global-color { color: var(--global); }
+    .user-color { color: var(--user); }
+    .project-color { color: var(--project); }
+    .repo-color { color: var(--repo); }
+
+    .scope-columns { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .column { min-height: 330px; border-radius: 20px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.026); padding: 10px; }
+    .column h3 { margin: 0 0 10px; color: currentColor; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+    .mini-card { border-radius: 14px; padding: 10px; background: rgba(26,26,26,.88); border: 1px solid rgba(255,255,255,.08); margin-bottom: 8px; }
+    .mini-card b { display: block; color: var(--text); font-size: 12px; margin-bottom: 7px; }
+    .mini-path { color: var(--faint); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9px; line-height: 1.4; }
+
+    .rail-layout { grid-template-columns: 190px minmax(0, 1fr); }
+    .rail { border-radius: 20px; background: rgba(255,255,255,.032); border: 1px solid rgba(255,255,255,.08); padding: 10px; }
+    .rail-item { display: flex; justify-content: space-between; align-items: center; padding: 11px 10px; margin-bottom: 7px; border-radius: 14px; color: var(--muted); background: rgba(255,255,255,.03); }
+    .rail-item.active { color: var(--primary-soft); background: rgba(0,209,255,.09); border: 1px solid rgba(0,209,255,.18); }
+    .rail-item b { font-size: 12px; }
+    .rail-item span { font-size: 11px; color: currentColor; }
+    .stack { display: grid; gap: 9px; }
+    .wide-card { border-radius: 18px; padding: 12px; border: 1px solid rgba(255,255,255,.08); background: rgba(26,26,26,.78); display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; color: var(--primary); }
+    .wide-card b { display: block; color: var(--text); font-size: 13px; }
+    .wide-card .path { margin-top: 7px; }
+    .status { color: var(--success); font-size: 10px; font-weight: 950; }
+
+    .matrix { display: grid; grid-template-columns: 190px repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .matrix-cell { min-height: 48px; border-radius: 14px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.035); padding: 9px; font-size: 11px; color: var(--muted); }
+    .matrix-cell.head { color: var(--text); font-weight: 850; background: rgba(255,255,255,.055); }
+    .matrix-cell.active { color: var(--text); background: rgba(0,209,255,.09); border-color: rgba(0,209,255,.28); }
+    .matrix-cell.override { color: var(--warning); background: rgba(255,181,71,.08); border-color: rgba(255,181,71,.24); }
+
+    .pros {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .pro {
+      border-radius: 15px;
+      padding: 10px;
+      background: rgba(255,255,255,.032);
+      border: 1px solid rgba(255,255,255,.06);
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .pro b { display: block; color: var(--text); margin-bottom: 4px; font-size: 11px; }
+
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; }
+      .scope-row, .skill-grid, .scope-columns, .rail-layout, .pros { grid-template-columns: 1fr; }
+      .matrix { grid-template-columns: 1fr 1fr; }
+      .option-head { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-card">
+        <div class="eyebrow"><i></i>Aisland Settings · Skills</div>
+        <h1>Skills 页面布局候选方案</h1>
+        <p class="lead">目标是让用户快速判断“有哪些 Skill、装在哪个作用域、当前是否生效”，同时避免在设置页展示 SKILL.md 内容摘要。下面 4 个方案都保留路径优先、卡片呈现、作用域状态可视化，并遵循现有 Cyber-Minimalist 视觉系统。</p>
+      </div>
+      <aside class="note-card">
+        <div class="principles">
+          <div class="principle"><i class="dot global"></i><div><b>全局 / Aisland 托管</b><span>适合用户主动安装，可卸载，应放在最显眼状态。</span></div></div>
+          <div class="principle"><i class="dot user"></i><div><b>用户级</b><span>来自用户目录，通常只读，用路径解释来源。</span></div></div>
+          <div class="principle"><i class="dot project"></i><div><b>项目级</b><span>当前工作目录或项目环境，强调临时上下文。</span></div></div>
+          <div class="principle"><i class="dot repo"></i><div><b>仓库级</b><span>优先级最高，适合用覆盖状态提醒用户。</span></div></div>
+        </div>
+        <div class="legend">
+          <span class="pill global-color">Global</span>
+          <span class="pill user-color">User</span>
+          <span class="pill project-color">Project</span>
+          <span class="pill repo-color">Repository</span>
+        </div>
+      </aside>
+    </section>
+
+    <section class="options">
+      <article class="option">
+        <header class="option-head">
+          <div class="option-title">
+            <div class="number">A</div>
+            <div>
+              <h2>Scope Summary + Adaptive Cards</h2>
+              <p>保留当前卡片思路，但把作用域统计变成顶部仪表盘；下方所有 Skills 自适应网格排列。</p>
+            </div>
+          </div>
+          <div class="select-hint">推荐：低风险迭代</div>
+        </header>
+        <div class="mock">
+          <div class="window-bar"><div class="traffic"><i></i><i></i><i></i></div><div class="window-title">Settings / Skills</div><div class="window-spacer"></div><div class="ghost-btn">Refresh</div><div class="primary-btn">Install Skill</div></div>
+          <div class="mock-body">
+            <div class="scope-row">
+              <div class="scope-stat global-color"><span>GLOBAL</span><strong>3</strong></div>
+              <div class="scope-stat user-color"><span>USER</span><strong>8</strong></div>
+              <div class="scope-stat project-color"><span>PROJECT</span><strong>2</strong></div>
+              <div class="scope-stat repo-color"><span>REPOSITORY</span><strong>5</strong></div>
+            </div>
+            <div class="skill-grid">
+              <div class="skill-card global-color"><div class="skill-top"><i class="icon-box"></i><div><div class="skill-name">openai-docs</div><div class="chips"><span class="chip">Global</span><span class="chip dark">Active</span></div></div></div><div class="path">~/Library/Application Support/Aisland/Skills/openai-docs/SKILL.md</div></div>
+              <div class="skill-card repo-color"><div class="skill-top"><i class="icon-box"></i><div><div class="skill-name">swift-package</div><div class="chips"><span class="chip">Repo</span><span class="chip dark">Active</span></div></div></div><div class="path">/Aisland/.agents/skills/swift-package/SKILL.md</div></div>
+              <div class="skill-card user-color"><div class="skill-top"><i class="icon-box"></i><div><div class="skill-name">docx</div><div class="chips"><span class="chip">User</span><span class="chip dark">Read-only</span></div></div></div><div class="path">~/.agents/skills/docx/SKILL.md</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="pros"><div class="pro"><b>优点</b>最接近现有实现，SwiftUI 迁移成本低。</div><div class="pro"><b>适合</b>Skills 数量不多，用户主要浏览和管理。</div><div class="pro"><b>注意</b>数量很多时需要搜索/过滤补足。</div></div>
+      </article>
+
+      <article class="option">
+        <header class="option-head">
+          <div class="option-title">
+            <div class="number">B</div>
+            <div>
+              <h2>Kanban by Scope</h2>
+              <p>按作用域分列展示，每列都是一个安装层级；用户一眼能看出 Skill 来源与优先级分布。</p>
+            </div>
+          </div>
+          <div class="select-hint">推荐：来源辨识最强</div>
+        </header>
+        <div class="mock">
+          <div class="window-bar"><div class="traffic"><i></i><i></i><i></i></div><div class="window-title">Installed Skills by scope</div><div class="window-spacer"></div><div class="ghost-btn">Refresh</div><div class="primary-btn">Install Skill</div></div>
+          <div class="mock-body">
+            <div class="scope-columns">
+              <div class="column global-color"><h3>Global · 3</h3><div class="mini-card"><b>openai-docs</b><div class="chips"><span class="chip">Aisland</span></div><div class="mini-path">Application Support/.../SKILL.md</div></div><div class="mini-card"><b>imagegen</b><div class="mini-path">Application Support/.../SKILL.md</div></div></div>
+              <div class="column user-color"><h3>User · 8</h3><div class="mini-card"><b>docx</b><div class="chips"><span class="chip dark">Read-only</span></div><div class="mini-path">~/.agents/skills/docx/SKILL.md</div></div></div>
+              <div class="column project-color"><h3>Project · 2</h3><div class="mini-card"><b>web-design-guidelines</b><div class="mini-path">./.codex/skills/web-design/SKILL.md</div></div></div>
+              <div class="column repo-color"><h3>Repository · 5</h3><div class="mini-card"><b>aisland-runtime</b><div class="chips"><span class="chip">Active</span></div><div class="mini-path">.agents/skills/aisland-runtime/SKILL.md</div></div><div class="mini-card"><b>swiftui-style</b><div class="mini-path">.codex/skills/swiftui-style/SKILL.md</div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="pros"><div class="pro"><b>优点</b>非常适合解释“作用域”，覆盖关系自然。</div><div class="pro"><b>适合</b>用户经常排查 Skill 来源和优先级。</div><div class="pro"><b>注意</b>窄窗口下需要折叠为分组列表。</div></div>
+      </article>
+
+      <article class="option">
+        <header class="option-head">
+          <div class="option-title">
+            <div class="number">C</div>
+            <div>
+              <h2>Scope Filter Rail + Focused List</h2>
+              <p>左侧固定作用域筛选和数量，右侧只展示当前范围的 Skill 卡片，适合 Skills 数量持续增长。</p>
+            </div>
+          </div>
+          <div class="select-hint">推荐：中长期最佳</div>
+        </header>
+        <div class="mock">
+          <div class="window-bar"><div class="traffic"><i></i><i></i><i></i></div><div class="window-title">Skills Library</div><div class="window-spacer"></div><div class="ghost-btn">Search</div><div class="primary-btn">Install Skill</div></div>
+          <div class="mock-body rail-layout">
+            <aside class="rail">
+              <div class="rail-item active"><b>All Skills</b><span>18</span></div>
+              <div class="rail-item"><b>Global</b><span>3</span></div>
+              <div class="rail-item"><b>User</b><span>8</span></div>
+              <div class="rail-item"><b>Project</b><span>2</span></div>
+              <div class="rail-item"><b>Repository</b><span>5</span></div>
+            </aside>
+            <div class="stack">
+              <div class="wide-card global-color"><div><b>openai-docs</b><div class="path">~/Library/Application Support/Aisland/Skills/openai-docs/SKILL.md</div></div><div class="status">ACTIVE</div></div>
+              <div class="wide-card repo-color"><div><b>aisland-runtime</b><div class="path">/Users/wander/Documents/code/apps/Aisland/.agents/skills/aisland-runtime/SKILL.md</div></div><div class="status">ACTIVE</div></div>
+              <div class="wide-card project-color"><div><b>web-design-guidelines</b><div class="path">./.codex/skills/web-design-guidelines/SKILL.md</div></div><div class="status">READ ONLY</div></div>
+              <div class="wide-card user-color"><div><b>docx</b><div class="path">~/.agents/skills/docx/SKILL.md</div></div><div class="status">READ ONLY</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="pros"><div class="pro"><b>优点</b>可扩展到搜索、只看覆盖项、只看 Aisland 托管。</div><div class="pro"><b>适合</b>Skills 很多或后续有 Marketplace。</div><div class="pro"><b>注意</b>比方案 A 多一层交互状态。</div></div>
+      </article>
+
+      <article class="option">
+        <header class="option-head">
+          <div class="option-title">
+            <div class="number">D</div>
+            <div>
+              <h2>Conflict Matrix</h2>
+              <p>把同名 Skill 的不同作用域放在同一行，明确展示哪个版本生效、哪个被覆盖。</p>
+            </div>
+          </div>
+          <div class="select-hint">推荐：覆盖诊断专用</div>
+        </header>
+        <div class="mock">
+          <div class="window-bar"><div class="traffic"><i></i><i></i><i></i></div><div class="window-title">Skill priority matrix</div><div class="window-spacer"></div><div class="ghost-btn">Show conflicts</div><div class="primary-btn">Install Skill</div></div>
+          <div class="mock-body">
+            <div class="matrix">
+              <div class="matrix-cell head">Skill</div><div class="matrix-cell head global-color">Global</div><div class="matrix-cell head user-color">User</div><div class="matrix-cell head project-color">Project</div><div class="matrix-cell head repo-color">Repository</div>
+              <div class="matrix-cell head">openai-docs</div><div class="matrix-cell active">Active<br><small>Application Support</small></div><div class="matrix-cell">-</div><div class="matrix-cell">-</div><div class="matrix-cell">-</div>
+              <div class="matrix-cell head">swiftui-style</div><div class="matrix-cell override">Overridden</div><div class="matrix-cell">-</div><div class="matrix-cell active">Active</div><div class="matrix-cell">-</div>
+              <div class="matrix-cell head">aisland-runtime</div><div class="matrix-cell">-</div><div class="matrix-cell override">Overridden</div><div class="matrix-cell">-</div><div class="matrix-cell active">Active</div>
+              <div class="matrix-cell head">docx</div><div class="matrix-cell">-</div><div class="matrix-cell active">Active</div><div class="matrix-cell">-</div><div class="matrix-cell">-</div>
+            </div>
+          </div>
+        </div>
+        <div class="pros"><div class="pro"><b>优点</b>覆盖逻辑最清晰，适合高级用户。</div><div class="pro"><b>适合</b>后续加入“冲突检查/修复”入口。</div><div class="pro"><b>注意</b>管理普通列表不如方案 A/C 轻量。</div></div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>
