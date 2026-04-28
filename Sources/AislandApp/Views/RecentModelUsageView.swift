@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import AislandCore
 
@@ -22,49 +23,10 @@ struct RecentModelUsageView: View {
         rows.reduce(0) { $0 + $1.costUSD }
     }
 
-    private var latestRow: UsageAnalyticsHourlyModelBucket? {
-        rows
-            .filter { $0.totalTokens > 0 || $0.costUSD > 0 }
-            .sorted {
-                ($0.lastSeenAt ?? $0.hourStartAt) > ($1.lastSeenAt ?? $1.hourStartAt)
-            }
-            .first
-    }
-
-    private var topModel: RecentUsageModelSummary? {
-        Dictionary(grouping: rows, by: \.modelIdentifier)
-            .map { modelIdentifier, rows in
-                RecentUsageModelSummary(
-                    modelIdentifier: modelIdentifier,
-                    modelDisplayName: rows.first?.modelDisplayName ?? modelIdentifier,
-                    provider: rows.first?.provider,
-                    totalTokens: rows.reduce(0) { $0 + $1.totalTokens },
-                    costUSD: rows.reduce(0) { $0 + $1.costUSD }
-                )
-            }
-            .filter { $0.totalTokens > 0 || $0.costUSD > 0 }
-            .sorted { lhs, rhs in
-                if lhs.totalTokens == rhs.totalTokens { return lhs.modelDisplayName < rhs.modelDisplayName }
-                return lhs.totalTokens > rhs.totalTokens
-            }
-            .first
-    }
-
     var body: some View {
-        GeometryReader { proxy in
-            let summaryWidth = max(150, proxy.size.width * 0.25)
-
-            HStack(alignment: .center, spacing: 12) {
-                heatmapPanel
-                    .frame(maxWidth: .infinity)
-                    .frame(maxHeight: .infinity)
-
-                summaryPanel
-                    .frame(width: summaryWidth)
-                    .frame(maxHeight: .infinity)
-            }
-        }
-        .frame(height: 500)
+        heatmapPanel
+            .frame(maxWidth: .infinity)
+            .frame(height: 320)
         .onAppear {
             if rows.isEmpty {
                 model.refreshUsageAnalytics()
@@ -108,31 +70,6 @@ struct RecentModelUsageView: View {
         }
     }
 
-    private var summaryPanel: some View {
-        usageSurfaceCard {
-            VStack(alignment: .leading, spacing: 9) {
-                summaryCard(
-                    title: model.lang.t("usage.surface.latest"),
-                    value: latestRow.map { $0.totalTokens.recentUsageTokenString } ?? "0",
-                    detail: latestRow.map { Self.relativeTime($0.lastSeenAt ?? $0.hourStartAt) }
-                        ?? model.lang.t("usage.surface.noRecent")
-                )
-
-                summaryCard(
-                    title: model.lang.t("usage.surface.model"),
-                    value: topModel?.modelDisplayName ?? "—",
-                    detail: topModel?.provider?.displayName ?? model.lang.t("usage.surface.noModel")
-                )
-
-                summaryCard(
-                    title: model.lang.t("usage.surface.cost"),
-                    value: totalCostUSD.recentUsageCurrencyString,
-                    detail: model.lang.t("usage.surface.recentDays")
-                )
-            }
-        }
-    }
-
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 8) {
             Spacer(minLength: 0)
@@ -152,29 +89,6 @@ struct RecentModelUsageView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func summaryCard(title: String, value: String, detail: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title.uppercased())
-                .font(.system(size: 9, weight: .bold))
-                .foregroundStyle(theme.textSecondary.opacity(0.82))
-                .lineLimit(1)
-            Text(value)
-                .font(.system(size: 14, weight: .black, design: .rounded))
-                .foregroundStyle(theme.text)
-                .lineLimit(1)
-                .minimumScaleFactor(0.62)
-            Text(detail)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(theme.textSecondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 11)
-        .padding(.vertical, 10)
-        .background(theme.surfaceContainer.opacity(0.48), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-    }
-
     private func usageSurfaceCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -189,11 +103,6 @@ struct RecentModelUsageView: View {
             )
     }
 
-    private static func relativeTime(_ date: Date) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .short
-        return formatter.localizedString(for: date, relativeTo: .now)
-    }
 }
 
 private struct HourlyContributionHeatmap: View {
@@ -209,10 +118,10 @@ private struct HourlyContributionHeatmap: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let labelWidth: CGFloat = 42
-            let cellSpacing: CGFloat = 3
+            let labelWidth: CGFloat = 52
+            let cellSpacing: CGFloat = 4
             let availableCellWidth = proxy.size.width - labelWidth - CGFloat(23) * cellSpacing
-            let cellSize = min(16, max(8, availableCellWidth / 24))
+            let cellSize = min(20, max(9, availableCellWidth / 24))
 
             VStack(alignment: .leading, spacing: 12) {
                 hourHeader(labelWidth: labelWidth, cellSize: cellSize, spacing: cellSpacing)
@@ -261,7 +170,6 @@ private struct HourlyContributionHeatmap: View {
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(theme.textSecondary)
 
-                RecentUsageDayTotals(days: days, theme: theme)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
@@ -272,7 +180,7 @@ private struct HourlyContributionHeatmap: View {
             Color.clear.frame(width: labelWidth, height: 1)
             ForEach(0..<24, id: \.self) { hour in
                 Text(hour % 6 == 0 ? String(format: "%02d", hour) : "")
-                    .font(.system(size: 8, weight: .bold, design: .rounded))
+                    .font(.system(size: 8.5, weight: .bold, design: .rounded))
                     .foregroundStyle(theme.textSecondary.opacity(0.58))
                     .frame(width: cellSize)
             }
@@ -287,8 +195,8 @@ private struct HourlyContributionHeatmap: View {
             return theme.surfaceContainer.opacity(0.44)
         }
 
-        let intensity = min(1, Double(cell.totalTokens) / Double(maxTokens))
-        return theme.primary.opacity(0.18 + 0.70 * intensity)
+        let intensity = sqrt(min(1, Double(cell.totalTokens) / Double(maxTokens)))
+        return RecentUsageHeatmapColor.color(theme: theme, intensity: intensity)
     }
 
     private func stroke(for cell: RecentUsageHourCell) -> Color {
@@ -296,41 +204,6 @@ private struct HourlyContributionHeatmap: View {
             return theme.text.opacity(0.48)
         }
         return theme.text.opacity(cell.totalTokens > 0 ? 0.10 : 0.04)
-    }
-}
-
-private struct RecentUsageDayTotals: View {
-    var days: [RecentUsageDay]
-    var theme: IslandThemePalette
-
-    private var maxTokens: Int {
-        max(days.map(\.totalTokens).max() ?? 1, 1)
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            ForEach(days) { day in
-                HStack(spacing: 8) {
-                    Text(day.longLabel)
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundStyle(theme.textSecondary)
-                        .frame(width: 46, alignment: .leading)
-                    GeometryReader { proxy in
-                        RoundedRectangle(cornerRadius: 5, style: .continuous)
-                            .fill(theme.primary.opacity(day.totalTokens > 0 ? 0.28 : 0.08))
-                            .frame(width: max(day.totalTokens > 0 ? 3 : 0, proxy.size.width * CGFloat(day.totalTokens) / CGFloat(maxTokens)))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .frame(height: 8)
-                    Text(day.totalTokens.recentUsageTokenString)
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundStyle(theme.textSecondary)
-                        .monospacedDigit()
-                        .frame(width: 42, alignment: .trailing)
-                }
-            }
-        }
-        .padding(.horizontal, 4)
     }
 }
 
@@ -347,10 +220,6 @@ private struct RecentUsageDay: Identifiable {
 
     var shortLabel: String {
         Self.shortFormatter.string(from: dayStartAt)
-    }
-
-    var longLabel: String {
-        Self.longFormatter.string(from: dayStartAt)
     }
 
     static func completeRecentDays(from rows: [UsageAnalyticsHourlyModelBucket], dayCount: Int) -> [RecentUsageDay] {
@@ -387,13 +256,28 @@ private struct RecentUsageDay: Identifiable {
         formatter.setLocalizedDateFormatFromTemplate("EEE")
         return formatter
     }()
+}
 
-    private static let longFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = .current
-        formatter.setLocalizedDateFormatFromTemplate("Md")
-        return formatter
-    }()
+private enum RecentUsageHeatmapColor {
+    static func color(theme: IslandThemePalette, intensity: Double) -> Color {
+        let clamped = min(max(intensity, 0), 1)
+        guard let base = NSColor(theme.primary).usingColorSpace(.deviceRGB) else {
+            return theme.primary.opacity(0.22 + 0.72 * clamped)
+        }
+
+        var hue: CGFloat = 0
+        var saturation: CGFloat = 0
+        var brightness: CGFloat = 0
+        var alpha: CGFloat = 0
+        base.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
+
+        return Color(
+            hue: Double(hue),
+            saturation: min(1, Double(max(0.18, saturation)) * (0.24 + 0.76 * clamped)),
+            brightness: min(1, Double(max(0.42, brightness)) * (0.42 + 0.58 * clamped)),
+            opacity: 0.38 + 0.58 * clamped
+        )
+    }
 }
 
 private struct RecentUsageHourCell: Identifiable {
@@ -420,14 +304,6 @@ private struct RecentUsageHourCell: Identifiable {
         formatter.timeStyle = .short
         return formatter
     }()
-}
-
-private struct RecentUsageModelSummary {
-    var modelIdentifier: String
-    var modelDisplayName: String
-    var provider: UsageLogProvider?
-    var totalTokens: Int
-    var costUSD: Double
 }
 
 private extension Int {

@@ -367,8 +367,8 @@
 "whiteNoise.category.utility" = "Utility";
 
 /* Recent Usage */
-"usage.surface.title" = "Recent model usage";
-"usage.surface.subtitle" = "Recent days, grouped into hourly contribution cells.";
+"usage.surface.title" = "7-day x 24-hour heatmap";
+"usage.surface.subtitle" = "Recent hourly peaks using Aisland's accent saturation.";
 "usage.surface.legend" = "Hourly contribution";
 "usage.surface.latest" = "Latest";
 "usage.surface.model" = "Model";

@@ -367,8 +367,8 @@
 "whiteNoise.category.utility" = "工具";
 
 /* Recent Usage */
-"usage.surface.title" = "近期模型用量";
-"usage.surface.subtitle" = "近几天按小时聚合，像贡献图一样查看高峰。";
+"usage.surface.title" = "7 天 x 24 小时热力图";
+"usage.surface.subtitle" = "按小时捕捉最近峰值，沿用 Aisland 主题色饱和度。";
 "usage.surface.legend" = "每小时贡献";
 "usage.surface.latest" = "最近";
 "usage.surface.model" = "模型";
