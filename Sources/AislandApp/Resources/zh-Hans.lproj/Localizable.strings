@@ -332,6 +332,7 @@
 "settings.skills.empty.title" = "暂无 Skills";
 "settings.skills.empty.body" = "可安装本地 SKILL.md 文件，或包含 SKILL.md 的文件夹。";
 "settings.skills.alwaysApply" = "始终";
+"settings.skills.active" = "启用中";
 "settings.skills.managed" = "Aisland";
 "settings.skills.readOnly" = "只读";
 "settings.skills.overridden" = "被覆盖";
@@ -342,6 +343,10 @@
 "settings.skills.source.repository" = "仓库";
 "settings.skills.source.project" = "项目";
 "settings.skills.source.user" = "用户";
+"settings.skills.scope.global" = "全局";
+"settings.skills.scope.user" = "用户";
+"settings.skills.scope.project" = "项目";
+"settings.skills.scope.repository" = "仓库";
 
 /* White Noise */
 "island.surface.whiteNoise" = "白噪音";

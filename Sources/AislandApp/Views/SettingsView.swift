@@ -371,8 +371,10 @@ struct LLMSettingsPane: View {
 struct SkillsSettingsPane: View {
     var model: AppModel
     @State private var pendingUninstallSkill: TemporaryChatInstalledSkill?
+    @Environment(\.islandTheme) private var theme
 
     private var lang: LanguageManager { model.lang }
+    private var installedSkills: [TemporaryChatInstalledSkill] { model.temporaryChatInstalledSkills }
 
     var body: some View {
         Form {
@@ -412,8 +414,8 @@ struct SkillsSettingsPane: View {
                 }
             }
 
-            Section(lang.t("settings.skills.installed")) {
-                if model.temporaryChatInstalledSkills.isEmpty {
+            Section {
+                if installedSkills.isEmpty {
                     ContentUnavailableView(
                         lang.t("settings.skills.empty.title"),
                         systemImage: "wand.and.stars",
@@ -421,10 +423,21 @@ struct SkillsSettingsPane: View {
                     )
                     .frame(maxWidth: .infinity)
                 } else {
-                    ForEach(model.temporaryChatInstalledSkills) { skill in
-                        skillRow(skill)
+                    skillScopeOverview
+                        .padding(.bottom, 4)
+
+                    LazyVGrid(
+                        columns: [GridItem(.adaptive(minimum: 260), spacing: 12)],
+                        alignment: .leading,
+                        spacing: 12
+                    ) {
+                        ForEach(installedSkills) { skill in
+                            skillCard(skill)
+                        }
                     }
                 }
+            } header: {
+                Text(lang.t("settings.skills.installed"))
             }
         }
         .formStyle(.grouped)
@@ -454,44 +467,97 @@ struct SkillsSettingsPane: View {
         }
     }
 
-    private func skillRow(_ skill: TemporaryChatInstalledSkill) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(skill.definition.title)
-                    .font(.system(size: 13, weight: .semibold))
-                if skill.definition.alwaysApply {
-                    badge(lang.t("settings.skills.alwaysApply"), color: .blue)
+    private var skillScopeOverview: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 118), spacing: 8)], spacing: 8) {
+            ForEach(TemporaryChatSkillInstallScope.allCases) { scope in
+                let count = installedSkills.filter { installScope(for: $0) == scope }.count
+                HStack(spacing: 8) {
+                    Image(systemName: scope.systemImageName)
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(scope.color(theme: theme))
+                        .frame(width: 24, height: 24)
+                        .background(scope.color(theme: theme).opacity(0.12), in: Circle())
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(scope.title(lang))
+                            .font(IslandTheme.labelFont(size: 10))
+                            .foregroundStyle(theme.textSecondary)
+                        Text("\(count)")
+                            .font(IslandTheme.bodyFont(size: 15, weight: .black))
+                            .foregroundStyle(count > 0 ? theme.text : theme.textTertiary)
+                            .monospacedDigit()
+                    }
+                    Spacer(minLength: 0)
                 }
-                if skill.isAislandManaged {
-                    badge(lang.t("settings.skills.managed"), color: .green)
-                } else {
-                    badge(lang.t("settings.skills.readOnly"), color: .secondary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 9)
+                .background(
+                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .fill(theme.surfaceContainer.opacity(0.36))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .strokeBorder(scope.color(theme: theme).opacity(count > 0 ? 0.18 : 0.07), lineWidth: 1)
+                )
+            }
+        }
+    }
+
+    private func skillCard(_ skill: TemporaryChatInstalledSkill) -> some View {
+        let scope = installScope(for: skill)
+
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(scope.color(theme: theme).opacity(0.14))
+                    Image(systemName: scope.systemImageName)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(scope.color(theme: theme))
                 }
-                if skill.isOverridden {
-                    badge(lang.t("settings.skills.overridden"), color: .orange)
+                .frame(width: 36, height: 36)
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(skill.definition.title)
+                        .font(IslandTheme.bodyFont(size: 13, weight: .semibold))
+                        .foregroundStyle(theme.text)
+                        .lineLimit(1)
+                    HStack(spacing: 6) {
+                        badge(scope.title(lang), color: scope.color(theme: theme))
+                        badge(
+                            skill.isAislandManaged ? lang.t("settings.skills.managed") : lang.t("settings.skills.readOnly"),
+                            color: skill.isAislandManaged ? theme.success : theme.textSecondary
+                        )
+                    }
                 }
+
                 Spacer(minLength: 8)
             }
 
-            Text(skill.definition.summary)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            HStack(spacing: 8) {
-                Text(sourceTitle(for: skill.definition.source))
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.secondary)
+            HStack(spacing: 6) {
+                Image(systemName: "folder")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(theme.textTertiary)
                 Text(skill.definition.fileURL.path)
                     .font(.caption2.monospaced())
-                    .foregroundStyle(.tertiary)
-                    .lineLimit(1)
+                    .foregroundStyle(theme.textSecondary)
+                    .lineLimit(2)
                     .truncationMode(.middle)
+                    .textSelection(.enabled)
             }
+            .padding(8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(theme.surfaceContainer.opacity(0.38), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 
-            if !skill.definition.tags.isEmpty {
-                Text(skill.definition.tags.map { "#\($0)" }.joined(separator: " "))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+            HStack(spacing: 6) {
+                if skill.definition.alwaysApply {
+                    badge(lang.t("settings.skills.alwaysApply"), color: theme.primary)
+                }
+                if skill.isOverridden {
+                    badge(lang.t("settings.skills.overridden"), color: theme.warning)
+                } else {
+                    badge(lang.t("settings.skills.active"), color: theme.success)
+                }
+                Spacer(minLength: 0)
             }
 
             if skill.isOverridden, let active = skill.activeDefinition {
@@ -504,18 +570,30 @@ struct SkillsSettingsPane: View {
                 Button(lang.t("settings.skills.reveal")) {
                     model.revealTemporaryChatSkill(skill)
                 }
+                .buttonStyle(.borderless)
 
                 if skill.isAislandManaged {
                     Button(lang.t("settings.general.uninstall"), role: .destructive) {
                         pendingUninstallSkill = skill
                     }
+                    .buttonStyle(.borderless)
                 }
 
                 Spacer()
             }
             .font(.caption)
         }
-        .padding(.vertical, 4)
+        .padding(12)
+        .frame(maxWidth: .infinity, minHeight: 174, alignment: .topLeading)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(theme.card.opacity(0.76))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(scope.color(theme: theme).opacity(0.18), lineWidth: 1)
+        )
+        .shadow(color: theme.shadow.opacity(0.10), radius: 10, x: 0, y: 5)
     }
 
     private func badge(_ text: String, color: Color) -> some View {
@@ -527,6 +605,21 @@ struct SkillsSettingsPane: View {
             .background(color.opacity(0.12), in: Capsule())
     }
 
+    private func installScope(for skill: TemporaryChatInstalledSkill) -> TemporaryChatSkillInstallScope {
+        if skill.isAislandManaged {
+            return .global
+        }
+
+        switch skill.definition.source {
+        case .repository:
+            return .repository
+        case .project:
+            return .project
+        case .user:
+            return .user
+        }
+    }
+
     private func sourceTitle(for source: TemporaryChatSkillSource) -> String {
         switch source {
         case .repository:
@@ -535,6 +628,57 @@ struct SkillsSettingsPane: View {
             lang.t("settings.skills.source.project")
         case .user:
             lang.t("settings.skills.source.user")
+        }
+    }
+}
+
+private enum TemporaryChatSkillInstallScope: CaseIterable, Identifiable {
+    case global
+    case user
+    case project
+    case repository
+
+    var id: String {
+        switch self {
+        case .global: "global"
+        case .user: "user"
+        case .project: "project"
+        case .repository: "repository"
+        }
+    }
+
+    var systemImageName: String {
+        switch self {
+        case .global: "globe"
+        case .user: "person.crop.circle"
+        case .project: "folder.badge.gearshape"
+        case .repository: "shippingbox"
+        }
+    }
+
+    func title(_ lang: LanguageManager) -> String {
+        switch self {
+        case .global:
+            lang.t("settings.skills.scope.global")
+        case .user:
+            lang.t("settings.skills.scope.user")
+        case .project:
+            lang.t("settings.skills.scope.project")
+        case .repository:
+            lang.t("settings.skills.scope.repository")
+        }
+    }
+
+    func color(theme: IslandThemePalette) -> Color {
+        switch self {
+        case .global:
+            theme.primary
+        case .user:
+            theme.secondary
+        case .project:
+            theme.tertiary
+        case .repository:
+            theme.warning
         }
     }
 }

@@ -332,6 +332,7 @@
 "settings.skills.empty.title" = "No Skills found";
 "settings.skills.empty.body" = "Install a local SKILL.md file or a folder that contains SKILL.md.";
 "settings.skills.alwaysApply" = "Always";
+"settings.skills.active" = "Active";
 "settings.skills.managed" = "Aisland";
 "settings.skills.readOnly" = "Read-only";
 "settings.skills.overridden" = "Overridden";
@@ -342,6 +343,10 @@
 "settings.skills.source.repository" = "Repository";
 "settings.skills.source.project" = "Project";
 "settings.skills.source.user" = "User";
+"settings.skills.scope.global" = "Global";
+"settings.skills.scope.user" = "User";
+"settings.skills.scope.project" = "Project";
+"settings.skills.scope.repository" = "Repository";
 
 /* White Noise */
 "island.surface.whiteNoise" = "White Noise";
