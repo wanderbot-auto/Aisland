@@ -104,7 +104,7 @@
     .hero-card span { color: var(--dim); font-size: 12px; font-weight: 680; line-height: 1.5; }
     .nav {
       display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
+      grid-template-columns: repeat(7, minmax(0, 1fr));
       gap: 8px;
       margin: 18px 0 22px;
       padding: 8px;
@@ -258,6 +258,80 @@
     .wf-row:nth-child(3n) .wf-fill { background: linear-gradient(90deg, var(--amber), var(--orange)); }
     .wf-row span { color: var(--dim); font-size: 11px; font-weight: 760; text-align: right; }
 
+    .combo-layout { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(280px, .72fr); gap: 14px; align-items: stretch; }
+    .usage-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; position: relative; }
+    .usage-day {
+      position: relative;
+      min-height: 70px;
+      padding: 8px;
+      border: 1px solid rgba(255,255,255,.085);
+      border-radius: 15px;
+      background: rgba(255,255,255,.028);
+      isolation: isolate;
+      cursor: default;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease;
+    }
+    .usage-day:hover { z-index: 8; transform: translateY(-2px); border-color: var(--line-strong); background: rgba(255,255,255,.052); }
+    .usage-day-fill {
+      position: absolute;
+      inset: auto 0 0;
+      height: var(--h);
+      border-radius: 0 0 14px 14px;
+      background: linear-gradient(180deg, rgba(0,209,255,.08), rgba(0,209,255,.64));
+      box-shadow: 0 0 20px rgba(0,209,255,.22);
+      z-index: -1;
+    }
+    .usage-day.hot .usage-day-fill { background: linear-gradient(180deg, rgba(255,204,102,.14), rgba(255,204,102,.75)); box-shadow: 0 0 20px rgba(255,204,102,.22); }
+    .usage-day strong { display: block; color: #fff; font-size: 11px; }
+    .usage-day span { display: block; margin-top: 24px; color: var(--muted); font-size: 10px; font-weight: 760; }
+    .day-tooltip {
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 10px);
+      width: min(330px, 78vw);
+      padding: 12px;
+      border: 1px solid rgba(164,230,255,.22);
+      border-radius: 18px;
+      background: rgba(8,8,8,.94);
+      box-shadow: 0 22px 70px rgba(0,0,0,.62), 0 0 28px rgba(0,209,255,.12);
+      backdrop-filter: blur(24px);
+      opacity: 0;
+      transform: translate(-50%, 8px) scale(.98);
+      pointer-events: none;
+      transition: opacity .16s ease, transform .16s ease;
+    }
+    .usage-day:hover .day-tooltip { opacity: 1; transform: translate(-50%, 0) scale(1); }
+    .day-tooltip::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 100%;
+      width: 10px;
+      height: 10px;
+      background: rgba(8,8,8,.94);
+      border-right: 1px solid rgba(164,230,255,.22);
+      border-bottom: 1px solid rgba(164,230,255,.22);
+      transform: translate(-50%, -5px) rotate(45deg);
+    }
+    .tooltip-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+    .tooltip-head b { color: #fff; font-size: 13px; }
+    .tooltip-head span { color: var(--cyan-soft); font-size: 11px; font-weight: 820; }
+    .tooltip-models { display: grid; gap: 7px; margin-bottom: 11px; }
+    .tooltip-model { display: grid; grid-template-columns: 8px minmax(0,1fr) auto; gap: 8px; align-items: center; }
+    .tooltip-model i { width: 8px; height: 8px; border-radius: 999px; background: var(--cyan); box-shadow: 0 0 12px currentColor; }
+    .tooltip-model em { color: var(--text); font-style: normal; font-size: 11px; font-weight: 760; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tooltip-model small { color: var(--dim); font-size: 10px; font-weight: 780; }
+    .tooltip-heat { display: grid; grid-template-columns: repeat(24, minmax(4px, 1fr)); gap: 3px; align-items: end; height: 42px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.08); }
+    .tooltip-heat i { display: block; height: var(--v); min-height: 4px; border-radius: 4px; background: color-mix(in srgb, var(--cyan) var(--p), rgba(255,255,255,.08)); box-shadow: 0 0 10px rgba(0,209,255,.14); }
+    .combo-pareto { display: grid; gap: 10px; }
+    .pareto-row { display: grid; grid-template-columns: 132px minmax(0, 1fr) 64px; gap: 10px; align-items: center; padding: 8px 0; }
+    .pareto-row b { color: #fff; font-size: 11px; font-weight: 820; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pareto-track { height: 22px; border-radius: 999px; background: rgba(255,255,255,.045); overflow: hidden; }
+    .pareto-fill { width: var(--w); height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--cyan), var(--cyan-soft)); box-shadow: 0 0 16px rgba(0,209,255,.18); }
+    .pareto-row:nth-child(2n) .pareto-fill { background: linear-gradient(90deg, var(--green), var(--cyan)); }
+    .pareto-row:nth-child(3n) .pareto-fill { background: linear-gradient(90deg, var(--amber), var(--orange)); }
+    .pareto-row span { color: var(--dim); font-size: 11px; font-weight: 780; text-align: right; }
+
     .sankey { width: 100%; height: 320px; }
     .sankey text { fill: var(--muted); font-size: 11px; font-weight: 760; }
     .sankey .node { fill: rgba(255,255,255,.08); stroke: rgba(255,255,255,.14); }
@@ -280,13 +354,14 @@
     .pros span { color: var(--dim); font-size: 11px; line-height: 1.45; }
 
     @media (max-width: 900px) {
-      .hero, .recommendation, .panel-grid, .rings { grid-template-columns: 1fr; }
+      .hero, .recommendation, .panel-grid, .rings, .combo-layout { grid-template-columns: 1fr; }
       .hero-card { width: auto; }
       .nav { grid-template-columns: repeat(2, 1fr); border-radius: 22px; }
       .metrics { grid-template-columns: repeat(2, 1fr); }
       .option-head { grid-template-columns: 1fr; }
       .pros { grid-template-columns: 1fr; }
       .calendar { grid-template-columns: repeat(4, 1fr); }
+      .usage-calendar { grid-template-columns: repeat(4, 1fr); }
       .matrix { grid-template-columns: 92px repeat(5, minmax(72px, 1fr)); overflow-x: auto; }
     }
   </style>
@@ -308,12 +383,13 @@
         <p class="lead">热力图擅长看“哪里热”，但不擅长表达总量走势、模型结构、成本归因和会话爆发。下面每个方案都用同一套 Aisland 深色玻璃风格模拟，方便直接挑选后落到 SwiftUI。</p>
       </div>
       <aside class="hero-card">
-        <b>推荐默认：方案 A + C</b>
-        <span>主视图用堆叠面积图看趋势；右侧用模型贡献排行解释消耗来源。比热力图更直观，也更适合 1/7/14/30 天范围切换。</span>
+        <b>当前偏好：方案 B + C</b>
+        <span>主视图用日期卡片柱状日历；右侧保留模型贡献 Pareto。悬浮某一天时，浮层显示当天模型构成和 24 小时时间热力图。</span>
       </aside>
     </section>
 
     <nav class="nav" aria-label="方案导航">
+      <a href="#preferred">精选组合</a>
       <a href="#area">A 趋势面积</a>
       <a href="#calendar">B 日期卡片</a>
       <a href="#pareto">C 模型排行</a>
@@ -330,6 +406,46 @@
       <div class="note">
         <h3>不建议继续强化热力图的场景</h3>
         <p>当用户主要关心 token 总量、成本、模型占比、趋势变化时，热力图的信息密度高但判断成本也高，容易看起来像噪点矩阵。</p>
+      </div>
+    </section>
+
+
+    <section class="option" id="preferred">
+      <div class="option-head">
+        <div>
+          <div class="kicker">Selected Direction · B + C</div>
+          <h2>日期卡片柱状日历 + 模型贡献排行</h2>
+          <p>主区域用每日柱状卡片表达 token 总量，右侧用 Pareto 排行解释模型贡献。悬浮任意日期卡片时，浮层展示当天 Top 模型和 24 小时时间热力图，用于快速回答“这一天为什么高”。</p>
+        </div>
+        <div class="badge">当前选中</div>
+      </div>
+      <div class="mock">
+        <div class="window">
+          <div class="topbar"><div class="traffic"><i></i><i></i><i></i></div><strong>Usage · Calendar + Pareto</strong><span>hover a day for hourly detail</span></div>
+          <div class="content">
+            <div class="metrics"><div class="metric"><span>Total</span><b>18.4M</b></div><div class="metric"><span>Peak day</span><b>4/21</b></div><div class="metric"><span>Cost</span><b>$38.62</b></div><div class="metric"><span>Active days</span><b>14</b></div></div>
+            <div class="combo-layout">
+              <div class="panel">
+                <h3>每日 Token 柱状日历 · 悬浮查看当天模型和小时热力</h3>
+                <div class="usage-calendar">
+                  <div class="usage-day " style="--h:58%"><strong>4/08</strong><span>1.1M</span><i class="usage-day-fill"></i><div class="day-tooltip"><div class="tooltip-head"><b>4/08 · 1.1M tokens</b><span>$6.85</span></div><div class="tooltip-models"><div class="tooltip-model"><i style="color:var(--cyan)"></i><em>claude-sonnet-4.5</em><small>520K</small></div><div class="tooltip-model"><i style="color:var(--green);background:var(--green)"></i><em>gpt-5.3-codex</em><small>360K</small></div><div class="tooltip-model"><i style="color:var(--amber);background:var(--amber)"></i><em>deepseek-v3.2</em><small>220K</small></div></div><div class="tooltip-heat" aria-label="当天 24 小时时间热力图"><i style="--v:10%;--p:12%"></i><i style="--v:12%;--p:14%"></i><i style="--v:8%;--p:10%"></i><i style="--v:6%;--p:8%"></i><i style="--v:8%;--p:10%"></i><i style="--v:18%;--p:18%"></i><i style="--v:32%;--p:30%"></i><i style="--v:42%;--p:44%"></i><i style="--v:38%;--p:40%"></i><i style="--v:24%;--p:26%"></i><i style="--v:18%;--p:20%"></i><i style="--v:30%;--p:32%"></i><i style="--v:64%;--p:66%"></i><i style="--v:84%;--p:88%"></i><i style="--v:72%;--p:72%"></i><i style="--v:48%;--p:50%"></i><i style="--v:34%;--p:36%"></i><i style="--v:58%;--p:62%"></i><i style="--v:78%;--p:82%"></i><i style="--v:62%;--p:64%"></i><i style="--v:40%;--p:42%"></i><i style="--v:28%;--p:30%"></i><i style="--v:16%;--p:18%"></i><i style="--v:10%;--p:12%"></i></div></div></div><div class="usage-day " style="--h:40%"><strong>4/09</strong><span>710K</span><i class="usage-day-fill"></i><div class="day-tooltip"><div class="tooltip-head"><b>4/09 · 710K tokens</b><span>$8.22</span></div><div class="tooltip-models"><div class="tooltip-model"><i style="color:var(--cyan)"></i><em>gpt-5.3-codex</em><small>300K</small></div><div class="tooltip-model"><i style="color:var(--green);background:var(--green)"></i><em>claude-sonnet-4.5</em><small>260K</small></div><div class="tooltip-model"><i style="color:var(--amber);background:var(--amber)"></i><em>qwen3-coder</em><small>150K</small></div></div><div class="tooltip-heat" aria-label="当天 24 小时时间热力图"><i style="--v:6%;--p:8%"></i><i style="--v:6%;--p:8%"></i><i style="--v:7%;--p:8%"></i><i style="--v:10%;--p:10%"></i><i style="--v:16%;--p:18%"></i><i style="--v:22%;--p:24%"></i><i style="--v:26%;--p:28%"></i><i style="--v:28%;--p:30%"></i><i style="--v:22%;--p:24%"></i><i style="--v:18%;--p:20%"></i><i style="--v:20%;--p:22%"></i><i style="--v:34%;--p:36%"></i><i style="--v:50%;--p:54%"></i><i style="--v:58%;--p:60%"></i><i style="--v:48%;--p:52%"></i><i style="--v:42%;--p:44%"></i><i style="--v:38%;--p:40%"></i><i style="--v:46%;--p:48%"></i><i style="--v:64%;--p:68%"></i><i style="--v:82%;--p:86%"></i><i style="--v:74%;--p:76%"></i><i style="--v:46%;--p:48%"></i><i style="--v:28%;--p:30%"></i><i style="--v:16%;--p:18%"></i></div></div></div><div class="usage-day hot" style="--h:84%"><strong>4/10</strong><span>2.0M</span><i class="usage-day-fill"></i><div class="day-tooltip"><div class="tooltip-head"><b>4/10 · 2.0M tokens</b><span>$9.59</span></div><div class="tooltip-models"><div class="tooltip-model"><i style="color:var(--cyan)"></i><em>claude-sonnet-4.5</em><small>960K</small></div><div class="tooltip-model"><i style="color:var(--green);background:var(--green)"></i><em>gpt-5.3-codex</em><small>680K</small></div><div class="tooltip-model"><i style="color:var(--amber);background:var(--amber)"></i><em>deepseek-v3.2</em><small>360K</small></div></div><div class="tooltip-heat" aria-label="当天 24 小时时间热力图"><i style="--v:8%;--p:10%"></i><i style="--v:8%;--p:10%"></i><i style="--v:7%;--p:8%"></i><i style="--v:6%;--p:8%"></i><i style="--v:12%;--p:12%"></i><i style="--v:20%;--p:20%"></i><i style="--v:28%;--p:28%"></i><i style="--v:34%;--p:34%"></i><i style="--v:42%;--p:42%"></i><i style="--v:50%;--p:52%"></i><i style="--v:36%;--p:38%"></i><i style="--v:30%;--p:32%"></i><i style="--v:44%;--p:46%"></i><i style="--v:56%;--p:58%"></i><i style="--v:72%;--p:74%"></i><i style="--v:90%;--p:92%"></i><i style="--v:76%;--p:78%"></i><i style="--v:52%;--p:54%"></i><i style="--v:40%;--p:42%"></i><i style="--v:34%;--p:36%"></i><i style="--v:26%;--p:28%"></i><i style="--v:20%;--p:22%"></i><i style="--v:14%;--p:16%"></i><i style="--v:10%;--p:12%"></i></div></div></div><div class="usage-day " style="--h:48%"><strong>4/11</strong><span>880K</span><i class="usage-day-fill"></i><div class="day-tooltip"><div class="tooltip-head"><b>4/11 · 880K tokens</b><span>$10.96</span></div><div class="tooltip-models"><div class="tooltip-model"><i style="color:var(--cyan)"></i><em>gpt-5.3-codex</em><small>410K</small></div><div class="tooltip-model"><i style="color:var(--green);background:var(--green)"></i><em>glm-4.7</em><small>270K</small></div><div class="tooltip-model"><i style="color:var(--amber);background:var(--amber)"></i><em>claude-sonnet-4.5</em><small>200K</small></div></div><div class="tooltip-heat" aria-label="当天 24 小时时间热力图"><i style="--v:10%;--p:12%"></i><i style="--v:12%;--p:14%"></i><i style="--v:8%;--p:10%"></i><i style="--v:6%;--p:8%"></i><i style="--v:8%;--p:10%"></i><i style="--v:18%;--p:18%"></i><i style="--v:32%;--p:30%"></i><i style="--v:42%;--p:44%"></i><i style="--v:38%;--p:40%"></i><i style="--v:24%;--p:26%"></i><i style="--v:18%;--p:20%"></i><i style="--v:30%;--p:32%"></i><i style="--v:64%;--p:66%"></i><i style="--v:84%;--p:88%"></i><i style="--v:72%;--p:72%"></i><i style="--v:48%;--p:50%"></i><i style="--v:34%;--p:36%"></i><i style="--v:58%;--p:62%"></i><i style="--v:78%;--p:82%"></i><i style="--v:62%;--p:64%"></i><i style="--v:40%;--p:42%"></i><i style="--v:28%;--p:30%"></i><i style="--v:16%;--p:18%"></i><i style="--v:10%;--p:12%"></i></div></div></div><div class="usage-day " style="--h:31%"><strong>4/12</strong><span>500K</span><i class="usage-day-fill"></i><div class="day-tooltip"><div class="tooltip-head"><b>4/12 · 500K tokens</b><span>$12.33</span></div><div class="tooltip-models"><div class="tooltip-model"><i style="color:var(--cyan)"></i><em>deepseek-v3.2</em><small>210K</small></div><div class="tooltip-model"><i style="color:var(--green);background:var(--green)"></i><em>qwen3-coder</em><small>170K</small></div><div class="tooltip-model"><i style="color:var(--amber);background:var(--amber)"></i><em>other</em><small>120K</small></div></div><div class="tooltip-heat" aria-label="当天 24 小时时间热力图"><i style="--v:6%;--p:8%"></i><i style="--v:6%;--p:8%"></i><i style="--v:7%;--p:8%"></i><i style="--v:10%;--p:10%"></i><i style="--v:16%;--p:18%"></i><i style="--v:22%;--p:24%"></i><i style="--v:26%;--p:28%"></i><i style="--v:28%;--p:30%"></i><i style="--v:22%;--p:24%"></i><i style="--v:18%;--p:20%"></i><i style="--v:20%;--p:22%"></i><i style="--v:34%;--p:36%"></i><i style="--v:50%;--p:54%"></i><i style="--v:58%;--p:60%"></i><i style="--v:48%;--p:52%"></i><i style="--v:42%;--p:44%"></i><i style="--v:38%;--p:40%"></i><i style="--v:46%;--p:48%"></i><i style="--v:64%;--p:68%"></i><i style="--v:82%;--p:86%"></i><i style="--v:74%;--p:76%"></i><i style="--v:46%;--p:48%"></i><i style="--v:28%;--p:30%"></i><i style="--v:16%;--p:18%"></i></div></div></div><div class="usage-day " style="--h:44%"><strong>4/13</strong><span>780K</span><i class="usage-day-fill"></i><div class="day-tooltip"><div class="tooltip-head"><b>4/13 · 780K tokens</b><span>$13.7</span></div><div class="tooltip-models"><div class="tooltip-model"><i style="color:var(--cyan)"></i><em>claude-sonnet-4.5</em><small>340K</small></div><div class="tooltip-model"><i style="color:var(--green);background:var(--green)"></i><em>gpt-5.3-codex</em><small>280K</small></div><div class="tooltip-model"><i style="color:var(--amber);background:var(--amber)"></i><em>other</em><small>160K</small></div></div><div class="tooltip-heat" aria-label="当天 24 小时时间热力图"><i style="--v:10%;--p:12%"></i><i style="--v:12%;--p:14%"></i><i style="--v:8%;--p:10%"></i><i style="--v:6%;--p:8%"></i><i style="--v:8%;--p:10%"></i><i style="--v:18%;--p:18%"></i><i style="--v:32%;--p:30%"></i><i style="--v:42%;--p:44%"></i><i style="--v:38%;--p:40%"></i><i style="--v:24%;--p:26%"></i><i style="--v:18%;--p:20%"></i><i style="--v:30%;--p:32%"></i><i style="--v:64%;--p:66%"></i><i style="--v:84%;--p:88%"></i><i style="--v:72%;--p:72%"></i><i style="--v:48%;--p:50%"></i><i style="--v:34%;--p:36%"></i><i style="--v:58%;--p:62%"></i><i style="--v:78%;--p:82%"></i><i style="--v:62%;--p:64%"></i><i style="--v:40%;--p:42%"></i><i style="--v:28%;--p:30%"></i><i style="--v:16%;--p:18%"></i><i style="--v:10%;--p:12%"></i></div></div></div><div class="usage-day " style="--h:50%"><strong>4/14</strong><span>920K</span><i class="usage-day-fill"></i><div class="day-tooltip"><div class="tooltip-head"><b>4/14 · 920K tokens</b><span>$15.07</span></div><div class="tooltip-models"><div class="tooltip-model"><i style="color:var(--cyan)"></i><em>gpt-5.3-codex</em><small>390K</small></div><div class="tooltip-model"><i style="color:var(--green);background:var(--green)"></i><em>claude-sonnet-4.5</em><small>320K</small></div><div class="tooltip-model"><i style="color:var(--amber);background:var(--amber)"></i><em>glm-4.7</em><small>210K</small></div></div><div class="tooltip-heat" aria-label="当天 24 小时时间热力图"><i style="--v:8%;--p:10%"></i><i style="--v:8%;--p:10%"></i><i style="--v:7%;--p:8%"></i><i style="--v:6%;--p:8%"></i><i style="--v:12%;--p:12%"></i><i style="--v:20%;--p:20%"></i><i style="--v:28%;--p:28%"></i><i style="--v:34%;--p:34%"></i><i style="--v:42%;--p:42%"></i><i style="--v:50%;--p:52%"></i><i style="--v:36%;--p:38%"></i><i style="--v:30%;--p:32%"></i><i style="--v:44%;--p:46%"></i><i style="--v:56%;--p:58%"></i><i style="--v:72%;--p:74%"></i><i style="--v:90%;--p:92%"></i><i style="--v:76%;--p:78%"></i><i style="--v:52%;--p:54%"></i><i style="--v:40%;--p:42%"></i><i style="--v:34%;--p:36%"></i><i style="--v:26%;--p:28%"></i><i style="--v:20%;--p:22%"></i><i style="--v:14%;--p:16%"></i><i style="--v:10%;--p:12%"></i></div></div></div><div class="usage-day " style="--h:67%"><strong>4/15</strong><span>1.4M</span><i class="usage-day-fill"></i><div class="day-tooltip"><div class="tooltip-head"><b>4/15 · 1.4M tokens</b><span>$16.44</span></div><div class="tooltip-models"><div class="tooltip-model"><i style="color:var(--cyan)"></i><em>claude-sonnet-4.5</em><small>610K</small></div><div class="tooltip-model"><i style="color:var(--green);background:var(--green)"></i><em>deepseek-v3.2</em><small>460K</small></div><div class="tooltip-model"><i style="color:var(--amber);background:var(--amber)"></i><em>gpt-5.3-codex</em><small>330K</small></div></div><div class="tooltip-heat" aria-label="当天 24 小时时间热力图"><i style="--v:6%;--p:8%"></i><i style="--v:6%;--p:8%"></i><i style="--v:7%;--p:8%"></i><i style="--v:10%;--p:10%"></i><i style="--v:16%;--p:18%"></i><i style="--v:22%;--p:24%"></i><i style="--v:26%;--p:28%"></i><i style="--v:28%;--p:30%"></i><i style="--v:22%;--p:24%"></i><i style="--v:18%;--p:20%"></i><i style="--v:20%;--p:22%"></i><i style="--v:34%;--p:36%"></i><i style="--v:50%;--p:54%"></i><i style="--v:58%;--p:60%"></i><i style="--v:48%;--p:52%"></i><i style="--v:42%;--p:44%"></i><i style="--v:38%;--p:40%"></i><i style="--v:46%;--p:48%"></i><i style="--v:64%;--p:68%"></i><i style="--v:82%;--p:86%"></i><i style="--v:74%;--p:76%"></i><i style="--v:46%;--p:48%"></i><i style="--v:28%;--p:30%"></i><i style="--v:16%;--p:18%"></i></div></div></div><div class="usage-day " style="--h:35%"><strong>4/16</strong><span>590K</span><i class="usage-day-fill"></i><div class="day-tooltip"><div class="tooltip-head"><b>4/16 · 590K tokens</b><span>$17.81</span></div><div class="tooltip-models"><div class="tooltip-model"><i style="color:var(--cyan)"></i><em>qwen3-coder</em><small>240K</small></div><div class="tooltip-model"><i style="color:var(--green);background:var(--green)"></i><em>gpt-5.3-codex</em><small>210K</small></div><div class="tooltip-model"><i style="color:var(--amber);background:var(--amber)"></i><em>other</em><small>140K</small></div></div><div class="tooltip-heat" aria-label="当天 24 小时时间热力图"><i style="--v:10%;--p:12%"></i><i style="--v:12%;--p:14%"></i><i style="--v:8%;--p:10%"></i><i style="--v:6%;--p:8%"></i><i style="--v:8%;--p:10%"></i><i style="--v:18%;--p:18%"></i><i style="--v:32%;--p:30%"></i><i style="--v:42%;--p:44%"></i><i style="--v:38%;--p:40%"></i><i style="--v:24%;--p:26%"></i><i style="--v:18%;--p:20%"></i><i style="--v:30%;--p:32%"></i><i style="--v:64%;--p:66%"></i><i style="--v:84%;--p:88%"></i><i style="--v:72%;--p:72%"></i><i style="--v:48%;--p:50%"></i><i style="--v:34%;--p:36%"></i><i style="--v:58%;--p:62%"></i><i style="--v:78%;--p:82%"></i><i style="--v:62%;--p:64%"></i><i style="--v:40%;--p:42%"></i><i style="--v:28%;--p:30%"></i><i style="--v:16%;--p:18%"></i><i style="--v:10%;--p:12%"></i></div></div></div><div class="usage-day " style="--h:26%"><strong>4/17</strong><span>360K</span><i class="usage-day-fill"></i><div class="day-tooltip"><div class="tooltip-head"><b>4/17 · 360K tokens</b><span>$19.18</span></div><div class="tooltip-models"><div class="tooltip-model"><i style="color:var(--cyan)"></i><em>deepseek-v3.2</em><small>150K</small></div><div class="tooltip-model"><i style="color:var(--green);background:var(--green)"></i><em>other</em><small>120K</small></div><div class="tooltip-model"><i style="color:var(--amber);background:var(--amber)"></i><em>glm-4.7</em><small>90K</small></div></div><div class="tooltip-heat" aria-label="当天 24 小时时间热力图"><i style="--v:6%;--p:8%"></i><i style="--v:6%;--p:8%"></i><i style="--v:7%;--p:8%"></i><i style="--v:10%;--p:10%"></i><i style="--v:16%;--p:18%"></i><i style="--v:22%;--p:24%"></i><i style="--v:26%;--p:28%"></i><i style="--v:28%;--p:30%"></i><i style="--v:22%;--p:24%"></i><i style="--v:18%;--p:20%"></i><i style="--v:20%;--p:22%"></i><i style="--v:34%;--p:36%"></i><i style="--v:50%;--p:54%"></i><i style="--v:58%;--p:60%"></i><i style="--v:48%;--p:52%"></i><i style="--v:42%;--p:44%"></i><i style="--v:38%;--p:40%"></i><i style="--v:46%;--p:48%"></i><i style="--v:64%;--p:68%"></i><i style="--v:82%;--p:86%"></i><i style="--v:74%;--p:76%"></i><i style="--v:46%;--p:48%"></i><i style="--v:28%;--p:30%"></i><i style="--v:16%;--p:18%"></i></div></div></div><div class="usage-day hot" style="--h:80%"><strong>4/18</strong><span>1.9M</span><i class="usage-day-fill"></i><div class="day-tooltip"><div class="tooltip-head"><b>4/18 · 1.9M tokens</b><span>$20.55</span></div><div class="tooltip-models"><div class="tooltip-model"><i style="color:var(--cyan)"></i><em>claude-sonnet-4.5</em><small>820K</small></div><div class="tooltip-model"><i style="color:var(--green);background:var(--green)"></i><em>gpt-5.3-codex</em><small>640K</small></div><div class="tooltip-model"><i style="color:var(--amber);background:var(--amber)"></i><em>deepseek-v3.2</em><small>440K</small></div></div><div class="tooltip-heat" aria-label="当天 24 小时时间热力图"><i style="--v:8%;--p:10%"></i><i style="--v:8%;--p:10%"></i><i style="--v:7%;--p:8%"></i><i style="--v:6%;--p:8%"></i><i style="--v:12%;--p:12%"></i><i style="--v:20%;--p:20%"></i><i style="--v:28%;--p:28%"></i><i style="--v:34%;--p:34%"></i><i style="--v:42%;--p:42%"></i><i style="--v:50%;--p:52%"></i><i style="--v:36%;--p:38%"></i><i style="--v:30%;--p:32%"></i><i style="--v:44%;--p:46%"></i><i style="--v:56%;--p:58%"></i><i style="--v:72%;--p:74%"></i><i style="--v:90%;--p:92%"></i><i style="--v:76%;--p:78%"></i><i style="--v:52%;--p:54%"></i><i style="--v:40%;--p:42%"></i><i style="--v:34%;--p:36%"></i><i style="--v:26%;--p:28%"></i><i style="--v:20%;--p:22%"></i><i style="--v:14%;--p:16%"></i><i style="--v:10%;--p:12%"></i></div></div></div><div class="usage-day " style="--h:46%"><strong>4/19</strong><span>820K</span><i class="usage-day-fill"></i><div class="day-tooltip"><div class="tooltip-head"><b>4/19 · 820K tokens</b><span>$21.92</span></div><div class="tooltip-models"><div class="tooltip-model"><i style="color:var(--cyan)"></i><em>gpt-5.3-codex</em><small>350K</small></div><div class="tooltip-model"><i style="color:var(--green);background:var(--green)"></i><em>claude-sonnet-4.5</em><small>290K</small></div><div class="tooltip-model"><i style="color:var(--amber);background:var(--amber)"></i><em>other</em><small>180K</small></div></div><div class="tooltip-heat" aria-label="当天 24 小时时间热力图"><i style="--v:10%;--p:12%"></i><i style="--v:12%;--p:14%"></i><i style="--v:8%;--p:10%"></i><i style="--v:6%;--p:8%"></i><i style="--v:8%;--p:10%"></i><i style="--v:18%;--p:18%"></i><i style="--v:32%;--p:30%"></i><i style="--v:42%;--p:44%"></i><i style="--v:38%;--p:40%"></i><i style="--v:24%;--p:26%"></i><i style="--v:18%;--p:20%"></i><i style="--v:30%;--p:32%"></i><i style="--v:64%;--p:66%"></i><i style="--v:84%;--p:88%"></i><i style="--v:72%;--p:72%"></i><i style="--v:48%;--p:50%"></i><i style="--v:34%;--p:36%"></i><i style="--v:58%;--p:62%"></i><i style="--v:78%;--p:82%"></i><i style="--v:62%;--p:64%"></i><i style="--v:40%;--p:42%"></i><i style="--v:28%;--p:30%"></i><i style="--v:16%;--p:18%"></i><i style="--v:10%;--p:12%"></i></div></div></div><div class="usage-day " style="--h:61%"><strong>4/20</strong><span>1.2M</span><i class="usage-day-fill"></i><div class="day-tooltip"><div class="tooltip-head"><b>4/20 · 1.2M tokens</b><span>$23.29</span></div><div class="tooltip-models"><div class="tooltip-model"><i style="color:var(--cyan)"></i><em>claude-sonnet-4.5</em><small>510K</small></div><div class="tooltip-model"><i style="color:var(--green);background:var(--green)"></i><em>glm-4.7</em><small>390K</small></div><div class="tooltip-model"><i style="color:var(--amber);background:var(--amber)"></i><em>qwen3-coder</em><small>300K</small></div></div><div class="tooltip-heat" aria-label="当天 24 小时时间热力图"><i style="--v:8%;--p:10%"></i><i style="--v:8%;--p:10%"></i><i style="--v:7%;--p:8%"></i><i style="--v:6%;--p:8%"></i><i style="--v:12%;--p:12%"></i><i style="--v:20%;--p:20%"></i><i style="--v:28%;--p:28%"></i><i style="--v:34%;--p:34%"></i><i style="--v:42%;--p:42%"></i><i style="--v:50%;--p:52%"></i><i style="--v:36%;--p:38%"></i><i style="--v:30%;--p:32%"></i><i style="--v:44%;--p:46%"></i><i style="--v:56%;--p:58%"></i><i style="--v:72%;--p:74%"></i><i style="--v:90%;--p:92%"></i><i style="--v:76%;--p:78%"></i><i style="--v:52%;--p:54%"></i><i style="--v:40%;--p:42%"></i><i style="--v:34%;--p:36%"></i><i style="--v:26%;--p:28%"></i><i style="--v:20%;--p:22%"></i><i style="--v:14%;--p:16%"></i><i style="--v:10%;--p:12%"></i></div></div></div><div class="usage-day hot" style="--h:92%"><strong>4/21</strong><span>2.4M</span><i class="usage-day-fill"></i><div class="day-tooltip"><div class="tooltip-head"><b>4/21 · 2.4M tokens</b><span>$24.66</span></div><div class="tooltip-models"><div class="tooltip-model"><i style="color:var(--cyan)"></i><em>claude-sonnet-4.5</em><small>1.1M</small></div><div class="tooltip-model"><i style="color:var(--green);background:var(--green)"></i><em>gpt-5.3-codex</em><small>840K</small></div><div class="tooltip-model"><i style="color:var(--amber);background:var(--amber)"></i><em>deepseek-v3.2</em><small>460K</small></div></div><div class="tooltip-heat" aria-label="当天 24 小时时间热力图"><i style="--v:10%;--p:12%"></i><i style="--v:12%;--p:14%"></i><i style="--v:8%;--p:10%"></i><i style="--v:6%;--p:8%"></i><i style="--v:8%;--p:10%"></i><i style="--v:18%;--p:18%"></i><i style="--v:32%;--p:30%"></i><i style="--v:42%;--p:44%"></i><i style="--v:38%;--p:40%"></i><i style="--v:24%;--p:26%"></i><i style="--v:18%;--p:20%"></i><i style="--v:30%;--p:32%"></i><i style="--v:64%;--p:66%"></i><i style="--v:84%;--p:88%"></i><i style="--v:72%;--p:72%"></i><i style="--v:48%;--p:50%"></i><i style="--v:34%;--p:36%"></i><i style="--v:58%;--p:62%"></i><i style="--v:78%;--p:82%"></i><i style="--v:62%;--p:64%"></i><i style="--v:40%;--p:42%"></i><i style="--v:28%;--p:30%"></i><i style="--v:16%;--p:18%"></i><i style="--v:10%;--p:12%"></i></div></div></div>
+                </div>
+              </div>
+              <aside class="panel">
+                <h3>模型贡献排行 · Pareto</h3>
+                <div class="combo-pareto">
+                  <div class="pareto-row"><b>claude-sonnet-4.5</b><div class="pareto-track"><div class="pareto-fill" style="--w:94%"></div></div><span>6.8M</span></div>
+                  <div class="pareto-row"><b>gpt-5.3-codex</b><div class="pareto-track"><div class="pareto-fill" style="--w:72%"></div></div><span>5.2M</span></div>
+                  <div class="pareto-row"><b>deepseek-v3.2</b><div class="pareto-track"><div class="pareto-fill" style="--w:48%"></div></div><span>3.4M</span></div>
+                  <div class="pareto-row"><b>glm-4.7</b><div class="pareto-track"><div class="pareto-fill" style="--w:31%"></div></div><span>2.2M</span></div>
+                  <div class="pareto-row"><b>qwen3-coder</b><div class="pareto-track"><div class="pareto-fill" style="--w:22%"></div></div><span>1.5M</span></div>
+                  <div class="pareto-row"><b>other</b><div class="pareto-track"><div class="pareto-fill" style="--w:14%"></div></div><span>890K</span></div>
+                </div>
+              </aside>
+            </div>
+            <div class="pros"><div><b>主图职责</b><span>日期柱状卡片负责看每日总量和峰值。</span></div><div><b>悬浮职责</b><span>浮层只在需要时展示当天模型和小时热力。</span></div><div><b>排行职责</b><span>Pareto 解释整体消耗来自哪些模型。</span></div></div>
+          </div>
+        </div>
       </div>
     </section>
 
