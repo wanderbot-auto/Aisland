@@ -522,30 +522,40 @@ struct SkillsSettingsPane: View {
 
     private func skillCard(_ skill: TemporaryChatInstalledSkill) -> some View {
         let scope = installScope(for: skill)
+        let iconColor = skillIconColor(for: skill, scope: scope)
 
-        return VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 10) {
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 8) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(scope.color(theme: theme).opacity(0.14))
-                    Image(systemName: scope.systemImageName)
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(scope.color(theme: theme))
+                        .fill(iconColor.opacity(0.14))
+                    Image(systemName: skillIconName(for: skill))
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(iconColor)
                 }
-                .frame(width: 36, height: 36)
+                .frame(width: 32, height: 32)
 
-                VStack(alignment: .leading, spacing: 5) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(skill.definition.title)
                         .font(IslandTheme.bodyFont(size: 13, weight: .semibold))
                         .foregroundStyle(theme.text)
                         .lineLimit(1)
-                    HStack(spacing: 6) {
+                    HStack(spacing: 5) {
                         badge(scope.title(lang), color: scope.color(theme: theme))
                         badge(
                             skill.isAislandManaged ? lang.t("settings.skills.managed") : lang.t("settings.skills.readOnly"),
                             color: skill.isAislandManaged ? theme.success : theme.textSecondary
                         )
+                        if skill.definition.alwaysApply {
+                            badge(lang.t("settings.skills.alwaysApply"), color: theme.primary)
+                        }
+                        if skill.isOverridden {
+                            badge(lang.t("settings.skills.overridden"), color: theme.warning)
+                        } else {
+                            badge(lang.t("settings.skills.active"), color: theme.success)
+                        }
                     }
+                    .lineLimit(1)
                 }
 
                 Spacer(minLength: 8)
@@ -558,46 +568,33 @@ struct SkillsSettingsPane: View {
                 Text(skillRootDirectory(for: skill))
                     .font(.caption2.monospaced())
                     .foregroundStyle(theme.textSecondary)
-                    .lineLimit(2)
+                    .lineLimit(1)
                     .truncationMode(.middle)
                     .textSelection(.enabled)
-            }
-            .padding(8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(theme.surfaceContainer.opacity(0.38), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-
-            HStack(spacing: 6) {
-                if skill.definition.alwaysApply {
-                    badge(lang.t("settings.skills.alwaysApply"), color: theme.primary)
-                }
-                if skill.isOverridden {
-                    badge(lang.t("settings.skills.overridden"), color: theme.warning)
-                } else {
-                    badge(lang.t("settings.skills.active"), color: theme.success)
-                }
                 Spacer(minLength: 0)
-            }
 
-            if skill.isOverridden, let active = skill.activeDefinition {
-                Text(lang.t("settings.skills.overridden.help", installScope(for: active).title(lang)))
-                    .font(.caption2)
-                    .foregroundStyle(theme.warning)
-            }
-
-            HStack {
                 if skill.isAislandManaged {
                     Button(lang.t("settings.general.uninstall"), role: .destructive) {
                         pendingUninstallSkill = skill
                     }
                     .buttonStyle(.borderless)
                 }
-
-                Spacer()
             }
             .font(.caption)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(theme.surfaceContainer.opacity(0.38), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+            if skill.isOverridden, let active = skill.activeDefinition {
+                Text(lang.t("settings.skills.overridden.help", installScope(for: active).title(lang)))
+                    .font(.caption2)
+                    .foregroundStyle(theme.warning)
+                    .lineLimit(1)
+            }
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, minHeight: 174, alignment: .topLeading)
+        .padding(10)
+        .frame(maxWidth: .infinity, minHeight: 116, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(theme.card.opacity(0.76))
@@ -609,12 +606,79 @@ struct SkillsSettingsPane: View {
         .shadow(color: theme.shadow.opacity(0.10), radius: 10, x: 0, y: 5)
     }
 
+    private func skillIconName(for skill: TemporaryChatInstalledSkill) -> String {
+        let attributes = skillAttributeText(for: skill)
+
+        if attributes.containsAny(["figma", "design", "ui", "ux", "logo", "svg", "image", "visual"]) {
+            return "paintpalette.fill"
+        }
+        if attributes.containsAny(["swift", "python", "javascript", "typescript", "react", "code", "coding", "api", "sdk"]) {
+            return "chevron.left.forwardslash.chevron.right"
+        }
+        if attributes.containsAny(["browser", "web", "website", "frontend", "html", "css"]) {
+            return "safari.fill"
+        }
+        if attributes.containsAny(["doc", "docs", "docx", "documentation", "markdown", "writing", "report", "memo"]) {
+            return "text.book.closed.fill"
+        }
+        if attributes.containsAny(["excel", "spreadsheet", "csv", "data", "sql", "table"]) {
+            return "tablecells.fill"
+        }
+        if attributes.containsAny(["slides", "powerpoint", "ppt", "pptx", "presentation"]) {
+            return "rectangle.on.rectangle.angled.fill"
+        }
+        if attributes.containsAny(["chat", "message", "wecom", "slack", "discord"]) {
+            return "bubble.left.and.bubble.right.fill"
+        }
+        if attributes.containsAny(["calendar", "schedule", "meeting", "todo", "reminder"]) {
+            return "calendar.badge.clock"
+        }
+        if attributes.containsAny(["terminal", "shell", "cli", "git", "ci", "build", "test"]) {
+            return "terminal.fill"
+        }
+        if attributes.containsAny(["ai", "llm", "openai", "prompt", "agent"]) {
+            return "brain.head.profile"
+        }
+        if attributes.containsAny(["plugin", "mcp", "extension"]) {
+            return "puzzlepiece.extension.fill"
+        }
+        if skill.definition.alwaysApply {
+            return "sparkles"
+        }
+
+        return installScope(for: skill).systemImageName
+    }
+
+    private func skillIconColor(
+        for skill: TemporaryChatInstalledSkill,
+        scope: TemporaryChatSkillInstallScope
+    ) -> Color {
+        if skill.isOverridden {
+            return theme.warning
+        }
+        if skill.definition.alwaysApply {
+            return theme.primary
+        }
+        if skill.definition.tags.isEmpty {
+            return scope.color(theme: theme)
+        }
+        return scope == .project ? theme.tertiary : theme.secondary
+    }
+
+    private func skillAttributeText(for skill: TemporaryChatInstalledSkill) -> String {
+        ([skill.definition.id, skill.definition.title, skill.definition.summary] + skill.definition.tags)
+            .joined(separator: " ")
+            .lowercased()
+    }
+
     private func badge(_ text: String, color: Color) -> some View {
         Text(text)
             .font(.system(size: 10, weight: .bold, design: .rounded))
             .foregroundStyle(color)
-            .padding(.horizontal, 7)
-            .padding(.vertical, 3)
+            .lineLimit(1)
+            .minimumScaleFactor(0.82)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
             .background(color.opacity(0.12), in: Capsule())
     }
 
@@ -678,6 +742,21 @@ private enum TemporaryChatSkillInstallScope: CaseIterable, Identifiable {
             theme.primary
         case .project:
             theme.tertiary
+        }
+    }
+}
+
+private extension String {
+    func containsAny(_ needles: [String]) -> Bool {
+        let tokens = Set(
+            components(separatedBy: CharacterSet.alphanumerics.inverted)
+                .filter { !$0.isEmpty }
+        )
+
+        return needles.contains { needle in
+            let normalizedNeedle = needle.lowercased()
+            return tokens.contains(normalizedNeedle)
+                || (normalizedNeedle.count > 3 && contains(normalizedNeedle))
         }
     }
 }
