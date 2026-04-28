@@ -160,9 +160,9 @@ private struct HourlyContributionHeatmap: View {
                         .foregroundStyle(theme.textSecondary)
                     Spacer(minLength: 0)
                     Text(lessLabel)
-                    ForEach([0.16, 0.30, 0.48, 0.66, 0.84], id: \.self) { opacity in
+                    ForEach([0.08, 0.24, 0.44, 0.68, 1.0], id: \.self) { intensity in
                         RoundedRectangle(cornerRadius: 3, style: .continuous)
-                            .fill(theme.primary.opacity(opacity))
+                            .fill(RecentUsageHeatmapColor.color(theme: theme, intensity: intensity))
                             .frame(width: 12, height: 12)
                     }
                     Text(moreLabel)
