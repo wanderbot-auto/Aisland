@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aisland Token 用量图形方案</title>
+  <style>
+    :root {
+      --bg: #000;
+      --surface: #111;
+      --surface-2: #191919;
+      --surface-3: #252525;
+      --surface-4: #303030;
+      --line: rgba(255,255,255,.105);
+      --line-strong: rgba(164,230,255,.28);
+      --text: #e8edf0;
+      --muted: #afc0c8;
+      --dim: #70828c;
+      --cyan: #00d1ff;
+      --cyan-soft: #a4e6ff;
+      --green: #39e39b;
+      --amber: #ffcc66;
+      --orange: #ff9457;
+      --pink: #ff6aa8;
+      --violet: #8f8cff;
+      --glass: rgba(7,7,7,.68);
+      --card: rgba(22,22,22,.72);
+      --radius: 28px;
+      --shadow: 0 30px 90px rgba(0,0,0,.58);
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 52% -8%, rgba(0,209,255,.18), transparent 36rem),
+        radial-gradient(circle at 14% 22%, rgba(57,227,155,.08), transparent 26rem),
+        radial-gradient(circle at 92% 12%, rgba(255,204,102,.075), transparent 24rem),
+        linear-gradient(180deg, #000 0%, #080808 58%, #030303 100%);
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .15;
+      background-image:
+        linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 52px 52px;
+      mask-image: radial-gradient(circle at top, black, transparent 76%);
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      width: min(1280px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 18px 0 72px;
+    }
+    .island {
+      position: sticky;
+      top: 12px;
+      z-index: 20;
+      width: min(620px, 100%);
+      margin: 0 auto 36px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--glass);
+      box-shadow: 0 0 34px rgba(0,209,255,.16), inset 0 1px rgba(255,255,255,.08);
+      backdrop-filter: blur(34px) saturate(1.16);
+    }
+    .island-row { display: flex; align-items: center; gap: 10px; min-height: 24px; }
+    .orb { width: 10px; height: 10px; border-radius: 999px; background: var(--cyan); box-shadow: 0 0 22px var(--cyan); }
+    .island-title { color: #fff; font-size: 13px; font-weight: 780; }
+    .island-meta { margin-left: auto; color: var(--muted); font-size: 11px; font-weight: 760; letter-spacing: .08em; text-transform: uppercase; }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 22px;
+      align-items: end;
+      margin-bottom: 20px;
+    }
+    .kicker { color: var(--cyan-soft); font-size: 11px; font-weight: 780; letter-spacing: .13em; text-transform: uppercase; }
+    h1 { max-width: 880px; margin: 12px 0 12px; color: #fff; font-size: clamp(38px, 6vw, 76px); line-height: .92; letter-spacing: -.064em; }
+    .lead { max-width: 760px; margin: 0; color: var(--muted); font-size: 15px; line-height: 1.68; }
+    .hero-card {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(18,18,18,.74);
+      box-shadow: inset 0 1px rgba(255,255,255,.06), var(--shadow);
+      backdrop-filter: blur(24px);
+    }
+    .hero-card b { display: block; color: #fff; font-size: 28px; letter-spacing: -.055em; }
+    .hero-card span { color: var(--dim); font-size: 12px; font-weight: 680; line-height: 1.5; }
+    .nav {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+      margin: 18px 0 22px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(0,0,0,.62);
+      backdrop-filter: blur(22px);
+    }
+    .nav a {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+    .nav a:hover { color: #001f28; background: var(--cyan); box-shadow: 0 0 20px rgba(0,209,255,.18); }
+
+    .recommendation {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .note {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 16px;
+      background: linear-gradient(180deg, rgba(0,209,255,.08), rgba(20,20,20,.68));
+      box-shadow: inset 0 1px rgba(255,255,255,.06);
+    }
+    .note h3 { margin: 0 0 7px; color: #fff; font-size: 16px; letter-spacing: -.02em; }
+    .note p { margin: 0; color: var(--muted); font-size: 12.5px; line-height: 1.62; }
+
+    .option {
+      margin: 22px 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 32px;
+      background: rgba(17,17,17,.76);
+      box-shadow: inset 0 1px rgba(255,255,255,.05), var(--shadow);
+      backdrop-filter: blur(24px);
+    }
+    .option-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: start;
+      padding: 20px 22px;
+      border-bottom: 1px solid var(--line);
+    }
+    .option h2 { margin: 8px 0 7px; color: #fff; font-size: clamp(27px, 3.6vw, 44px); line-height: .98; letter-spacing: -.056em; }
+    .option p { max-width: 720px; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .badge {
+      min-width: 124px;
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      color: #001f28;
+      background: var(--cyan);
+      font-size: 12px;
+      font-weight: 820;
+      box-shadow: 0 0 22px rgba(0,209,255,.20);
+    }
+    .badge.secondary { color: var(--muted); background: rgba(255,255,255,.045); border: 1px solid var(--line); box-shadow: none; }
+    .mock {
+      padding: 18px;
+      background:
+        radial-gradient(circle at 70% 0%, rgba(0,209,255,.10), transparent 25rem),
+        linear-gradient(180deg, rgba(255,255,255,.025), transparent);
+    }
+    .window {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(22,22,22,.98), rgba(7,7,7,.98));
+      box-shadow: inset 0 1px rgba(255,255,255,.07);
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.025);
+    }
+    .traffic { display: flex; gap: 7px; }
+    .traffic i { width: 9px; height: 9px; display: block; border-radius: 50%; background: #444; }
+    .traffic i:nth-child(1) { background: #ff6b5f; }
+    .traffic i:nth-child(2) { background: #ffcc66; }
+    .traffic i:nth-child(3) { background: #39e39b; }
+    .topbar strong { color: #fff; font-size: 13px; }
+    .topbar span { color: var(--dim); font-size: 11px; font-weight: 680; }
+    .content { padding: 18px; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+    .metric { padding: 12px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.035); }
+    .metric span { display: block; color: var(--dim); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .metric b { display: block; margin-top: 6px; color: #fff; font-size: 20px; letter-spacing: -.04em; }
+
+    .panel-grid { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 14px; }
+    .panel { border: 1px solid var(--line); border-radius: 20px; background: rgba(255,255,255,.028); padding: 14px; min-height: 310px; }
+    .panel h3 { margin: 0 0 12px; color: #fff; font-size: 13px; letter-spacing: -.01em; }
+    .axis-label { fill: #70828c; font-size: 10px; font-weight: 700; }
+    .grid-line { stroke: rgba(255,255,255,.08); stroke-width: 1; }
+    .cyan-stroke { stroke: var(--cyan); stroke-width: 2.4; fill: none; filter: drop-shadow(0 0 8px rgba(0,209,255,.32)); }
+    .green-stroke { stroke: var(--green); stroke-width: 2; fill: none; }
+    .amber-stroke { stroke: var(--amber); stroke-width: 2; fill: none; }
+    .area-cyan { fill: url(#areaCyan); opacity: .94; }
+    .area-green { fill: url(#areaGreen); opacity: .86; }
+    .bar { rx: 5; filter: drop-shadow(0 0 8px rgba(0,209,255,.16)); }
+    .mini-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.07); }
+    .mini-row:last-child { border-bottom: 0; }
+    .mini-row b { color: #fff; font-size: 12px; }
+    .mini-row span { color: var(--dim); font-size: 11px; font-weight: 700; }
+
+    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+    .day-card { min-height: 64px; padding: 7px; border: 1px solid rgba(255,255,255,.08); border-radius: 13px; background: rgba(255,255,255,.028); position: relative; overflow: hidden; }
+    .day-card::after { content: ""; position: absolute; inset: auto 0 0; height: var(--h); background: linear-gradient(180deg, rgba(0,209,255,.12), rgba(0,209,255,.62)); box-shadow: 0 0 18px rgba(0,209,255,.22); }
+    .day-card.hot::after { background: linear-gradient(180deg, rgba(255,204,102,.16), rgba(255,204,102,.74)); box-shadow: 0 0 18px rgba(255,204,102,.22); }
+    .day-card strong { position: relative; z-index: 1; color: #fff; font-size: 11px; }
+    .day-card span { position: relative; z-index: 1; display: block; margin-top: 22px; color: var(--muted); font-size: 10px; font-weight: 760; }
+
+    .rings { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 18px; align-items: center; }
+    .ring-list { display: grid; gap: 10px; }
+    .ring-item { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 9px; align-items: center; padding: 10px; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; background: rgba(255,255,255,.03); }
+    .dot { width: 10px; height: 10px; border-radius: 999px; background: var(--cyan); box-shadow: 0 0 12px currentColor; }
+    .ring-item b { color: #fff; font-size: 12px; }
+    .ring-item span { color: var(--dim); font-size: 11px; font-weight: 720; }
+
+    .timeline { display: grid; gap: 10px; }
+    .lane { display: grid; grid-template-columns: 96px minmax(0,1fr); gap: 12px; align-items: center; }
+    .lane-label { color: var(--muted); font-size: 11px; font-weight: 800; }
+    .track { position: relative; height: 34px; border: 1px solid rgba(255,255,255,.08); border-radius: 999px; background: rgba(255,255,255,.026); overflow: hidden; }
+    .segment { position: absolute; top: 5px; height: 22px; border-radius: 999px; background: linear-gradient(90deg, var(--cyan), var(--green)); box-shadow: 0 0 16px rgba(0,209,255,.18); }
+    .segment.amber { background: linear-gradient(90deg, var(--amber), var(--orange)); box-shadow: 0 0 16px rgba(255,204,102,.16); }
+    .segment.pink { background: linear-gradient(90deg, var(--pink), var(--violet)); box-shadow: 0 0 16px rgba(255,106,168,.16); }
+
+    .waterfall { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .wf-row { display: grid; grid-template-columns: 122px minmax(0, 1fr) 72px; gap: 10px; align-items: center; }
+    .wf-row b { color: #fff; font-size: 11px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .wf-track { height: 24px; border-radius: 999px; background: rgba(255,255,255,.04); overflow: hidden; }
+    .wf-fill { height: 100%; width: var(--w); border-radius: 999px; background: linear-gradient(90deg, var(--cyan), var(--cyan-soft)); box-shadow: 0 0 16px rgba(0,209,255,.18); }
+    .wf-row:nth-child(2n) .wf-fill { background: linear-gradient(90deg, var(--green), var(--cyan)); }
+    .wf-row:nth-child(3n) .wf-fill { background: linear-gradient(90deg, var(--amber), var(--orange)); }
+    .wf-row span { color: var(--dim); font-size: 11px; font-weight: 760; text-align: right; }
+
+    .sankey { width: 100%; height: 320px; }
+    .sankey text { fill: var(--muted); font-size: 11px; font-weight: 760; }
+    .sankey .node { fill: rgba(255,255,255,.08); stroke: rgba(255,255,255,.14); }
+    .sankey .flow { fill: none; stroke-linecap: round; opacity: .78; }
+
+    .matrix { display: grid; grid-template-columns: 130px repeat(5, 1fr); gap: 8px; }
+    .matrix > div { min-height: 42px; display: flex; align-items: center; padding: 8px; border: 1px solid rgba(255,255,255,.075); border-radius: 12px; background: rgba(255,255,255,.026); color: var(--muted); font-size: 11px; font-weight: 750; }
+    .matrix .head { color: var(--dim); justify-content: center; background: transparent; border-color: transparent; }
+    .matrix .label { color: #fff; }
+    .matrix .cell { justify-content: center; color: #001f28; background: color-mix(in srgb, var(--cyan) var(--p), rgba(255,255,255,.035)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.04); }
+
+    .pros {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .pros div { padding: 12px; border: 1px solid rgba(255,255,255,.08); border-radius: 16px; background: rgba(255,255,255,.03); }
+    .pros b { display: block; color: #fff; font-size: 12px; margin-bottom: 4px; }
+    .pros span { color: var(--dim); font-size: 11px; line-height: 1.45; }
+
+    @media (max-width: 900px) {
+      .hero, .recommendation, .panel-grid, .rings { grid-template-columns: 1fr; }
+      .hero-card { width: auto; }
+      .nav { grid-template-columns: repeat(2, 1fr); border-radius: 22px; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .option-head { grid-template-columns: 1fr; }
+      .pros { grid-template-columns: 1fr; }
+      .calendar { grid-template-columns: repeat(4, 1fr); }
+      .matrix { grid-template-columns: 92px repeat(5, minmax(72px, 1fr)); overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="island">
+      <div class="island-row">
+        <i class="orb"></i>
+        <div class="island-title">Aisland · Token Usage Visualization Options</div>
+        <div class="island-meta">Choose a direction</div>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div>
+        <div class="kicker">不用热力图也能表达 Token 消耗</div>
+        <h1>6 种更适合统计页的用量图形方案</h1>
+        <p class="lead">热力图擅长看“哪里热”，但不擅长表达总量走势、模型结构、成本归因和会话爆发。下面每个方案都用同一套 Aisland 深色玻璃风格模拟，方便直接挑选后落到 SwiftUI。</p>
+      </div>
+      <aside class="hero-card">
+        <b>推荐默认：方案 A + C</b>
+        <span>主视图用堆叠面积图看趋势；右侧用模型贡献排行解释消耗来源。比热力图更直观，也更适合 1/7/14/30 天范围切换。</span>
+      </aside>
+    </section>
+
+    <nav class="nav" aria-label="方案导航">
+      <a href="#area">A 趋势面积</a>
+      <a href="#calendar">B 日期卡片</a>
+      <a href="#pareto">C 模型排行</a>
+      <a href="#rings">D 环形配额</a>
+      <a href="#timeline">E 会话时间线</a>
+      <a href="#flow">F 来源流向</a>
+    </nav>
+
+    <section class="recommendation">
+      <div class="note">
+        <h3>选择建议</h3>
+        <p>如果统计页只放一个主图：选 A。若想看“谁花得最多”：选 C。若重点是预算/配额压力：选 D。若要解释某天为什么暴涨：选 E 或 F。</p>
+      </div>
+      <div class="note">
+        <h3>不建议继续强化热力图的场景</h3>
+        <p>当用户主要关心 token 总量、成本、模型占比、趋势变化时，热力图的信息密度高但判断成本也高，容易看起来像噪点矩阵。</p>
+      </div>
+    </section>
+
+    <section class="option" id="area">
+      <div class="option-head">
+        <div>
+          <div class="kicker">Option A · 默认主图候选</div>
+          <h2>堆叠面积趋势图</h2>
+          <p>横轴是时间，纵轴是 token，总量走势和模型/来源构成同时表达。范围调整时只改变采样粒度：1 天按小时，7/14 天按半天，30 天按日。</p>
+        </div>
+        <div class="badge">最推荐</div>
+      </div>
+      <div class="mock">
+        <div class="window">
+          <div class="topbar"><div class="traffic"><i></i><i></i><i></i></div><strong>Usage · Trend</strong><span>14 days · 12h bucket</span></div>
+          <div class="content">
+            <div class="metrics"><div class="metric"><span>Total</span><b>18.4M</b></div><div class="metric"><span>Peak</span><b>2.7M</b></div><div class="metric"><span>Cost</span><b>$38.62</b></div><div class="metric"><span>Avg/day</span><b>1.31M</b></div></div>
+            <div class="panel-grid">
+              <div class="panel">
+                <h3>Token 消耗趋势 · 按来源堆叠</h3>
+                <svg viewBox="0 0 760 300" width="100%" height="300" role="img" aria-label="堆叠面积趋势图">
+                  <defs><linearGradient id="areaCyan" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#00d1ff" stop-opacity=".72"/><stop offset="1" stop-color="#00d1ff" stop-opacity=".08"/></linearGradient><linearGradient id="areaGreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#39e39b" stop-opacity=".62"/><stop offset="1" stop-color="#39e39b" stop-opacity=".07"/></linearGradient></defs>
+                  <line class="grid-line" x1="44" y1="42" x2="724" y2="42"/><line class="grid-line" x1="44" y1="108" x2="724" y2="108"/><line class="grid-line" x1="44" y1="174" x2="724" y2="174"/><line class="grid-line" x1="44" y1="240" x2="724" y2="240"/>
+                  <text class="axis-label" x="8" y="45">3M</text><text class="axis-label" x="8" y="111">2M</text><text class="axis-label" x="8" y="177">1M</text><text class="axis-label" x="8" y="244">0</text>
+                  <path class="area-green" d="M44 240 C84 218,112 204,154 212 C210 226,228 170,278 174 C330 178,352 110,396 120 C444 132,470 82,520 92 C582 106,600 62,648 70 C690 78,708 94,724 88 L724 240 Z"/>
+                  <path class="area-cyan" d="M44 240 C84 200,112 194,154 178 C210 196,228 128,278 128 C330 132,352 74,396 84 C444 94,470 46,520 54 C582 74,600 30,648 38 C690 48,708 64,724 58 L724 240 Z"/>
+                  <path class="green-stroke" d="M44 218 C84 206,112 198,154 204 C210 214,228 156,278 160 C330 166,352 100,396 110 C444 122,470 72,520 84 C582 98,600 52,648 60 C690 70,708 86,724 82"/>
+                  <path class="cyan-stroke" d="M44 200 C84 182,112 172,154 164 C210 180,228 112,278 112 C330 116,352 62,396 70 C444 82,470 34,520 42 C582 62,600 22,648 30 C690 40,708 54,724 50"/>
+                </svg>
+              </div>
+              <aside class="panel"><h3>悬浮摘要</h3><div class="mini-row"><b>4/22 12:00</b><span>2.7M tokens</span></div><div class="mini-row"><b>Claude</b><span>1.4M · $18.20</span></div><div class="mini-row"><b>Codex</b><span>930K · $12.70</span></div><div class="mini-row"><b>OpenCode</b><span>370K · $7.72</span></div></aside>
+            </div>
+            <div class="pros"><div><b>优点</b><span>最容易读趋势；适配任意时间范围。</span></div><div><b>适合回答</b><span>最近是否变贵、哪天爆了、总体是否下降。</span></div><div><b>SwiftUI 实现</b><span>Path + LinearGradient，或 Canvas 绘制。</span></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="option" id="calendar">
+      <div class="option-head"><div><div class="kicker">Option B · 比热力图更清爽</div><h2>日期卡片柱状日历</h2><p>仍保留日期维度，但每一天是一张小卡，卡片底部柱高代表当日总 token，颜色代表成本压力。比密集热力点更有留白。</p></div><div class="badge secondary">清爽日期视图</div></div>
+      <div class="mock"><div class="window"><div class="topbar"><div class="traffic"><i></i><i></i><i></i></div><strong>Usage · Calendar Bars</strong><span>30 days · daily</span></div><div class="content"><div class="calendar">
+        <div class="day-card" style="--h:22%"><strong>3/30</strong><span>280K</span></div><div class="day-card" style="--h:38%"><strong>3/31</strong><span>620K</span></div><div class="day-card hot" style="--h:76%"><strong>4/1</strong><span>1.7M</span></div><div class="day-card" style="--h:45%"><strong>4/2</strong><span>830K</span></div><div class="day-card" style="--h:52%"><strong>4/3</strong><span>960K</span></div><div class="day-card hot" style="--h:90%"><strong>4/4</strong><span>2.4M</span></div><div class="day-card" style="--h:34%"><strong>4/5</strong><span>540K</span></div>
+        <div class="day-card" style="--h:28%"><strong>4/6</strong><span>420K</span></div><div class="day-card" style="--h:36%"><strong>4/7</strong><span>600K</span></div><div class="day-card" style="--h:58%"><strong>4/8</strong><span>1.1M</span></div><div class="day-card" style="--h:40%"><strong>4/9</strong><span>710K</span></div><div class="day-card hot" style="--h:84%"><strong>4/10</strong><span>2.0M</span></div><div class="day-card" style="--h:48%"><strong>4/11</strong><span>880K</span></div><div class="day-card" style="--h:31%"><strong>4/12</strong><span>500K</span></div>
+        <div class="day-card" style="--h:44%"><strong>4/13</strong><span>780K</span></div><div class="day-card" style="--h:50%"><strong>4/14</strong><span>920K</span></div><div class="day-card" style="--h:67%"><strong>4/15</strong><span>1.4M</span></div><div class="day-card" style="--h:35%"><strong>4/16</strong><span>590K</span></div><div class="day-card" style="--h:26%"><strong>4/17</strong><span>360K</span></div><div class="day-card hot" style="--h:80%"><strong>4/18</strong><span>1.9M</span></div><div class="day-card" style="--h:46%"><strong>4/19</strong><span>820K</span></div>
+      </div><div class="pros"><div><b>优点</b><span>有日期感，但不会像热力图一样密。</span></div><div><b>适合回答</b><span>哪几天最贵、周末/工作日是否差异明显。</span></div><div><b>可组合</b><span>悬浮展示当天模型构成 mini stack。</span></div></div></div></div></div>
+    </section>
+
+    <section class="option" id="pareto">
+      <div class="option-head"><div><div class="kicker">Option C · 解释消耗来源</div><h2>模型贡献排行 / Pareto 条形图</h2><p>直接显示哪些模型吞掉最多 token 和成本。适合作为趋势图右侧或下方的固定辅助图，也能替代“高频模型”列表。</p></div><div class="badge">强烈建议保留</div></div>
+      <div class="mock"><div class="window"><div class="topbar"><div class="traffic"><i></i><i></i><i></i></div><strong>Usage · Model Contribution</strong><span>sorted by total tokens</span></div><div class="content"><div class="panel"><h3>Top Models · Token / Cost</h3><div class="waterfall"><div class="wf-row"><b>claude-sonnet-4.5</b><div class="wf-track"><div class="wf-fill" style="--w:94%"></div></div><span>6.8M</span></div><div class="wf-row"><b>gpt-5.3-codex</b><div class="wf-track"><div class="wf-fill" style="--w:72%"></div></div><span>5.2M</span></div><div class="wf-row"><b>deepseek-v3.2</b><div class="wf-track"><div class="wf-fill" style="--w:48%"></div></div><span>3.4M</span></div><div class="wf-row"><b>glm-4.7</b><div class="wf-track"><div class="wf-fill" style="--w:31%"></div></div><span>2.2M</span></div><div class="wf-row"><b>qwen3-coder</b><div class="wf-track"><div class="wf-fill" style="--w:22%"></div></div><span>1.5M</span></div><div class="wf-row"><b>other</b><div class="wf-track"><div class="wf-fill" style="--w:14%"></div></div><span>890K</span></div></div></div><div class="pros"><div><b>优点</b><span>最强解释性，成本归因一眼明白。</span></div><div><b>适合回答</b><span>哪个模型导致消耗增加。</span></div><div><b>SwiftUI 实现</b><span>LazyVStack + GeometryReader 宽度即可。</span></div></div></div></div></div>
+    </section>
+
+    <section class="option" id="rings">
+      <div class="option-head"><div><div class="kicker">Option D · 预算/配额视角</div><h2>同心环进度图</h2><p>将 token、cost、会话数、上下文占用分别做成环形进度。适合放在统计页顶部，作为“现在是否危险”的仪表盘。</p></div><div class="badge secondary">适合顶部摘要</div></div>
+      <div class="mock"><div class="window"><div class="topbar"><div class="traffic"><i></i><i></i><i></i></div><strong>Usage · Quota Rings</strong><span>monthly budget</span></div><div class="content"><div class="rings"><svg viewBox="0 0 260 260" width="260" height="260" role="img" aria-label="同心环配额图"><circle cx="130" cy="130" r="104" stroke="rgba(255,255,255,.07)" stroke-width="16" fill="none"/><circle cx="130" cy="130" r="104" stroke="#00d1ff" stroke-width="16" stroke-linecap="round" stroke-dasharray="520 654" fill="none" transform="rotate(-90 130 130)"/><circle cx="130" cy="130" r="78" stroke="rgba(255,255,255,.07)" stroke-width="16" fill="none"/><circle cx="130" cy="130" r="78" stroke="#39e39b" stroke-width="16" stroke-linecap="round" stroke-dasharray="310 490" fill="none" transform="rotate(-90 130 130)"/><circle cx="130" cy="130" r="52" stroke="rgba(255,255,255,.07)" stroke-width="16" fill="none"/><circle cx="130" cy="130" r="52" stroke="#ffcc66" stroke-width="16" stroke-linecap="round" stroke-dasharray="250 327" fill="none" transform="rotate(-90 130 130)"/><text x="130" y="124" text-anchor="middle" fill="#fff" font-size="34" font-weight="850">72%</text><text x="130" y="148" text-anchor="middle" fill="#70828c" font-size="12" font-weight="760">budget used</text></svg><div class="ring-list"><div class="ring-item"><i class="dot" style="color:var(--cyan)"></i><b>Token 月配额</b><span>18.4M / 25M</span></div><div class="ring-item"><i class="dot" style="color:var(--green);background:var(--green)"></i><b>成本预算</b><span>$38.62 / $60</span></div><div class="ring-item"><i class="dot" style="color:var(--amber);background:var(--amber)"></i><b>高峰阈值</b><span>2.7M / 3.5M</span></div></div></div><div class="pros"><div><b>优点</b><span>即时反馈强，适合预算提醒。</span></div><div><b>局限</b><span>不擅长展示时间走势。</span></div><div><b>组合建议</b><span>作为 A 的顶部指标增强版。</span></div></div></div></div></div>
+    </section>
+
+    <section class="option" id="timeline">
+      <div class="option-head"><div><div class="kicker">Option E · 会话爆发分析</div><h2>会话泳道时间线</h2><p>每个 agent/provider 一条泳道，色块代表实际会话或高消耗片段，长度代表持续时间，厚度/亮度代表 token。适合分析某个时间段为什么突然变贵。</p></div><div class="badge secondary">适合钻取</div></div>
+      <div class="mock"><div class="window"><div class="topbar"><div class="traffic"><i></i><i></i><i></i></div><strong>Usage · Session Lanes</strong><span>today · by agent</span></div><div class="content"><div class="panel"><h3>今日会话消耗片段</h3><div class="timeline"><div class="lane"><div class="lane-label">Claude Code</div><div class="track"><i class="segment" style="left:8%;width:18%"></i><i class="segment amber" style="left:48%;width:26%"></i></div></div><div class="lane"><div class="lane-label">Codex</div><div class="track"><i class="segment pink" style="left:18%;width:34%"></i><i class="segment" style="left:70%;width:18%"></i></div></div><div class="lane"><div class="lane-label">OpenCode</div><div class="track"><i class="segment" style="left:4%;width:12%"></i><i class="segment amber" style="left:30%;width:16%"></i><i class="segment pink" style="left:62%;width:24%"></i></div></div><div class="lane"><div class="lane-label">Temp Chat</div><div class="track"><i class="segment amber" style="left:12%;width:10%"></i><i class="segment" style="left:54%;width:16%"></i></div></div></div></div><div class="pros"><div><b>优点</b><span>把“消耗”关联回会话行为。</span></div><div><b>适合回答</b><span>哪个 agent 在哪个时间段爆了。</span></div><div><b>交互建议</b><span>点击片段跳到会话或日志详情。</span></div></div></div></div></div>
+    </section>
+
+    <section class="option" id="flow">
+      <div class="option-head"><div><div class="kicker">Option F · 来源到模型流向</div><h2>Sankey 流向图 + Provider/Model 矩阵</h2><p>展示 token 从 Agent 来源流向 Provider，再流向 Model。适合多 provider、多 agent 的归因视图；也可以做成矩阵，避免复杂曲线。</p></div><div class="badge secondary">适合高级分析</div></div>
+      <div class="mock"><div class="window"><div class="topbar"><div class="traffic"><i></i><i></i><i></i></div><strong>Usage · Flow Attribution</strong><span>agent → provider → model</span></div><div class="content"><div class="panel-grid"><div class="panel"><h3>Token 流向</h3><svg class="sankey" viewBox="0 0 700 320" role="img" aria-label="Token Sankey 流向图"><path class="flow" d="M96 76 C230 76 250 88 372 88" stroke="#00d1ff" stroke-width="42"/><path class="flow" d="M96 162 C230 162 250 132 372 132" stroke="#39e39b" stroke-width="34"/><path class="flow" d="M96 238 C230 238 250 180 372 180" stroke="#ffcc66" stroke-width="26"/><path class="flow" d="M420 96 C510 96 526 76 632 76" stroke="#00d1ff" stroke-width="34"/><path class="flow" d="M420 136 C510 136 526 152 632 152" stroke="#39e39b" stroke-width="30"/><path class="flow" d="M420 184 C510 184 526 226 632 226" stroke="#ffcc66" stroke-width="22"/><rect class="node" x="24" y="48" width="86" height="56" rx="14"/><rect class="node" x="24" y="134" width="86" height="56" rx="14"/><rect class="node" x="24" y="210" width="86" height="56" rx="14"/><rect class="node" x="360" y="64" width="76" height="144" rx="16"/><rect class="node" x="616" y="48" width="72" height="56" rx="14"/><rect class="node" x="616" y="124" width="72" height="56" rx="14"/><rect class="node" x="616" y="198" width="72" height="56" rx="14"/><text x="42" y="80">Codex</text><text x="42" y="166">Claude</text><text x="42" y="242">Chat</text><text x="376" y="136">Providers</text><text x="628" y="80">Sonnet</text><text x="628" y="156">GPT</text><text x="628" y="230">Other</text></svg></div><aside class="panel"><h3>矩阵替代</h3><div class="matrix"><div></div><div class="head">Claude</div><div class="head">Codex</div><div class="head">Chat</div><div class="head">OpenCode</div><div class="head">Total</div><div class="label">Sonnet</div><div class="cell" style="--p:74%">4.2M</div><div class="cell" style="--p:12%">0.4M</div><div class="cell" style="--p:20%">0.8M</div><div class="cell" style="--p:8%">0.2M</div><div class="cell" style="--p:88%">5.6M</div><div class="label">GPT</div><div class="cell" style="--p:8%">0.2M</div><div class="cell" style="--p:70%">3.8M</div><div class="cell" style="--p:18%">0.7M</div><div class="cell" style="--p:28%">1.1M</div><div class="cell" style="--p:80%">5.8M</div></div></aside></div><div class="pros"><div><b>优点</b><span>归因最完整。</span></div><div><b>局限</b><span>Sankey 在小窗口可能显复杂。</span></div><div><b>落地建议</b><span>桌面宽屏用 Sankey，窄屏用矩阵。</span></div></div></div></div></div>
+    </section>
+  </main>
+</body>
+</html>
