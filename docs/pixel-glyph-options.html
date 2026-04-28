@@ -3,22 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Aisland Cute Pet Pixel Glyph Options</title>
+  <title>Aisland FreePixel Pet Preview</title>
   <style>
     :root {
-      --bg: #08070c;
-      --panel: rgba(28, 25, 34, 0.82);
+      --bg: #07080d;
+      --panel: rgba(17, 19, 26, 0.82);
       --panel-2: rgba(255, 255, 255, 0.065);
-      --line: rgba(255, 226, 240, 0.18);
-      --text: #fff8fb;
-      --muted: #d3bcc8;
-      --cream: #fff0cf;
+      --line: rgba(218, 230, 255, 0.15);
+      --text: #f7fbff;
+      --muted: #aab8c7;
       --pink: #ff9fc6;
+      --cyan: #87ddff;
       --mint: #8ff0c5;
-      --sky: #8ddcff;
-      --lilac: #cdb4ff;
-      --peach: #ffbd88;
-      --pixel-gap: 2px;
+      --amber: #ffc56f;
       color-scheme: dark;
       font-family: ui-rounded, "SF Pro Rounded", "Avenir Next", system-ui, sans-serif;
     }
@@ -30,10 +27,10 @@
       min-height: 100vh;
       color: var(--text);
       background:
-        radial-gradient(circle at 16% 12%, rgba(255, 159, 198, 0.24), transparent 30%),
-        radial-gradient(circle at 84% 10%, rgba(141, 220, 255, 0.18), transparent 28%),
-        radial-gradient(circle at 48% 92%, rgba(143, 240, 197, 0.16), transparent 34%),
-        linear-gradient(145deg, #09070d 0%, #15101c 48%, #080a10 100%);
+        radial-gradient(circle at 12% 8%, rgba(255, 159, 198, 0.22), transparent 28%),
+        radial-gradient(circle at 86% 12%, rgba(135, 221, 255, 0.18), transparent 26%),
+        radial-gradient(circle at 44% 92%, rgba(143, 240, 197, 0.15), transparent 34%),
+        linear-gradient(145deg, #05060a 0%, #11151d 48%, #08070d 100%);
     }
 
     main {
@@ -61,7 +58,7 @@
 
     h1 {
       margin: 0;
-      max-width: 800px;
+      max-width: 820px;
       font-size: clamp(34px, 5vw, 62px);
       line-height: 0.94;
       letter-spacing: -0.06em;
@@ -69,7 +66,7 @@
 
     .intro {
       margin: 14px 0 0;
-      max-width: 790px;
+      max-width: 800px;
       color: var(--muted);
       font-size: 15px;
       line-height: 1.7;
@@ -80,15 +77,15 @@
       flex-wrap: wrap;
       gap: 8px;
       justify-content: flex-end;
-      max-width: 360px;
+      max-width: 380px;
     }
 
     .chip {
       border: 1px solid var(--line);
       border-radius: 999px;
       padding: 7px 10px;
-      color: #ffe7f0;
-      background: rgba(255, 255, 255, 0.06);
+      color: #e7f4ff;
+      background: rgba(255, 255, 255, 0.055);
       font-size: 12px;
       font-weight: 800;
       white-space: nowrap;
@@ -96,48 +93,34 @@
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
     }
 
     .card {
       position: relative;
       overflow: hidden;
       border: 1px solid var(--line);
-      border-radius: 28px;
-      min-height: 346px;
-      padding: 16px;
+      border-radius: 30px;
+      min-height: 430px;
+      padding: 18px;
       background:
         linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.025)),
         var(--panel);
       box-shadow: 0 28px 70px rgba(0, 0, 0, 0.35);
     }
 
-    .card::before,
-    .card::after {
+    .card::before {
       content: "";
       position: absolute;
+      inset: -70px -82px auto auto;
+      width: 185px;
+      height: 185px;
       border-radius: 999px;
-      pointer-events: none;
-    }
-
-    .card::before {
-      inset: -56px -78px auto auto;
-      width: 160px;
-      height: 160px;
       background: var(--accent);
-      opacity: 0.22;
-      filter: blur(24px);
-    }
-
-    .card::after {
-      left: 18px;
-      bottom: 16px;
-      width: 54px;
-      height: 14px;
-      background: rgba(255, 255, 255, 0.08);
-      box-shadow: 76px -240px 0 rgba(255,255,255,0.06), 132px -38px 0 rgba(255,255,255,0.045);
-      transform: rotate(-7deg);
+      opacity: 0.20;
+      filter: blur(26px);
+      pointer-events: none;
     }
 
     .card-head {
@@ -146,50 +129,62 @@
       align-items: flex-start;
       justify-content: space-between;
       gap: 10px;
-      min-height: 58px;
+      min-height: 62px;
       z-index: 1;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+    }
+
+    .tag {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
     }
 
     .index {
       display: inline-grid;
       place-items: center;
-      width: 30px;
-      height: 30px;
-      border-radius: 12px;
-      color: #140b12;
+      width: 32px;
+      height: 32px;
+      border-radius: 13px;
+      color: #081016;
       background: var(--accent);
       font-size: 12px;
       font-weight: 950;
       box-shadow: 0 0 24px color-mix(in srgb, var(--accent), transparent 42%);
     }
 
-    h2 {
-      margin: 0;
-      font-size: 16px;
-      line-height: 1.15;
-      letter-spacing: -0.02em;
-    }
-
-    .tag {
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 11px;
-      line-height: 1.35;
-    }
-
     .stage {
       position: relative;
       display: grid;
       place-items: center;
-      height: 138px;
-      margin: 20px 0 14px;
-      border-radius: 25px;
+      height: 166px;
+      margin: 18px 0 14px;
+      border-radius: 27px;
       border: 1px solid rgba(255, 255, 255, 0.095);
       background:
         radial-gradient(circle at 50% 44%, color-mix(in srgb, var(--accent), transparent 72%), transparent 48%),
         radial-gradient(circle at 28% 70%, rgba(255,255,255,0.08), transparent 22%),
-        linear-gradient(180deg, rgba(255,255,255,0.075), rgba(0,0,0,0.16)),
-        #111018;
+        linear-gradient(180deg, rgba(255,255,255,0.075), rgba(0,0,0,0.18)),
+        #0d1118;
+    }
+
+    .notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 116px;
+      height: 18px;
+      transform: translateX(-50%);
+      border-radius: 0 0 18px 18px;
+      background: #020306;
+      opacity: 0.92;
     }
 
     .island-bar {
@@ -197,43 +192,25 @@
       align-items: center;
       gap: 10px;
       min-width: 126px;
-      min-height: 44px;
-      padding: 10px 15px;
+      min-height: 42px;
+      padding: 8px 14px;
       border-radius: 20px;
       border: 1px solid rgba(255, 255, 255, 0.13);
-      background: rgba(12, 11, 17, 0.84);
+      background: rgba(7, 9, 13, 0.86);
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.10),
         0 14px 40px rgba(0, 0, 0, 0.42),
         0 0 30px color-mix(in srgb, var(--accent), transparent 68%);
     }
 
-    .pixel-art {
-      --cell: 5px;
-      display: grid;
-      grid-template-columns: repeat(var(--cols), var(--cell));
-      grid-auto-rows: var(--cell);
-      gap: var(--pixel-gap);
+    .pet {
+      display: block;
+      width: var(--pet-size);
+      height: var(--pet-size);
+      object-fit: contain;
       image-rendering: pixelated;
-      filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent), transparent 42%));
-      transform: scale(1.02);
-      transform-origin: center;
+      filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent), transparent 48%));
     }
-
-    .pixel {
-      width: var(--cell);
-      height: var(--cell);
-      border-radius: 1.4px;
-      background: transparent;
-    }
-
-    .p1 { background: var(--accent); }
-    .p2 { background: color-mix(in srgb, var(--accent), white 38%); }
-    .p3 { background: color-mix(in srgb, var(--accent), black 28%); }
-    .p4 { background: #fffaf2; }
-    .p5 { background: #ff8fb8; }
-    .p6 { background: #ffc56f; }
-    .p7 { background: #19141d; }
 
     .state-dot {
       width: 8px;
@@ -241,6 +218,31 @@
       border-radius: 50%;
       background: var(--accent);
       box-shadow: 0 0 16px var(--accent);
+    }
+
+    .sizes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+      margin: 0 0 14px;
+    }
+
+    .size-tile {
+      display: grid;
+      place-items: center;
+      gap: 7px;
+      min-height: 84px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.045);
+    }
+
+    .size-tile span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
     }
 
     .meta {
@@ -270,37 +272,38 @@
     }
 
     .line code {
-      color: #fff6fb;
+      color: #fff8fb;
       font-size: 12px;
       font-weight: 850;
       font-family: "SF Mono", ui-monospace, monospace;
+      text-align: right;
     }
 
     .notes {
       min-height: 48px;
       margin: 0;
-      color: #e2cbd7;
+      color: #d5e0ec;
       font-size: 12px;
       line-height: 1.55;
     }
 
     .notice {
       margin-top: 18px;
-      color: #c7aebe;
+      color: #aebccc;
       font-size: 12px;
       line-height: 1.7;
     }
 
     @keyframes pet-bounce {
-      0%, 100% { transform: translateY(0) scale(1.02) rotate(0deg); }
-      30% { transform: translateY(-3px) scale(1.04) rotate(-1deg); }
-      60% { transform: translateY(0) scale(1.02) rotate(1deg); }
+      0%, 100% { transform: translateY(0) scale(1); }
+      34% { transform: translateY(-3px) scale(1.04); }
+      68% { transform: translateY(0) scale(0.99); }
     }
 
-    .card:hover .pixel-art { animation: pet-bounce 0.82s steps(3, end) infinite; }
+    .card:hover .island-bar .pet { animation: pet-bounce 0.82s steps(3, end) infinite; }
 
     @media (max-width: 1050px) {
-      .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       header { grid-template-columns: 1fr; }
       .legend { justify-content: flex-start; }
     }
@@ -308,7 +311,7 @@
     @media (max-width: 680px) {
       main { width: min(100vw - 22px, 480px); padding-top: 24px; }
       .grid { grid-template-columns: 1fr; }
-      .card { min-height: 314px; }
+      .card { min-height: 390px; }
     }
   </style>
 </head>
@@ -316,244 +319,116 @@
   <main>
     <header>
       <section>
-        <p class="eyebrow">Aisland Pixel Pet Lab</p>
-        <h1>10 个更俏皮可爱的宠物像素图形备选</h1>
-        <p class="intro">这一版弱化“网站吉祥物致敬”，统一改成小宠物和陪伴感角色：圆脸、软色、短名字、低攻击性轮廓，更适合放在 Aisland 的刘海小胶囊里长期显示。</p>
+        <p class="eyebrow">Aisland × FreePixel Pet Preview</p>
+        <h1>6 个真实动物像素宠物预览</h1>
+        <p class="intro">这一版直接使用 FreePixel Animals 中的透明 PNG，模拟 Aisland 刘海胶囊里的显示效果，并附带 18px / 24px / 32px 三档尺寸对比，方便判断缩小后是否仍然像小动物。</p>
       </section>
       <section class="legend" aria-label="Legend">
-        <span class="chip">9x9 / 10x10 矩阵</span>
-        <span class="chip">圆脸宠物感</span>
-        <span class="chip">Hover 弹跳预览</span>
+        <span class="chip">FreePixel Animals</span>
+        <span class="chip">200×200 transparent PNG</span>
+        <span class="chip">Aisland notch mock</span>
       </section>
     </header>
 
-    <section class="grid" id="glyphGrid"></section>
+    <section class="grid" id="petGrid"></section>
 
-    <p class="notice">建议：加入产品时可先挑 3-4 个作为内置款，例如猫、柴犬、兔子、鸭鸭；其余作为后续主题包。名称尽量用原创宠物名，避免直接绑定第三方品牌或官方吉祥物。</p>
+    <p class="notice">素材来源：FreePixel Animals collection。FreePixel 首页说明资源可免费用于商业项目且无需署名；落地到 App 前建议把下载来源、页面快照和授权说明记录到仓库文档中。当前 HTML 使用远程图片 URL，网络不可用时图片不会显示。</p>
   </main>
 
   <script>
-    const glyphs = [
+    const pets = [
       {
-        title: "Pudding Cat",
-        tag: "奶油猫猫 · 默认候选",
-        enumCase: "puddingCat",
-        accent: "#ffd08a",
-        notes: "圆脸、猫耳、腮红都很清楚；比品牌标记更像一个陪伴型小宠物。",
-        matrix: [
-          "030000030",
-          "333000333",
-          "322222223",
-          "324224423",
-          "322222223",
-          "025555520",
-          "002222200",
-          "030222030",
-          "300000003"
-        ]
+        title: "Kitten",
+        sourceName: "kitten tiny fluffy paws playing",
+        enumCase: "kitten",
+        accent: "#ffbd88",
+        url: "https://pub-8b7609252a6742d7b029292aaede7f7f.r2.dev/sorted/animals/kitten-tiny-fluffy-paws-playing_20260217_091649.png",
+        notes: "最贴近当前 Aisland 猫咪心智。耳朵、尾巴和暖色轮廓明显，适合作为默认宠物。"
       },
       {
-        title: "Mochi Shiba",
-        tag: "糯米柴犬 · 活力提醒",
-        enumCase: "mochiShiba",
+        title: "Corgi",
+        sourceName: "corgi short legs orange fluffy happy",
+        enumCase: "corgi",
         accent: "#ffb36b",
-        notes: "柴犬耳朵和小围脖很可爱，适合运行中、完成后的小奖励反馈。",
-        matrix: [
-          "060000060",
-          "666000666",
-          "633666336",
-          "632424236",
-          "633666336",
-          "066555660",
-          "006666600",
-          "060666060",
-          "600000006"
-        ]
+        url: "https://pub-8b7609252a6742d7b029292aaede7f7f.r2.dev/sorted/animals/corgi-short-legs-orange-fluffy-happy_20260217_091715.png",
+        notes: "颜色醒目、姿态开心，短腿和大耳朵在中等尺寸下辨识度较好，适合运行状态。"
       },
       {
-        title: "Bubble Bunny",
-        tag: "泡泡兔 · 轻盈安静",
-        enumCase: "bubbleBunny",
-        accent: "#fff5fb",
-        notes: "长耳朵和圆脸在小尺寸下很稳定；适合浅色主题或等待回答状态。",
-        matrix: [
-          "020020000",
-          "022022000",
-          "022222000",
-          "024242000",
-          "022222000",
-          "002555200",
-          "022222200",
-          "220000220",
-          "200000020"
-        ]
+        title: "Puppy",
+        sourceName: "puppy small cute floppy ears playful",
+        enumCase: "puppy",
+        accent: "#d7b28a",
+        url: "https://pub-8b7609252a6742d7b029292aaede7f7f.r2.dev/sorted/animals/puppy-small-cute-floppy-ears-playful_20260217_091637.png",
+        notes: "软萌宠物感强，垂耳和小狗轮廓适合设置页展示；需要重点看 18px 是否仍清楚。"
       },
       {
-        title: "Nap Panda",
-        tag: "午睡熊猫 · 慢节奏",
-        enumCase: "napPanda",
-        accent: "#e9f1ff",
-        notes: "黑眼圈用深色像素表现，情绪更软；适合低打扰、后台观察类状态。",
-        matrix: [
-          "077000770",
-          "772222277",
-          "724722427",
-          "722222227",
-          "722666227",
-          "077222770",
-          "007777700",
-          "070222070",
-          "700000007"
-        ]
+        title: "Hamster",
+        sourceName: "hamster small brown cheeks stuffed",
+        enumCase: "hamster",
+        accent: "#f2c078",
+        url: "https://pub-8b7609252a6742d7b029292aaede7f7f.r2.dev/sorted/animals/hamster-small-brown-cheeks-stuffed_20260217_091238.png",
+        notes: "圆脸很适合刘海小胶囊，缩小后更像一个可爱的状态圆点，适合低打扰陪伴感。"
       },
       {
-        title: "Toast Hamster",
-        tag: "吐司仓鼠 · 软乎乎",
-        enumCase: "toastHamster",
-        accent: "#f6c785",
-        notes: "方圆轮廓像一片吐司，也像仓鼠脸；非常适合像素网格。",
-        matrix: [
-          "033333330",
-          "322222223",
-          "322424223",
-          "322222223",
-          "322666223",
-          "325555523",
-          "322222223",
-          "033333330",
-          "003000300"
-        ]
+        title: "Bunny",
+        sourceName: "rabbit white floppy ears sitting",
+        enumCase: "bunny",
+        accent: "#f5f4ff",
+        url: "https://pub-8b7609252a6742d7b029292aaede7f7f.r2.dev/sorted/animals/rabbit-white-floppy-ears-sitting_20260217_091358.png",
+        notes: "长耳朵提供强轮廓，但白色素材在浅背景上需要描边或阴影；深色岛屿上效果会更好。"
       },
       {
-        title: "Jelly Axolotl",
-        tag: "果冻六角恐龙 · 奇妙宠物",
-        enumCase: "jellyAxolotl",
-        accent: "#ff9fc6",
-        notes: "外侧鳃羽有很强记忆点，俏皮但不吵；适合作为个性化亮点款。",
-        matrix: [
-          "500000005",
-          "550222055",
-          "052222250",
-          "522424225",
-          "052222250",
-          "005555500",
-          "002222200",
-          "020000020",
-          "200000002"
-        ]
-      },
-      {
-        title: "Cloud Alpaca",
-        tag: "云朵羊驼 · 治愈陪伴",
-        enumCase: "cloudAlpaca",
-        accent: "#d8c7ff",
-        notes: "蓬松头顶和长脖子有辨识度；适合做温柔主题或休息提醒。",
-        matrix: [
-          "002222000",
-          "022222200",
-          "222242220",
-          "222222220",
-          "022555200",
-          "002222000",
-          "002222000",
-          "002002000",
-          "020000200"
-        ]
-      },
-      {
-        title: "Sprout Turtle",
-        tag: "发芽小龟 · 稳定推进",
-        enumCase: "sproutTurtle",
-        accent: "#8ff0c5",
-        notes: "小龟代表稳步执行，头顶嫩芽增加萌点；适合长任务和构建任务。",
-        matrix: [
-          "000020000",
-          "000222000",
-          "000020000",
-          "002222200",
-          "022424220",
-          "222222222",
-          "022666220",
-          "202222202",
-          "020000020"
-        ]
-      },
-      {
-        title: "Pocket Penguin",
-        tag: "口袋企鹅 · 冷静值守",
-        enumCase: "pocketPenguin",
-        accent: "#8ddcff",
-        notes: "深色外套、白肚皮、黄色小脚，很适合深色玻璃岛屿。",
-        matrix: [
-          "007777700",
-          "077222770",
-          "072424270",
-          "072222270",
-          "072666270",
-          "007222700",
-          "000777000",
-          "006000600",
-          "060000060"
-        ]
-      },
-      {
-        title: "Tiny Otter",
-        tag: "抱石小水獭 · 亲密感",
-        enumCase: "tinyOtter",
-        accent: "#c99a6b",
-        notes: "抱着小贝壳/石头的姿态很讨喜；适合表达“我在帮你守着任务”。",
-        matrix: [
-          "003333000",
-          "032222300",
-          "322424230",
-          "322222230",
-          "032666300",
-          "003222000",
-          "022444220",
-          "220333022",
-          "200000002"
-        ]
+        title: "Panda",
+        sourceName: "panda giant black white bamboo eating",
+        enumCase: "panda",
+        accent: "#dfe8ef",
+        url: "https://pub-8b7609252a6742d7b029292aaede7f7f.r2.dev/sorted/animals/panda-giant-black-white-bamboo-eating_20260217_092119.png",
+        notes: "黑白对比很适合小尺寸显示，熊猫脸辨识度高；整体气质更安静、稳定。"
       }
     ];
 
-    const grid = document.getElementById("glyphGrid");
+    const grid = document.getElementById("petGrid");
 
-    function renderGlyph(glyph, index) {
+    function petImage(pet, size, altSuffix = "") {
+      return `<img class="pet" style="--pet-size: ${size}px" src="${pet.url}" alt="${pet.title}${altSuffix}" loading="lazy" />`;
+    }
+
+    function renderPet(pet, index) {
       const card = document.createElement("article");
       card.className = "card";
-      card.style.setProperty("--accent", glyph.accent);
-
-      const cols = Math.max(...glyph.matrix.map(row => row.length));
-      const pixels = glyph.matrix.flatMap(row => {
-        const padded = row.padEnd(cols, "0");
-        return [...padded].map(value => `<span class="pixel ${value === "0" ? "" : `p${value}`}"></span>`).join("");
-      }).join("");
+      card.style.setProperty("--accent", pet.accent);
 
       card.innerHTML = `
         <div class="card-head">
           <div>
-            <h2>${glyph.title}</h2>
-            <div class="tag">${glyph.tag}</div>
+            <h2>${pet.title}</h2>
+            <div class="tag">${pet.sourceName}</div>
           </div>
           <span class="index">${String(index + 1).padStart(2, "0")}</span>
         </div>
         <div class="stage">
+          <div class="notch"></div>
           <div class="island-bar">
-            <div class="pixel-art" style="--cols: ${cols}">${pixels}</div>
+            ${petImage(pet, 28, " in Aisland island")}
             <span class="state-dot"></span>
           </div>
         </div>
+        <div class="sizes" aria-label="Size previews">
+          <div class="size-tile">${petImage(pet, 18, " 18px preview")}<span>18px</span></div>
+          <div class="size-tile">${petImage(pet, 24, " 24px preview")}<span>24px</span></div>
+          <div class="size-tile">${petImage(pet, 32, " 32px preview")}<span>32px</span></div>
+        </div>
         <div class="meta">
-          <div class="line"><span>Enum</span><code>${glyph.enumCase}</code></div>
-          <div class="line"><span>Accent</span><code>${glyph.accent}</code></div>
-          <p class="notes">${glyph.notes}</p>
+          <div class="line"><span>Enum</span><code>${pet.enumCase}</code></div>
+          <div class="line"><span>Accent</span><code>${pet.accent}</code></div>
+          <p class="notes">${pet.notes}</p>
         </div>
       `;
 
       grid.appendChild(card);
     }
 
-    glyphs.forEach(renderGlyph);
+    pets.forEach(renderPet);
   </script>
 </body>
 </html>
