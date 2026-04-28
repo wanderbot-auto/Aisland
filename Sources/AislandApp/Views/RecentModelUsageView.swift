@@ -11,8 +11,12 @@ struct RecentModelUsageView: View {
         model.usageAnalyticsHourlyModelUsage
     }
 
-    private var days: [RecentUsageDay] {
+    private var completeDays: [RecentUsageDay] {
         RecentUsageDay.completeRecentDays(from: rows, dayCount: 7)
+    }
+
+    private var days: [RecentUsageDay] {
+        RecentUsageDay.trimmedToMeaningfulHours(days: completeDays)
     }
 
     private var totalTokens: Int {
@@ -38,19 +42,14 @@ struct RecentModelUsageView: View {
         usageSurfaceCard {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .firstTextBaseline) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(model.lang.t("usage.surface.title"))
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundStyle(theme.text)
-                        Text(model.lang.t("usage.surface.subtitle"))
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(theme.textSecondary)
-                    }
+                    Text(model.lang.t("usage.surface.title"))
+                        .font(IslandTheme.titleFont(size: 15))
+                        .foregroundStyle(theme.text)
 
                     Spacer(minLength: 8)
 
                     Text(totalTokens.recentUsageTokenString)
-                        .font(.system(size: 18, weight: .black, design: .rounded))
+                        .font(IslandTheme.bodyFont(size: 18, weight: .black))
                         .foregroundStyle(theme.primary)
                         .monospacedDigit()
                 }
@@ -74,12 +73,8 @@ struct RecentModelUsageView: View {
         VStack(alignment: .leading, spacing: 8) {
             Spacer(minLength: 0)
             Label(model.lang.t("usage.surface.empty.title"), systemImage: "chart.bar.xaxis")
-                .font(.system(size: 12, weight: .semibold))
+                .font(IslandTheme.labelFont(size: 12))
                 .foregroundStyle(theme.text)
-            Text(model.lang.t("usage.surface.empty.subtitle"))
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(theme.textSecondary)
-                .lineLimit(2)
             if model.usageAnalyticsIsRefreshing {
                 ProgressView()
                     .controlSize(.small)
@@ -116,12 +111,17 @@ private struct HourlyContributionHeatmap: View {
         max(days.flatMap(\.cells).map(\.totalTokens).max() ?? 1, 1)
     }
 
+    private var hourValues: [Int] {
+        days.first?.cells.map(\.hourOfDay) ?? Array(0..<24)
+    }
+
     var body: some View {
         GeometryReader { proxy in
             let labelWidth: CGFloat = 52
             let cellSpacing: CGFloat = 4
-            let availableCellWidth = proxy.size.width - labelWidth - CGFloat(23) * cellSpacing
-            let cellSize = min(20, max(9, availableCellWidth / 24))
+            let columnCount = max(hourValues.count, 1)
+            let availableCellWidth = proxy.size.width - labelWidth - CGFloat(max(0, columnCount - 1)) * cellSpacing
+            let cellSize = min(20, max(9, availableCellWidth / CGFloat(columnCount)))
 
             VStack(alignment: .leading, spacing: 12) {
                 hourHeader(labelWidth: labelWidth, cellSize: cellSize, spacing: cellSpacing)
@@ -130,7 +130,7 @@ private struct HourlyContributionHeatmap: View {
                     ForEach(days) { day in
                         HStack(spacing: cellSpacing) {
                             Text(day.shortLabel)
-                                .font(.system(size: 9, weight: .bold, design: .rounded))
+                                .font(IslandTheme.labelFont(size: 9))
                                 .foregroundStyle(theme.textSecondary.opacity(day.isToday ? 0.95 : 0.62))
                                 .lineLimit(1)
                                 .frame(width: labelWidth, alignment: .trailing)
@@ -156,7 +156,7 @@ private struct HourlyContributionHeatmap: View {
 
                 HStack(spacing: 7) {
                     Text(legend)
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(IslandTheme.labelFont(size: 10))
                         .foregroundStyle(theme.textSecondary)
                     Spacer(minLength: 0)
                     Text(lessLabel)
@@ -167,7 +167,7 @@ private struct HourlyContributionHeatmap: View {
                     }
                     Text(moreLabel)
                 }
-                .font(.system(size: 10, weight: .semibold))
+                .font(IslandTheme.labelFont(size: 10))
                 .foregroundStyle(theme.textSecondary)
 
             }
@@ -178,13 +178,17 @@ private struct HourlyContributionHeatmap: View {
     private func hourHeader(labelWidth: CGFloat, cellSize: CGFloat, spacing: CGFloat) -> some View {
         HStack(spacing: spacing) {
             Color.clear.frame(width: labelWidth, height: 1)
-            ForEach(0..<24, id: \.self) { hour in
-                Text(hour % 6 == 0 ? String(format: "%02d", hour) : "")
-                    .font(.system(size: 8.5, weight: .bold, design: .rounded))
+            ForEach(hourValues, id: \.self) { hour in
+                Text(shouldShowHourLabel(hour) ? String(format: "%02d", hour) : "")
+                    .font(IslandTheme.labelFont(size: 8.5))
                     .foregroundStyle(theme.textSecondary.opacity(0.58))
                     .frame(width: cellSize)
             }
         }
+    }
+
+    private func shouldShowHourLabel(_ hour: Int) -> Bool {
+        hour == hourValues.first || hour == hourValues.last || hour % 6 == 0
     }
 
     private func fill(for cell: RecentUsageHourCell) -> Color {
@@ -250,6 +254,24 @@ private struct RecentUsageDay: Identifiable {
         }
     }
 
+    static func trimmedToMeaningfulHours(days: [RecentUsageDay]) -> [RecentUsageDay] {
+        let activeHours = days
+            .flatMap(\.cells)
+            .filter { ($0.totalTokens > 0 || $0.costUSD > 0) && !$0.isFuture }
+            .map(\.hourOfDay)
+
+        guard let firstHour = activeHours.min(), let lastHour = activeHours.max() else {
+            return days
+        }
+
+        return days.map { day in
+            RecentUsageDay(
+                dayStartAt: day.dayStartAt,
+                cells: day.cells.filter { (firstHour...lastHour).contains($0.hourOfDay) }
+            )
+        }
+    }
+
     private static let shortFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = .current
@@ -289,6 +311,7 @@ private struct RecentUsageHourCell: Identifiable {
     var totalTokens: Int { rows.reduce(0) { $0 + $1.totalTokens } }
     var costUSD: Double { rows.reduce(0) { $0 + $1.costUSD } }
     var isFuture: Bool { hourStartAt > .now }
+    var hourOfDay: Int { Calendar.current.component(.hour, from: hourStartAt) }
 
     var helpText: String {
         let modelText = rows.prefix(4)

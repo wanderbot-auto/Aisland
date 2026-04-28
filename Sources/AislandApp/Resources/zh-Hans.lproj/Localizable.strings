@@ -128,7 +128,7 @@
 "usage.chart.contributionGraph" = "Contribution Graph";
 "usage.chart.tokensPerDay.subtitle" = "按模型堆叠显示每日 token，并在每日上方标识预估或记录的 Cost。";
 "usage.chart.tokensPerDay" = "Tokens Per Day";
-"usage.heatmap.title" = "7 天 x 24 小时热力图";
+"usage.heatmap.title" = "7 天小时热力图";
 "usage.heatmap.total" = "总量";
 "usage.heatmap.peak" = "峰值";
 "usage.heatmap.activeHours" = "活跃小时";
@@ -358,8 +358,7 @@
 "whiteNoise.category.utility" = "工具";
 
 /* Recent Usage */
-"usage.surface.title" = "7 天 x 24 小时热力图";
-"usage.surface.subtitle" = "按小时捕捉最近峰值，沿用 Aisland 主题色饱和度。";
+"usage.surface.title" = "7 天小时热力图";
 "usage.surface.legend" = "每小时贡献";
 "usage.surface.latest" = "最近";
 "usage.surface.model" = "模型";
@@ -371,4 +370,3 @@
 "usage.surface.noRecent" = "暂无近期用量";
 "usage.surface.noModel" = "暂无模型";
 "usage.surface.empty.title" = "还没有模型用量";
-"usage.surface.empty.subtitle" = "本地 agent 日志上报 token 后，Aisland 会自动填充热力图。";

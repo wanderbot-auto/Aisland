@@ -128,7 +128,7 @@
 "usage.chart.contributionGraph" = "Contribution Graph";
 "usage.chart.tokensPerDay.subtitle" = "Stacked by model with estimated or reported cost shown above each day.";
 "usage.chart.tokensPerDay" = "Tokens Per Day";
-"usage.heatmap.title" = "7-day x 24-hour heatmap";
+"usage.heatmap.title" = "7-day hourly heatmap";
 "usage.heatmap.total" = "Total";
 "usage.heatmap.peak" = "Peak";
 "usage.heatmap.activeHours" = "Active hours";
@@ -358,8 +358,7 @@
 "whiteNoise.category.utility" = "Utility";
 
 /* Recent Usage */
-"usage.surface.title" = "7-day x 24-hour heatmap";
-"usage.surface.subtitle" = "Recent hourly peaks using Aisland's accent saturation.";
+"usage.surface.title" = "7-day hourly heatmap";
 "usage.surface.legend" = "Hourly contribution";
 "usage.surface.latest" = "Latest";
 "usage.surface.model" = "Model";
@@ -371,4 +370,3 @@
 "usage.surface.noRecent" = "No recent usage";
 "usage.surface.noModel" = "No model yet";
 "usage.surface.empty.title" = "No model usage yet";
-"usage.surface.empty.subtitle" = "Aisland will fill this heatmap after local agent logs report token usage.";
